@@ -1,0 +1,42 @@
+name: Hourly crypto scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hourly-crypto-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run scanner
+        run: python scanner.py
+
+      - name: Commit refreshed scan_result.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scan_result.json
+          if git diff --cached --quiet; then
+            echo "No scan_result.json changes to commit."
+          else
+            git commit -m "Update hourly crypto scan"
+            git push
+          fi
