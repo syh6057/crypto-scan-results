@@ -1,16 +1,16 @@
-name: Hourly crypto scan
+name: 5-minute crypto scan
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "7 * * * *"
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
 
 concurrency:
-  group: hourly-crypto-scan
-  cancel-in-progress: false
+  group: five-minute-crypto-scan
+  cancel-in-progress: true
 
 jobs:
   scan:
@@ -37,6 +37,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No scan_result.json changes to commit."
           else
-            git commit -m "Update hourly crypto scan"
+            git commit -m "Update 5-minute crypto scan"
             git push
           fi
