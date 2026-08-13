@@ -5,7 +5,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
-BINANCE = "https://api.binance.com"
+BINANCE = "https://data-api.binance.vision"
 BITHUMB = "https://api.bithumb.com"
 USER_AGENT = "crypto-scan-results/1.0"
 
