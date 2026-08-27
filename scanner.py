@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import time
 from datetime import datetime, timezone
@@ -7,2237 +8,422 @@ from statistics import mean
 import requests
 
 
-# ============================================================
-# FINAL CONFIG
-# ============================================================
-
 BINANCE_BASE = "https://data-api.binance.vision"
 BITHUMB_BASE = "https://api.bithumb.com"
-
-VERSION = "v4-execution-quality"
-
-WATCHLIST = [
-    "GWEI",
-    "NEAR",
-    "TAO",
-    "BIO"
-]
-
-# 명백한 스테이블코인/달러성 자산
-STABLE_BASES = {
-    "USDT",
-    "USDC",
-    "FDUSD",
-    "USDS",
-    "TUSD",
-    "DAI",
-    "PYUSD",
-    "USDP",
-    "XUSD",
-    "USD1",
-    "USDG",
-    "RLUSD",
-    "USDE",
-    "EURI",
-    "AEUR",
-    "BUSD",
-    "UST",
-    "USTC"
-}
-
-# 유동성 기준
-MIN_BINANCE_QUOTE_USDT = 500_000
-MIN_BITHUMB_TRADE_KRW = 300_000_000
-
-# A등급은 실제 진입·청산이 가능한 유동성을 별도로 요구
-MIN_ACTIONABLE_BINANCE_QUOTE_USDT = 2_000_000
-MIN_ACTIONABLE_BITHUMB_TRADE_KRW = 1_000_000_000
-
+POLICY_FILE = "crypto_decision_policy.json"
+RESULT_FILE = "scan_result.json"
+SUMMARY_FILE = "latest_summary.json"
+HISTORY_FILE = "recommendation_history.json"
+SUPPORTED_POLICY_SCHEMA = 1
+SUPPORTED_POLICY_VERSION = "2026-08-27.1"
+MAX_CANDLE_UNIVERSE = 180
+MIN_TRADE_KRW = 300_000_000
+ACTIONABLE_TRADE_KRW = 1_000_000_000
+MAJOR_LOW_BETA = {"BTC", "ETH", "DOGE", "XRP", "SOL", "BNB"}
+STABLES = {"USDT", "USDC", "FDUSD", "USDS", "TUSD", "DAI", "PYUSD", "USDP", "USD1", "USDE"}
 
 session = requests.Session()
-
-session.headers.update({
-    "User-Agent":
-        "Mozilla/5.0 crypto-prebreakout-scanner/3.0",
-
-    "Accept":
-        "application/json"
-})
+session.headers.update({"User-Agent": "coin-project-scanner/6.0", "Accept": "application/json"})
 
 
-# ============================================================
-# COMMON
-# ============================================================
-
-def get_json(
-    url,
-    params=None,
-    retries=4,
-    timeout=25
-):
-
-    last_error = None
-
-    for i in range(retries):
-
+def get_json(url, params=None, retries=4, timeout=25):
+    error = None
+    for attempt in range(retries):
         try:
-
-            response = session.get(
-                url,
-                params=params,
-                timeout=timeout
-            )
-
+            response = session.get(url, params=params, timeout=timeout)
             if response.status_code == 429:
-
-                time.sleep(
-                    2 + i * 2
-                )
-
+                time.sleep(2 + attempt * 2)
                 continue
-
             response.raise_for_status()
-
             return response.json()
+        except Exception as exc:
+            error = exc
+            time.sleep(1 + attempt)
+    raise error
 
-        except Exception as e:
 
-            last_error = e
+def load_json(path, default):
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except Exception:
+        return default
 
-            time.sleep(
-                1.5 + i * 1.5
-            )
 
-    raise last_error
+def save_json(path, value):
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=False, indent=2)
+
+
+def load_policy():
+    policy = load_json(POLICY_FILE, None)
+    if not policy:
+        raise RuntimeError("POLICY_MISSING: crypto_decision_policy.json is required")
+    if policy.get("schema_version") != SUPPORTED_POLICY_SCHEMA:
+        raise RuntimeError("POLICY_SCHEMA_MISMATCH: stop analysis before producing recommendations")
+    if policy.get("policy_version") != SUPPORTED_POLICY_VERSION:
+        raise RuntimeError("POLICY_VERSION_MISMATCH: scanner and policy must be updated together")
+    required = ["objective", "data_priority", "universes", "momentum_stages", "success_examples", "failure_examples"]
+    missing = [key for key in required if key not in policy]
+    if missing:
+        raise RuntimeError(f"POLICY_FIELDS_MISSING: {missing}")
+    return policy
 
 
 def pct(a, b):
-
-    if (
-        a is None
-        or b is None
-        or b == 0
-    ):
+    if a is None or b in (None, 0):
         return None
-
-    return (
-        a / b - 1.0
-    ) * 100.0
+    return (float(a) / float(b) - 1) * 100
 
 
-def rnd(
-    value,
-    digits=2
-):
-
-    if value is None:
-        return None
-
-    return round(
-        float(value),
-        digits
-    )
+def rnd(value, digits=2):
+    return None if value is None else round(float(value), digits)
 
 
-# ============================================================
-# PREVIOUS RESULT
-# ============================================================
-
-def load_previous():
-
-    if not os.path.exists(
-        "scan_result.json"
-    ):
-        return {}
-
-    try:
-
-        with open(
-            "scan_result.json",
-            "r",
-            encoding="utf-8"
-        ) as f:
-
-            return json.load(f)
-
-    except Exception:
-
-        return {}
-
-
-# ============================================================
-# BINANCE
-# ============================================================
-
-def get_binance_exchange_info():
-
-    return get_json(
-        BINANCE_BASE
-        + "/api/v3/exchangeInfo"
-    )
-
-
-def get_binance_24h():
-
-    rows = get_json(
-        BINANCE_BASE
-        + "/api/v3/ticker/24hr"
-    )
-
-    return {
-        x["symbol"]: x
-        for x in rows
-        if "symbol" in x
-    }
-
-
-def closed_klines(
-    symbol,
-    interval,
-    limit
-):
-
-    rows = get_json(
-        BINANCE_BASE
-        + "/api/v3/klines",
-
-        {
-            "symbol": symbol,
-            "interval": interval,
-            "limit": limit
+def get_bithumb_markets():
+    rows = get_json(BITHUMB_BASE + "/v1/market/all", {"isDetails": "true"})
+    output = {}
+    for row in rows:
+        market = row.get("market", "")
+        if not market.startswith("KRW-"):
+            continue
+        base = market.split("-", 1)[1]
+        output[base] = {
+            "market": market,
+            "korean_name": row.get("korean_name"),
+            "english_name": row.get("english_name"),
+            "market_warning": row.get("market_warning", "NONE"),
         }
-    )
-
-    now_ms = int(
-        time.time() * 1000
-    )
-
-    # 미완성 봉 제외
-    return [
-        row
-        for row in rows
-        if int(row[6]) < now_ms
-    ]
+    return output
 
 
-# ============================================================
-# BITHUMB
-# ============================================================
-
-def get_bithumb_markets(
-    previous
-):
-
-    try:
-
-        rows = get_json(
-            BITHUMB_BASE
-            + "/v1/market/all",
-
-            {
-                "isDetails":
-                    "true"
-            }
-        )
-
-        markets = {}
-
+def get_bithumb_tickers(markets):
+    codes = [value["market"] for value in markets.values()]
+    output = {}
+    for index in range(0, len(codes), 40):
+        rows = get_json(BITHUMB_BASE + "/v1/ticker", {"markets": ",".join(codes[index:index + 40])})
         for row in rows:
-
-            market = row.get(
-                "market",
-                ""
-            )
-
-            if not market.startswith(
-                "KRW-"
-            ):
-                continue
-
-            base = market.split(
-                "-",
-                1
-            )[1]
-
-            markets[base] = {
-
-                "market":
-                    market,
-
-                "korean_name":
-                    row.get(
-                        "korean_name"
-                    ),
-
-                "english_name":
-                    row.get(
-                        "english_name"
-                    ),
-
-                "market_warning":
-                    row.get(
-                        "market_warning",
-                        "NONE"
-                    )
-            }
-
-        return (
-            markets,
-            "live"
-        )
-
-    except Exception as e:
-
-        # API 일시 실패 시
-        # 직전 저장된 빗썸 목록 사용
-
-        cached = previous.get(
-            "bithumb_markets_cache",
-            {}
-        )
-
-        if cached:
-
-            return (
-                cached,
-                "previous_cache"
-            )
-
-        print(
-            "Bithumb market list unavailable:",
-            e
-        )
-
-        return (
-            {},
-            "unavailable"
-        )
+            output[row["market"]] = row
+        time.sleep(0.06)
+    return output
 
 
-def get_bithumb_tickers(
-    markets
-):
+def get_binance_universe():
+    info = get_json(BINANCE_BASE + "/api/v3/exchangeInfo")
+    tickers = get_json(BINANCE_BASE + "/api/v3/ticker/24hr")
+    ticker_map = {row["symbol"]: row for row in tickers if row.get("symbol")}
+    pairs = {}
+    for row in info.get("symbols", []):
+        base = row.get("baseAsset")
+        if row.get("status") == "TRADING" and row.get("quoteAsset") == "USDT" and base and base not in STABLES:
+            pairs[base] = row.get("symbol")
+    return pairs, ticker_map
 
-    if not markets:
 
-        return (
-            {},
-            "unavailable"
-        )
-
-    market_codes = [
-
-        data["market"]
-
-        for data
-        in markets.values()
+def binance_bars(symbol, interval, limit):
+    rows = get_json(BINANCE_BASE + "/api/v3/klines", {"symbol": symbol, "interval": interval, "limit": limit})
+    now_ms = int(time.time() * 1000)
+    return [
+        {"ts": int(row[0]), "open": float(row[1]), "high": float(row[2]), "low": float(row[3]), "close": float(row[4]), "volume": float(row[5])}
+        for row in rows if int(row[6]) < now_ms
     ]
 
-    result = {}
 
-    failures = 0
-
-    # URL 길이/부하 방지용
-    # 40개씩 분할
-
-    for i in range(
-        0,
-        len(market_codes),
-        40
-    ):
-
-        chunk = market_codes[
-            i:i + 40
-        ]
-
-        try:
-
-            rows = get_json(
-                BITHUMB_BASE
-                + "/v1/ticker",
-
-                {
-                    "markets":
-                        ",".join(chunk)
-                }
-            )
-
-            for row in rows:
-
-                market = row.get(
-                    "market"
-                )
-
-                if market:
-
-                    result[
-                        market
-                    ] = row
-
-        except Exception as e:
-
-            failures += 1
-
-            print(
-                "Bithumb ticker chunk failed:",
-                e
-            )
-
-        time.sleep(
-            0.08
-        )
-
-    if not result:
-
-        return (
-            {},
-            "unavailable"
-        )
-
-    if failures:
-
-        return (
-            result,
-            "partial"
-        )
-
-    return (
-        result,
-        "live"
-    )
-
-
-# ============================================================
-# BINANCE ∩ BITHUMB KRW
-# ============================================================
-
-def build_intersection(
-    exchange_info,
-    bithumb_markets
-):
-
-    result = []
-
-    for item in exchange_info.get(
-        "symbols",
-        []
-    ):
-
-        if (
-            item.get("status")
-            != "TRADING"
-        ):
+def bithumb_bars(market, unit, limit):
+    rows = get_json(BITHUMB_BASE + f"/v1/candles/minutes/{unit}", {"market": market, "count": limit})
+    interval_ms = unit * 60_000
+    now_ms = int(time.time() * 1000)
+    bars = []
+    for row in rows:
+        text = row.get("candle_date_time_utc")
+        if not text:
             continue
-
-        if (
-            item.get("quoteAsset")
-            != "USDT"
-        ):
+        ts = int(datetime.fromisoformat(text).replace(tzinfo=timezone.utc).timestamp() * 1000)
+        if ts + interval_ms > now_ms:
             continue
-
-        base = item.get(
-            "baseAsset",
-            ""
-        )
-
-        symbol = item.get(
-            "symbol",
-            ""
-        )
-
-        if not base:
-            continue
-
-        if base in STABLE_BASES:
-            continue
-
-        if base.endswith(
-            (
-                "UP",
-                "DOWN",
-                "BULL",
-                "BEAR"
-            )
-        ):
-            continue
-
-        # 빗썸 시장 목록 취득 성공 시
-        # KRW 미상장 종목 제거
-        if (
-            bithumb_markets
-            and base
-            not in bithumb_markets
-        ):
-            continue
-
-        warning = (
-            bithumb_markets
-            .get(
-                base,
-                {}
-            )
-            .get(
-                "market_warning",
-                "NONE"
-            )
-        )
-
-        # 유의종목 제외
-        if warning not in (
-            None,
-            "",
-            "NONE"
-        ):
-            continue
-
-        result.append(
-            (
-                symbol,
-                base
-            )
-        )
-
-    return result
+        bars.append({
+            "ts": ts,
+            "open": float(row["opening_price"]),
+            "high": float(row["high_price"]),
+            "low": float(row["low_price"]),
+            "close": float(row["trade_price"]),
+            "volume": float(row["candle_acc_trade_volume"]),
+        })
+    return sorted(bars, key=lambda value: value["ts"])
 
 
-# ============================================================
-# SYMBOL SCAN
-# ============================================================
-
-def scan_symbol(
-    symbol,
-    base,
-    binance_24h,
-    bithumb_market,
-    bithumb_ticker
-):
-
-    # ========================================================
-    # 1H — 핵심 탐지봉
-    # ========================================================
-
-    k1 = closed_klines(
-        symbol,
-        "1h",
-        22
-    )
-
-    if len(k1) < 21:
+def candle_metrics(k15, k1, k4):
+    if len(k15) < 8 or len(k1) < 21 or len(k4) < 3:
         return None
-
-    latest = k1[-1]
-    previous = k1[-2]
-
-    prior20 = k1[
-        -21:-1
-    ]
-
-    latest_vol = float(
-        latest[5]
-    )
-
-    previous_vol = float(
-        previous[5]
-    )
-
-    avg20 = mean(
-        float(x[5])
-        for x in prior20
-    )
-
-    vol_vs_prev = pct(
-        latest_vol,
-        previous_vol
-    )
-
-    vol_vs_20h = (
-        latest_vol / avg20
-        if avg20
-        else None
-    )
-
-    o1 = float(
-        latest[1]
-    )
-
-    h1 = float(
-        latest[2]
-    )
-
-    l1 = float(
-        latest[3]
-    )
-
-    c1 = float(
-        latest[4]
-    )
-
-    price_1h = pct(
-        c1,
-        o1
-    )
-
-    upper_wick = pct(
-        h1,
-        max(o1, c1)
-    )
-
-
-    # ========================================================
-    # 4H
-    # ========================================================
-
-    k4 = closed_klines(
-        symbol,
-        "4h",
-        7
-    )
-
-    price_4h = None
-
-    low_rising = False
-
-    if len(k4) >= 3:
-
-        latest4 = k4[-1]
-
-        price_4h = pct(
-            float(
-                latest4[4]
-            ),
-            float(
-                latest4[1]
-            )
-        )
-
-        lows = [
-            float(x[3])
-            for x in k4[-3:]
-        ]
-
-        low_rising = (
-            lows[-1]
-            >= lows[-2]
-            >= lows[-3]
-        )
-
-
-    # ========================================================
-    # 15M
-    # ========================================================
-
-    k15 = closed_klines(
-        symbol,
-        "15m",
-        9
-    )
-
-    persistence_15m = None
-
-    price_60m = None
-
-    positive_15m = 0
-
-    if len(k15) >= 8:
-
-        volumes = [
-            float(x[5])
-            for x in k15[-8:]
-        ]
-
-        old_avg = mean(
-            volumes[:4]
-        )
-
-        new_avg = mean(
-            volumes[4:]
-        )
-
-        if old_avg:
-
-            persistence_15m = (
-                new_avg
-                / old_avg
-            )
-
-        price_60m = pct(
-            float(
-                k15[-1][4]
-            ),
-            float(
-                k15[-4][1]
-            )
-        )
-
-        positive_15m = sum(
-
-            1
-
-            for x
-            in k15[-4:]
-
-            if float(x[4])
-            >= float(x[1])
-        )
-
-
-    # ========================================================
-    # BINANCE 24H
-    # ========================================================
-
-    bt = binance_24h.get(
-        symbol,
-        {}
-    )
-
-    last_usdt = (
-
-        float(
-            bt["lastPrice"]
-        )
-
-        if bt.get(
-            "lastPrice"
-        )
-
-        else None
-    )
-
-    price_24h = (
-
-        float(
-            bt[
-                "priceChangePercent"
-            ]
-        )
-
-        if bt.get(
-            "priceChangePercent"
-        )
-
-        else None
-    )
-
-    quote_24h = (
-
-        float(
-            bt["quoteVolume"]
-        )
-
-        if bt.get(
-            "quoteVolume"
-        )
-
-        else None
-    )
-
-
-    # ========================================================
-    # BITHUMB
-    # ========================================================
-
-    krw_price = None
-
-    krw_trade_24h = None
-
-    krw_high_vs_prevclose = None
-
-    krw_change_24h = None
-
-    krw_day_high = None
-
-    if bithumb_ticker:
-
-        krw_price = (
-            bithumb_ticker
-            .get(
-                "trade_price"
-            )
-        )
-
-        krw_trade_24h = (
-            bithumb_ticker
-            .get(
-                "acc_trade_price_24h"
-            )
-        )
-
-        prev_close = (
-            bithumb_ticker
-            .get(
-                "prev_closing_price"
-            )
-        )
-
-        high_price = (
-            bithumb_ticker
-            .get(
-                "high_price"
-            )
-        )
-
-        if high_price is not None:
-            krw_day_high = float(high_price)
-
-        if (
-            prev_close
-            and high_price
-        ):
-
-            krw_high_vs_prevclose = pct(
-                float(
-                    high_price
-                ),
-                float(
-                    prev_close
-                )
-            )
-
-        change_rate = (
-            bithumb_ticker
-            .get(
-                "signed_change_rate"
-            )
-        )
-
-        if change_rate is not None:
-
-            krw_change_24h = (
-                float(
-                    change_rate
-                )
-                * 100.0
-            )
-
-
-    # ========================================================
-    # OVERHEAT
-    # ========================================================
-
-    # 우선적으로 빗썸 당일 고가 /
-    # 전일 종가 사용
-
-    high_metric = (
-        krw_high_vs_prevclose
-    )
-
-    # 빗썸 데이터 없으면
-    # Binance rolling 24h 이용
-
-    if high_metric is None:
-
-        open24 = (
-
-            float(
-                bt["openPrice"]
-            )
-
-            if bt.get(
-                "openPrice"
-            )
-
-            else None
-        )
-
-        high24 = (
-
-            float(
-                bt["highPrice"]
-            )
-
-            if bt.get(
-                "highPrice"
-            )
-
-            else None
-        )
-
-        if (
-            open24
-            and high24
-        ):
-
-            high_metric = pct(
-                high24,
-                open24
-            )
-
-
-    overheated = bool(
-
-        (
-            high_metric
-            is not None
-            and
-            high_metric >= 15.0
-        )
-
-        or
-
-        (
-            price_1h
-            is not None
-            and
-            price_1h >= 10.0
-        )
-    )
-
-
-    warm = bool(
-
-        high_metric
-        is not None
-
-        and
-
-        10.0
-        <= high_metric
-        < 15.0
-    )
-
-
-    # ========================================================
-    # DUMPING VOLUME
-    # ========================================================
-
-    dumping = bool(
-
-        (
-            price_1h
-            is not None
-
-            and
-
-            price_1h < -1.0
-
-            and
-
-            vol_vs_20h
-            is not None
-
-            and
-
-            vol_vs_20h >= 2.0
-        )
-
-        or
-
-        (
-            price_4h
-            is not None
-
-            and
-
-            price_4h < -4.0
-
-            and
-
-            vol_vs_20h
-            is not None
-
-            and
-
-            vol_vs_20h >= 2.0
-        )
-    )
-
-
-    # ========================================================
-    # LIQUIDITY
-    # ========================================================
-
-    thin_binance = (
-
-        quote_24h
-        is None
-
-        or
-
-        quote_24h
-        < MIN_BINANCE_QUOTE_USDT
-    )
-
-
-    thin_bithumb = (
-
-        krw_trade_24h
-        is None
-
-        or
-
-        float(
-            krw_trade_24h
-        )
-        < MIN_BITHUMB_TRADE_KRW
-    )
-
-
-    # 둘 다 얇을 때만
-    # C 처리
-
-    low_liquidity = (
-        thin_binance
-        and
-        thin_bithumb
-    )
-
-    # A등급은 한쪽 시장이라도 충분한 체결 유동성을 요구한다.
-    execution_liquidity = (
-        (
-            quote_24h is not None
-            and quote_24h >= MIN_ACTIONABLE_BINANCE_QUOTE_USDT
-        )
-        or
-        (
-            krw_trade_24h is not None
-            and float(krw_trade_24h) >= MIN_ACTIONABLE_BITHUMB_TRADE_KRW
-        )
-    )
-
-    distance_from_day_high_pct = (
-        pct(krw_price, krw_day_high)
-        if krw_price is not None and krw_day_high
-        else None
-    )
-
-    near_day_high = (
-        distance_from_day_high_pct is not None
-        and distance_from_day_high_pct >= -1.0
-    )
-
-    chase_risk = bool(
-        near_day_high
-        and (
-            (price_1h is not None and price_1h > 2.0)
-            or
-            (price_60m is not None and price_60m > 2.0)
-        )
-    )
-
-
-    # ========================================================
-    # SCORE
-    # ========================================================
-
-    score = 0.0
-
-
-    # 거래량 직전봉 대비
-    if vol_vs_prev is not None:
-
-        score += (
-
-            max(
-                min(
-                    vol_vs_prev,
-                    500.0
-                ),
-                -100.0
-            )
-
-            / 100.0
-        )
-
-
-    # 20시간 평균 대비
-    if vol_vs_20h is not None:
-
-        score += (
-
-            min(
-                vol_vs_20h,
-                10.0
-            )
-
-            * 1.6
-        )
-
-
-    # 1H 가격
-    if price_1h is not None:
-
-        if (
-            0.0
-            <= price_1h
-            <= 2.0
-        ):
-
-            score += 4.0
-
-        elif (
-            2.0
-            < price_1h
-            <= 3.0
-        ):
-
-            score += 1.0
-
-        elif (
-            3.0
-            < price_1h
-            <= 5.0
-        ):
-
-            score -= 3.0
-
-        elif price_1h < -0.5:
-
-            score -= 2.5
-
-        elif price_1h > 5.0:
-
-            score -= 6.0
-
-
-    # 4H 가격 구조
-    if price_4h is not None:
-
-        if (
-            0.0
-            <= price_4h
-            <= 5.0
-        ):
-
-            score += 2.0
-
-        elif price_4h < -2.0:
-
-            score -= 2.5
-
-
-    # 4h 저점상승
-    if low_rising:
-
-        score += 1.5
-
-
-    # 15m 거래량 지속
-    if persistence_15m is not None:
-
-        if persistence_15m >= 1.5:
-
-            score += 2.5
-
-        elif persistence_15m >= 1.0:
-
-            score += 1.0
-
-        elif persistence_15m < 0.6:
-
-            score -= 1.5
-
-
-    if positive_15m >= 3:
-
-        score += 1.0
-
-
-    # 1h 긴 윗꼬리
-    if (
-        upper_wick
-        is not None
-        and
-        upper_wick >= 1.5
-    ):
-
-        score -= 2.0
-
-    if chase_risk:
-        score -= 5.0
-
-    if not execution_liquidity:
-        score -= 3.0
-
-
-    # 당일 고가
-    if high_metric is not None:
-
-        if high_metric >= 15.0:
-
-            score -= 10.0
-
-        elif high_metric >= 10.0:
-
-            score -= 4.0
-
-        elif high_metric < 8.0:
-
-            score += 1.0
-
-
-    # Binance 거래대금
-    if quote_24h is not None:
-
-        if quote_24h >= 50_000_000:
-
-            score += 2.0
-
-        elif quote_24h >= 10_000_000:
-
-            score += 1.5
-
-        elif quote_24h >= 2_000_000:
-
-            score += 0.8
-
-
-    # 빗썸 KRW 거래대금
-    if krw_trade_24h is not None:
-
-        krw_trade_float = float(
-            krw_trade_24h
-        )
-
-        if (
-            krw_trade_float
-            >= 10_000_000_000
-        ):
-
-            score += 2.0
-
-        elif (
-            krw_trade_float
-            >= 3_000_000_000
-        ):
-
-            score += 1.5
-
-        elif (
-            krw_trade_float
-            >= 1_000_000_000
-        ):
-
-            score += 1.0
-
-        elif (
-            krw_trade_float
-            < 100_000_000
-        ):
-
-            score -= 2.0
-
-
-    if warm:
-
-        score -= 2.0
-
-
-    if dumping:
-
-        score -= 8.0
-
-
-    if low_liquidity:
-
-        score -= 6.0
-
-
-    # ========================================================
-    # A GRADE
-    # ========================================================
-
-    volume_signal = (
-
-        (
-            vol_vs_prev
-            is not None
-
-            and
-
-            vol_vs_prev >= 60
-
-            and
-
-            vol_vs_20h
-            is not None
-
-            and
-
-            vol_vs_20h >= 2.0
-        )
-
-        or
-
-        (
-            vol_vs_prev
-            is not None
-
-            and
-
-            vol_vs_prev >= 30
-
-            and
-
-            vol_vs_20h
-            is not None
-
-            and
-
-            vol_vs_20h >= 3.0
-        )
-    )
-
-
-    grade = "B"
-
-
-    if (
-
-        not overheated
-
-        and
-        not warm
-
-        and
-        not dumping
-
-        and
-        not low_liquidity
-
-        and
-        execution_liquidity
-
-        and
-        not chase_risk
-
-        and
-        volume_signal
-
-        and
-        price_1h
-        is not None
-
-        and
-        0.0
-        <= price_1h
-        <= 2.0
-
-        and
-        price_4h
-        is not None
-
-        and
-        price_4h >= 0.0
-
-        and
-        price_60m
-        is not None
-
-        and
-        price_60m <= 2.0
-
-        and
-        upper_wick
-        is not None
-
-        and
-        upper_wick <= 1.5
-
-        and
-        persistence_15m
-        is not None
-
-        and
-        persistence_15m >= 1.2
-    ):
-
-        grade = "A"
-
-
-    if (
-
-        overheated
-
-        or
-        dumping
-
-        or
-        low_liquidity
-    ):
-
-        grade = "C"
-
-
+    latest, previous = k1[-1], k1[-2]
+    avg20 = mean(row["volume"] for row in k1[-21:-1])
+    old15 = mean(row["volume"] for row in k15[-8:-4])
+    new15 = mean(row["volume"] for row in k15[-4:])
+    lows = [row["low"] for row in k4[-3:]]
     return {
-
-        "symbol":
-            symbol,
-
-        "base":
-            base,
-
-        "bithumb_market":
-            bithumb_market,
-
-        "bithumb_krw_price":
-            rnd(
-                krw_price,
-                8
-            ),
-
-        "bithumb_24h_trade_krw":
-            rnd(
-                krw_trade_24h,
-                0
-            ),
-
-        "bithumb_24h_change_pct":
-            rnd(
-                krw_change_24h,
-                2
-            ),
-
-        "bithumb_day_high_vs_prevclose_pct":
-            rnd(
-                krw_high_vs_prevclose,
-                2
-            ),
-
-        "binance_last_usdt":
-            rnd(
-                last_usdt,
-                10
-            ),
-
-        "binance_24h_quote_usdt":
-            rnd(
-                quote_24h,
-                0
-            ),
-
-        "binance_24h_change_pct":
-            rnd(
-                price_24h,
-                2
-            ),
-
-        "vol_1h_vs_prev_pct":
-            rnd(
-                vol_vs_prev,
-                1
-            ),
-
-        "vol_1h_vs_20h_x":
-            rnd(
-                vol_vs_20h,
-                2
-            ),
-
-        "price_1h_pct":
-            rnd(
-                price_1h,
-                2
-            ),
-
-        "price_4h_pct":
-            rnd(
-                price_4h,
-                2
-            ),
-
-        "vol_15m_persistence_x":
-            rnd(
-                persistence_15m,
-                2
-            ),
-
-        "price_last_60m_pct":
-            rnd(
-                price_60m,
-                2
-            ),
-
-        "upper_wick_1h_pct":
-            rnd(
-                upper_wick,
-                2
-            ),
-
-        "four_hour_low_rising":
-            low_rising,
-
-        "recent_15m_positive_count":
-            positive_15m,
-
-        "warm_10_to_15":
-            warm,
-
-        "overheated_15_plus":
-            overheated,
-
-        "dumping_volume":
-            dumping,
-
-        "low_liquidity":
-            low_liquidity,
-
-        "execution_liquidity":
-            execution_liquidity,
-
-        "distance_from_day_high_pct":
-            rnd(
-                distance_from_day_high_pct,
-                2
-            ),
-
-        "near_day_high":
-            near_day_high,
-
-        "chase_risk":
-            chase_risk,
-
-        "setup_type":
-            (
-                "actionable_prebreakout"
-                if grade == "A"
-                else "volume_alert_only"
-            ),
-
-        "grade":
-            grade,
-
-        "score":
-            rnd(
-                score,
-                2
-            )
+        "vol_1h_vs_prev_pct": pct(latest["volume"], previous["volume"]),
+        "vol_1h_vs_20h_x": latest["volume"] / avg20 if avg20 else None,
+        "price_1h_pct": pct(latest["close"], latest["open"]),
+        "price_4h_pct": pct(k4[-1]["close"], k4[-1]["open"]),
+        "vol_15m_persistence_x": new15 / old15 if old15 else None,
+        "price_last_60m_pct": pct(k15[-1]["close"], k15[-4]["open"]),
+        "recent_15m_positive_count": sum(1 for row in k15[-4:] if row["close"] >= row["open"]),
+        "upper_wick_1h_pct": pct(latest["high"], max(latest["open"], latest["close"])),
+        "four_hour_low_rising": lows[-1] >= lows[-2] >= lows[-3],
     }
 
 
-# ============================================================
-# PREVIOUS RUN COMPARISON
-# ============================================================
-
-def compare_with_previous(
-    row,
-    previous_snapshot
-):
-
-    previous = previous_snapshot.get(
-        row["base"]
+def determine_stage(change24, metrics, distance_high):
+    change24 = change24 or 0
+    wick = metrics.get("upper_wick_1h_pct") or 0
+    p60 = metrics.get("price_last_60m_pct") or 0
+    persistence = metrics.get("vol_15m_persistence_x") or 0
+    exhausted = (
+        (change24 >= 8 and wick >= 1.5 and persistence < 0.8)
+        or (change24 >= 8 and p60 <= -1)
+        or (change24 >= 15 and distance_high is not None and distance_high <= -8)
+        or (change24 >= 15 and persistence < 0.55)
     )
-
-    if not previous:
-
-        return {
-
-            "base":
-                row["base"],
-
-            "status":
-                "no_previous_measurement"
-        }
+    if exhausted:
+        return "exhaustion"
+    if change24 < 8:
+        return "ignition"
+    if change24 < 25:
+        return "acceleration"
+    if change24 < 50:
+        return "late"
+    return "exhaustion"
 
 
-    def delta(key):
-
-        current_value = row.get(
-            key
-        )
-
-        previous_value = previous.get(
-            key
-        )
-
-        if (
-            current_value
-            is None
-
-            or
-
-            previous_value
-            is None
-        ):
-
-            return None
-
-        return rnd(
-
-            float(
-                current_value
-            )
-
-            -
-
-            float(
-                previous_value
-            ),
-
-            2
-        )
-
-
+def score_row(base, ticker, metrics, btc_change):
+    trade = float(ticker.get("acc_trade_price_24h") or 0)
+    change = float(ticker.get("signed_change_rate") or 0) * 100
+    price = float(ticker.get("trade_price") or 0)
+    high = float(ticker.get("high_price") or 0)
+    distance = pct(price, high) if high else None
+    stage = determine_stage(change, metrics, distance)
+    volume20 = metrics.get("vol_1h_vs_20h_x") or 0
+    persistence = metrics.get("vol_15m_persistence_x") or 0
+    p60 = metrics.get("price_last_60m_pct") or 0
+    p4 = metrics.get("price_4h_pct") or 0
+    wick = metrics.get("upper_wick_1h_pct") or 0
+    positives = metrics.get("recent_15m_positive_count") or 0
+    higher_low = bool(metrics.get("four_hour_low_rising"))
+    relative = change - (btc_change or 0)
+    score = min(math.log10(max(trade, 1)) - 8, 3) * 2
+    score += min(volume20, 5) * 2
+    score += min(persistence, 3) * 2
+    score += positives * 1.2
+    score += 5 if higher_low else -5
+    score += max(min(p60, 5), -5) * 1.2
+    score += max(min(p4, 12), -6) * 0.5
+    score += max(min(relative, 25), -10) * 0.25
+    score -= max(wick - 0.8, 0) * 2
+    if stage == "acceleration":
+        score += 5
+    elif stage == "late":
+        score += 1
+    elif stage == "exhaustion":
+        score -= 14
+    if base in MAJOR_LOW_BETA:
+        score -= 7
+    failure_like = volume20 >= 1.5 and (not higher_low or p60 <= 0)
+    success_like = stage in {"ignition", "acceleration"} and higher_low and p60 > 0 and persistence >= 1 and wick <= 1.5
+    if failure_like:
+        score -= 8
+    if success_like:
+        score += 6
     return {
-
-        "base":
-            row["base"],
-
-        "status":
-            "compared",
-
-        "vol_1h_vs_prev_pct": {
-
-            "previous":
-                previous.get(
-                    "vol_1h_vs_prev_pct"
-                ),
-
-            "current":
-                row.get(
-                    "vol_1h_vs_prev_pct"
-                ),
-
-            "delta":
-                delta(
-                    "vol_1h_vs_prev_pct"
-                )
-        },
-
-        "vol_1h_vs_20h_x": {
-
-            "previous":
-                previous.get(
-                    "vol_1h_vs_20h_x"
-                ),
-
-            "current":
-                row.get(
-                    "vol_1h_vs_20h_x"
-                ),
-
-            "delta":
-                delta(
-                    "vol_1h_vs_20h_x"
-                )
-        },
-
-        "price_1h_pct": {
-
-            "previous":
-                previous.get(
-                    "price_1h_pct"
-                ),
-
-            "current":
-                row.get(
-                    "price_1h_pct"
-                ),
-
-            "delta":
-                delta(
-                    "price_1h_pct"
-                )
-        },
-
-        "price_4h_pct": {
-
-            "previous":
-                previous.get(
-                    "price_4h_pct"
-                ),
-
-            "current":
-                row.get(
-                    "price_4h_pct"
-                ),
-
-            "delta":
-                delta(
-                    "price_4h_pct"
-                )
-        },
-
-        "score": {
-
-            "previous":
-                previous.get(
-                    "score"
-                ),
-
-            "current":
-                row.get(
-                    "score"
-                ),
-
-            "delta":
-                delta(
-                    "score"
-                )
-        }
+        "base": base,
+        "bithumb_market": ticker.get("market"),
+        "bithumb_krw_price": rnd(price, 8),
+        "bithumb_ticker_timestamp_ms": ticker.get("timestamp"),
+        "bithumb_24h_trade_krw": rnd(trade, 0),
+        "bithumb_24h_change_pct": rnd(change),
+        "distance_from_day_high_pct": rnd(distance),
+        "btc_relative_strength_24h_pct": rnd(relative),
+        "momentum_stage": stage,
+        "success_pattern_like": success_like,
+        "failure_pattern_like": failure_like,
+        "execution_liquidity": trade >= ACTIONABLE_TRADE_KRW,
+        "high_beta_target_eligible": base not in MAJOR_LOW_BETA,
+        "score": rnd(score),
+        **{key: rnd(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else value for key, value in metrics.items()},
     }
 
 
-# ============================================================
-# MARKET CONTEXT
-# ============================================================
-
-def build_market_context(
-    snapshot
-):
-
-    btc = snapshot.get(
-        "BTC"
-    )
-
-    eth = snapshot.get(
-        "ETH"
-    )
+def select_candle_universe(markets, tickers, previous):
+    ranked = []
+    for base, info in markets.items():
+        if info.get("market_warning") not in (None, "", "NONE"):
+            continue
+        ticker = tickers.get(info["market"], {})
+        trade = float(ticker.get("acc_trade_price_24h") or 0)
+        change = abs(float(ticker.get("signed_change_rate") or 0) * 100)
+        ranked.append((trade + change * 100_000_000, base))
+    selected = {base for _, base in sorted(ranked, reverse=True)[:MAX_CANDLE_UNIVERSE]}
+    selected.update(previous.get("snapshot", {}).keys())
+    selected.update({"PROM", "ONT", "BICO", "BIOT", "NESTRY", "PLUME", "CYS"})
+    return {base for base in selected if base in markets}
 
 
-    alt_rows = [
+def update_scorecard(history, tickers, candle_cache, generated_at):
+    checkpoints = [15, 60, 240, 1440]
+    for item in history:
+        market = item.get("market")
+        ticker = tickers.get(market)
+        if not ticker or item.get("closed"):
+            continue
+        base = item["base"]
+        bars = candle_cache.get(base, {}).get("15m", [])
+        start_ms = int(datetime.fromisoformat(item["recommended_at_utc"]).timestamp() * 1000)
+        after = [bar for bar in bars if bar["ts"] >= start_ms]
+        current = float(ticker.get("trade_price") or item["entry_price"])
+        highs = [bar["high"] for bar in after] + [current]
+        lows = [bar["low"] for bar in after] + [current]
+        item["current_return_pct"] = rnd(pct(current, item["entry_price"]))
+        item["mfe_pct"] = rnd(pct(max(highs), item["entry_price"]))
+        item["mae_pct"] = rnd(pct(min(lows), item["entry_price"]))
+        elapsed = (datetime.fromisoformat(generated_at) - datetime.fromisoformat(item["recommended_at_utc"])).total_seconds() / 60
+        item["checkpoints"] = item.get("checkpoints", {})
+        for minute in checkpoints:
+            if elapsed >= minute and str(minute) not in item["checkpoints"]:
+                item["checkpoints"][str(minute)] = {
+                    "return_pct": item["current_return_pct"],
+                    "mfe_pct": item["mfe_pct"],
+                    "mae_pct": item["mae_pct"],
+                }
+        if elapsed >= 1440:
+            item["closed"] = True
+    return history
 
-        row
-
-        for base, row
-        in snapshot.items()
-
-        if base
-        not in (
-            "BTC",
-            "ETH"
-        )
-    ]
-
-
-    def breadth(key):
-
-        values = [
-
-            row.get(key)
-
-            for row
-            in alt_rows
-
-            if row.get(key)
-            is not None
-        ]
-
-        if not values:
-
-            return None
-
-        positive = sum(
-
-            1
-
-            for value
-            in values
-
-            if float(value) > 0
-        )
-
-        return rnd(
-
-            positive
-            / len(values)
-            * 100.0,
-
-            1
-        )
-
-
-    return {
-
-        "BTC":
-            btc,
-
-        "ETH":
-            eth,
-
-        "alt_breadth_positive_1h_pct":
-            breadth(
-                "price_1h_pct"
-            ),
-
-        "alt_breadth_positive_4h_pct":
-            breadth(
-                "price_4h_pct"
-            ),
-
-        "alt_breadth_positive_24h_pct":
-            breadth(
-                "binance_24h_change_pct"
-            )
-    }
-
-
-# ============================================================
-# MAIN
-# ============================================================
 
 def main():
+    policy = load_policy()
+    previous = load_json(RESULT_FILE, {})
+    history = load_json(HISTORY_FILE, [])
+    generated_at = datetime.now(timezone.utc).isoformat()
+    markets = get_bithumb_markets()
+    tickers = get_bithumb_tickers(markets)
+    binance_pairs, binance_tickers = get_binance_universe()
+    candle_bases = select_candle_universe(markets, tickers, previous)
+    btc_ticker = tickers.get("KRW-BTC", {})
+    btc_change = float(btc_ticker.get("signed_change_rate") or 0) * 100
+    rows, failures, candle_cache = [], [], {}
 
-    print(
-        "================================"
-    )
-
-    print(
-        "CRYPTO PREBREAKOUT SCANNER FINAL"
-    )
-
-    print(
-        "================================"
-    )
-
-
-    previous = load_previous()
-
-    previous_snapshot = (
-        previous.get(
-            "snapshot",
-            {}
-        )
-    )
-
-
-    # Binance
-    exchange_info = (
-        get_binance_exchange_info()
-    )
-
-    binance_24h = (
-        get_binance_24h()
-    )
-
-
-    # Bithumb
-    (
-        bithumb_markets,
-        market_source
-    ) = get_bithumb_markets(
-        previous
-    )
-
-
-    (
-        bithumb_tickers,
-        ticker_source
-    ) = get_bithumb_tickers(
-        bithumb_markets
-    )
-
-
-    # 교집합
-    symbols = build_intersection(
-        exchange_info,
-        bithumb_markets
-    )
-
-
-    print(
-        "Intersection symbols:",
-        len(symbols)
-    )
-
-    print(
-        "Bithumb market source:",
-        market_source
-    )
-
-    print(
-        "Bithumb ticker source:",
-        ticker_source
-    )
-
-
-    results = []
-
-    failed = []
-
-
-    for i, (
-        symbol,
-        base
-    ) in enumerate(
-        symbols,
-        1
-    ):
-
+    for index, base in enumerate(sorted(candle_bases), 1):
+        market = markets[base]["market"]
+        ticker = tickers.get(market, {})
+        symbol = binance_pairs.get(base)
         try:
+            if symbol:
+                k15 = binance_bars(symbol, "15m", 10)
+                k1 = binance_bars(symbol, "1h", 22)
+                k4 = binance_bars(symbol, "4h", 8)
+                candle_source = "binance_official"
+            else:
+                k15 = bithumb_bars(market, 15, 100)
+                k1 = bithumb_bars(market, 60, 22)
+                k4 = bithumb_bars(market, 240, 8)
+                candle_source = "bithumb_official"
+            candle_cache[base] = {"15m": k15, "1h": k1, "4h": k4}
+            metrics = candle_metrics(k15, k1, k4)
+            if not metrics:
+                raise ValueError("insufficient completed candles")
+            row = score_row(base, ticker, metrics, btc_change)
+            row["candle_source"] = candle_source
+            row["in_binance_bithumb_intersection"] = bool(symbol)
+            if symbol:
+                bt = binance_tickers.get(symbol, {})
+                row["binance_symbol"] = symbol
+                row["binance_24h_change_pct"] = rnd(bt.get("priceChangePercent"))
+                row["binance_24h_quote_usdt"] = rnd(bt.get("quoteVolume"), 0)
+            rows.append(row)
+        except Exception as exc:
+            failures.append({"base": base, "market": market, "error": str(exc)})
+        if index % 20 == 0:
+            print(f"{index}/{len(candle_bases)} candidate candles processed")
+        time.sleep(0.04)
 
-            market_info = (
-                bithumb_markets
-                .get(
-                    base,
-                    {}
-                )
-            )
+    rows.sort(key=lambda row: row["score"], reverse=True)
+    snapshot = {row["base"]: row for row in rows}
+    exhausted = [row for row in rows if row["momentum_stage"] == "exhaustion"][:5]
+    acceleration = [row for row in rows if row["momentum_stage"] in {"acceleration", "late"} and not row["failure_pattern_like"]][:5]
+    next_rotation = [row for row in rows if row["momentum_stage"] == "ignition" and row["success_pattern_like"]][:5]
+    scanned = set(snapshot)
+    additional = []
+    for base, info in markets.items():
+        if base in scanned:
+            continue
+        ticker = tickers.get(info["market"], {})
+        additional.append({
+            "base": base,
+            "market": info["market"],
+            "bithumb_krw_price": ticker.get("trade_price"),
+            "bithumb_24h_change_pct": rnd(float(ticker.get("signed_change_rate") or 0) * 100),
+            "bithumb_24h_trade_krw": rnd(ticker.get("acc_trade_price_24h"), 0),
+            "status": "additional_data_required_not_deleted",
+        })
+    additional.sort(key=lambda row: row["bithumb_24h_trade_krw"] or 0, reverse=True)
+    actual_candidates = [
+        row for row in (acceleration + next_rotation)
+        if row["execution_liquidity"] and row["high_beta_target_eligible"] and not row["failure_pattern_like"] and row["score"] >= 18
+    ]
+    actual_pick = actual_candidates[0] if actual_candidates else None
+    watch_pick = next((row for row in rows if row is not actual_pick and row["high_beta_target_eligible"] and not row["failure_pattern_like"]), None)
 
-            market = (
-                market_info
-                .get(
-                    "market"
-                )
-            )
-
-            ticker = (
-
-                bithumb_tickers
-                .get(
-                    market,
-                    {}
-                )
-
-                if market
-
-                else {}
-            )
-
-
-            row = scan_symbol(
-
-                symbol,
-                base,
-
-                binance_24h,
-
-                market,
-
-                ticker
-            )
-
-
-            if row:
-
-                results.append(
-                    row
-                )
-
-
-        except Exception as e:
-
-            failed.append({
-
-                "symbol":
-                    symbol,
-
-                "base":
-                    base,
-
-                "error":
-                    str(e)
+    history = update_scorecard(history, tickers, candle_cache, generated_at)
+    if actual_pick:
+        last = history[-1] if history else None
+        if not last or last.get("base") != actual_pick["base"] or last.get("closed"):
+            history.append({
+                "base": actual_pick["base"],
+                "market": actual_pick["bithumb_market"],
+                "recommended_at_utc": generated_at,
+                "entry_price": actual_pick["bithumb_krw_price"],
+                "policy_version": policy["policy_version"],
+                "closed": False,
+                "checkpoints": {},
             })
 
-
-        if (
-            i % 25 == 0
-
-            or
-
-            i == len(symbols)
-        ):
-
-            print(
-
-                f"{i}/{len(symbols)} scanned "
-                f"| ok={len(results)} "
-                f"failed={len(failed)}"
-            )
-
-
-        time.sleep(
-            0.04
-        )
-
-
-    # ========================================================
-    # SORT
-    # ========================================================
-
-    grade_order = {
-
-        "A": 0,
-        "B": 1,
-        "C": 2
-    }
-
-
-    results.sort(
-
-        key=lambda row: (
-
-            grade_order.get(
-                row["grade"],
-                9
-            ),
-
-            -row["score"]
-        )
-    )
-
-
-    # ========================================================
-    # CLEAN
-    # ========================================================
-
-    clean = [
-
-        row
-
-        for row
-        in results
-
-        if (
-            row["grade"]
-            != "C"
-
-            and
-            not row[
-                "overheated_15_plus"
-            ]
-
-            and
-            not row[
-                "dumping_volume"
-            ]
-
-            and
-            not row[
-                "low_liquidity"
-            ]
-        )
-    ]
-
-
-    snapshot = {
-
-        row["base"]:
-            row
-
-        for row
-        in results
-    }
-
-
-    clean_top10 = (
-        clean[:10]
-    )
-
-
-    # ========================================================
-    # PREVIOUS COMPARISON
-    # ========================================================
-
-    comparisons = [
-
-        compare_with_previous(
-            row,
-            previous_snapshot
-        )
-
-        for row
-        in clean_top10
-    ]
-
-
-    # ========================================================
-    # WATCHLIST
-    # ========================================================
-
-    watchlist = {}
-
-
-    for base in WATCHLIST:
-
-        if base in snapshot:
-
-            watchlist[
-                base
-            ] = snapshot[
-                base
-            ]
-
-        else:
-
-            watchlist[
-                base
-            ] = {
-
-                "status":
-                    "not_in_verified_binance_bithumb_intersection"
-            }
-
-
-    # ========================================================
-    # OUTPUT
-    # ========================================================
-
+    all_changes = [float(t.get("signed_change_rate") or 0) * 100 for t in tickers.values()]
     output = {
-
-        "generated_at_utc":
-
-            datetime.now(
-                timezone.utc
-            ).isoformat(),
-
-
-        "version":
-            VERSION,
-
-
-        "data_sources": {
-
-            "binance":
-                "official_public_market_data",
-
-            "bithumb_market_list":
-                market_source,
-
-            "bithumb_ticker":
-                ticker_source
-        },
-
-
-        "bithumb_markets_cache":
-            bithumb_markets,
-
-
+        "generated_at_utc": generated_at,
+        "version": "v6-coin-project-policy-driven",
+        "policy_version": policy["policy_version"],
+        "policy_file": POLICY_FILE,
+        "data_sources": {"primary": "user_generated_github_scan", "bithumb": "official_public_market_data", "binance": "official_public_market_data"},
         "universe": {
-
-            "binance_bithumb_krw_intersection_count":
-                len(symbols),
-
-            "success":
-                len(results),
-
-            "failed":
-                len(failed)
+            "bithumb_krw_total": len(markets),
+            "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)),
+            "candidate_candles_scanned": len(rows),
+            "additional_data_required_count": len(additional),
+            "failed": len(failures),
         },
-
-
-        "market_context":
-            build_market_context(
-                snapshot
-            ),
-
-
-        "top20":
-            results[:20],
-
-
-        "clean_top10":
-            clean_top10,
-
-
-        "changes_vs_previous_run":
-            comparisons,
-
-
-        "watchlist":
-            watchlist,
-
-
-        # 다음 회차와
-        # 모든 동일 종목 비교용
-        "snapshot":
-            snapshot,
-
-
-        "failed_sample":
-            failed[:20]
+        "market_context": {
+            "btc_bithumb_24h_change_pct": rnd(btc_change),
+            "bithumb_positive_breadth_pct": rnd(sum(1 for value in all_changes if value > 0) / max(len(all_changes), 1) * 100, 1),
+        },
+        "already_pumped_or_exhausted_top5": exhausted,
+        "acceleration_continuation_top5": acceleration,
+        "next_rotation_top5": next_rotation,
+        "additional_data_required": additional[:30],
+        "actual_buy": actual_pick,
+        "watch_pick": watch_pick,
+        "recommendation_scorecard": history[-20:],
+        "snapshot": snapshot,
+        "failed_sample": failures[:30],
     }
-
-
-    # ========================================================
-    # SAVE
-    # ========================================================
-
-    with open(
-
-        "scan_result.json",
-
-        "w",
-
-        encoding="utf-8"
-
-    ) as f:
-
-        json.dump(
-
-            output,
-
-            f,
-
-            ensure_ascii=False,
-
-            indent=2
-        )
-
-
-    # ========================================================
-    # LOG
-    # ========================================================
-
-    print(
-        "\nSCAN COMPLETE"
-    )
-
-    print(
-        "Version:",
-        VERSION
-    )
-
-    print(
-        "Success:",
-        len(results)
-    )
-
-    print(
-        "Failed:",
-        len(failed)
-    )
-
-    print(
-        "\nCLEAN TOP 10"
-    )
-
-    print(
-
-        json.dumps(
-
-            clean_top10,
-
-            ensure_ascii=False,
-
-            indent=2
-        )
-    )
-
-
-    print(
-        "\nCHANGES VS PREVIOUS"
-    )
-
-    print(
-
-        json.dumps(
-
-            comparisons,
-
-            ensure_ascii=False,
-
-            indent=2
-        )
-    )
-
-
-    print(
-        "\nWATCHLIST"
-    )
-
-    print(
-
-        json.dumps(
-
-            watchlist,
-
-            ensure_ascii=False,
-
-            indent=2
-        )
-    )
+    summary = {key: output[key] for key in [
+        "generated_at_utc", "version", "policy_version", "data_sources", "universe", "market_context",
+        "already_pumped_or_exhausted_top5", "acceleration_continuation_top5", "next_rotation_top5",
+        "additional_data_required", "actual_buy", "watch_pick", "recommendation_scorecard"
+    ]}
+    save_json(RESULT_FILE, output)
+    save_json(SUMMARY_FILE, summary)
+    save_json(HISTORY_FILE, history)
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
-
     main()
