@@ -375,6 +375,8 @@ def update_scorecard(history, tickers, candle_cache, generated_at):
         # Quarantine legacy scorecard values created by cross-currency candle
         # comparisons.  They must never flow into ranking or user reports.
         invalid = item.setdefault("invalid_checkpoints", {})
+        for key in list(invalid):
+            invalid[key] = {"reason": "legacy_unit_mismatch_quarantined"}
         for key, value in list(item["checkpoints"].items()):
             values = [value.get("return_pct"), value.get("mfe_pct"), value.get("mae_pct")]
             if any(v is not None and abs(float(v)) >= 50 for v in values):
