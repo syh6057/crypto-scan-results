@@ -10,10 +10,10 @@ import requests
 BINANCE_BASE = "https://data-api.binance.vision"
 BITHUMB_BASE = "https://api.bithumb.com"
 POLICY_FILE = "crypto_decision_policy.json"
-RESULT_FILE = "scan_result.json"
-SUMMARY_FILE = "latest_summary.json"
-HISTORY_FILE = "recommendation_history.json"
-SNAPSHOT_HISTORY_FILE = "snapshot_history.json"
+RESULT_FILE = "policy_scan_result.json"
+SUMMARY_FILE = "policy_latest_summary.json"
+HISTORY_FILE = "policy_recommendation_history.json"
+SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SUPPORTED_POLICY_SCHEMA = 1
 SUPPORTED_POLICY_VERSION = "2026-08-27.2"
 MAX_CANDLE_UNIVERSE = 180
@@ -392,6 +392,7 @@ def main():
     all_changes = [float(t.get("signed_change_rate") or 0) * 100 for t in tickers.values()]
     output = {
         "generated_at_utc": generated_at,
+        "schema_version": policy["schema_version"],
         "version": "v7-pre-ignition-fes",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
@@ -408,7 +409,7 @@ def main():
         "snapshot": snapshot,
         "failed_sample": failures[:30],
     }
-    summary_keys = ["generated_at_utc", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top3", "exhaustion_no_chase", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "watch_pick", "recommendation_scorecard"]
+    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top3", "exhaustion_no_chase", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "watch_pick", "recommendation_scorecard"]
     summary = {k: output[k] for k in summary_keys}
     save_json(RESULT_FILE, output)
     save_json(SUMMARY_FILE, summary)
