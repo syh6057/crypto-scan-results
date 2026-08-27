@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "policy_version": "2026-08-27.1",
+  "project_name": "코인프로젝트",
+  "objective": {
+    "horizon_hours": [6, 24],
+    "target_additional_upside_pct": [20, 50],
+    "max_actual_buy_picks": 1,
+    "max_watch_picks": 1,
+    "description": "빗썸 KRW 전체에서 고베타 급등의 점화·가속 초입을 찾는다. 안정적인 소폭 상승 종목을 목표 대신 추천하지 않는다."
+  },
+  "data_priority": [
+    "user_generated_github_scan",
+    "user_latest_screenshot_or_explicit_value",
+    "bithumb_official_public_market_data",
+    "binance_official_public_market_data",
+    "other_sources_for_context_only"
+  ],
+  "data_rules": {
+    "stale_data_behavior": "후보를 삭제하지 않고 조건부 랭킹을 끝까지 산출한다. 주문가 확정 직전에 GitHub 재실행 또는 최신 화면을 요청한다.",
+    "search_snippet_is_live_price": false,
+    "cross_exchange_gap_requires_synchronized_timestamps": true,
+    "max_cross_exchange_timestamp_gap_seconds": 120,
+    "recalculate_order_plan_if_price_moved_pct": 8,
+    "never_treat_intersection_as_full_bithumb": true
+  },
+  "universes": {
+    "bithumb_full_krw": "모든 빗썸 KRW ticker를 평가하고, 후보군에는 빗썸 자체 15m·1h·4h OHLCV를 확보한다.",
+    "binance_bithumb_intersection": "Binance와 Bithumb 양쪽 데이터로 교차검증한다.",
+    "missing_candles": "종목을 삭제하지 않고 additional_data_required로 유지한다."
+  },
+  "momentum_stages": {
+    "ignition": {"min_24h_pct": -5, "max_24h_pct": 8},
+    "acceleration": {"min_24h_pct": 8, "max_24h_pct": 25},
+    "late": {"min_24h_pct": 25, "max_24h_pct": 50},
+    "exhaustion": "절대 상승률이 아니라 거래량 클라이맥스 후 감소, 긴 윗꼬리, 돌파 실패, 15m 연속 음전, 고점 급락, 가격-거래량 약세 다이버전스로 판정한다."
+  },
+  "decision_order": [
+    "ticker_and_unit_validation",
+    "failure_pattern_rejection",
+    "exhaustion_rejection",
+    "market_regime_and_breadth",
+    "bithumb_capital_rotation",
+    "four_hour_higher_low",
+    "fifteen_minute_persistence_and_reacceleration",
+    "one_hour_breakout_and_support",
+    "volume_and_trade_value_persistence",
+    "upper_wick_and_sell_pressure",
+    "btc_relative_strength",
+    "execution_liquidity",
+    "conditional_ranking",
+    "latest_price_order_plan_validation"
+  ],
+  "success_examples": {
+    "PROM": "상승률이 이미 8~15%여도 가격·거래대금 가속이 지속되면 자동 탈락시키지 않는다.",
+    "ONT": "가속 단계의 4h 구조와 15m 재가속을 절대 상승률보다 우선한다.",
+    "BICO": "가격보다 거래량·거래대금이 먼저 붙고 이후 가격이 확인되는 패턴을 우선한다.",
+    "BIOT": "빗썸 전체/교집합 밖 종목을 누락하지 않는다.",
+    "NESTRY": "Binance 교집합에 없다는 이유로 빗썸 후보를 제거하지 않는다."
+  },
+  "failure_examples": {
+    "PLUME": "거래량 증가만 있고 4h higher-low=false, 최근 60m 가격 확인 실패, 가격 검증 불일치이면 탈락한다.",
+    "DOGE": "안정적이어도 목표 20~50%와 맞지 않는 저베타 대형종목은 실제 실행픽으로 올리지 않는다.",
+    "CYS": "검색 캐시 875원을 실시간가로 오인해 실제 1028~1050원에서 허위 가격괴리를 만든 사례. 검색 요약으로 주문가를 만들지 않는다.",
+    "ETC_BANK_LA_ACE": "정체·약세 후보는 본전 기대나 과거 추천 때문에 유지하지 않고 현재 상대강도와 구조로 재평가한다."
+  },
+  "outputs": [
+    "already_pumped_or_exhausted_top5",
+    "acceleration_continuation_top5",
+    "next_rotation_top5",
+    "additional_data_required",
+    "actual_buy_or_no_buy",
+    "watch_pick",
+    "recommendation_scorecard_mfe_mae"
+  ],
+  "recommendation_tracking": {
+    "evaluation_minutes": [15, 60, 240, 1440],
+    "metrics": ["return_pct", "mfe_pct", "mae_pct"],
+    "feed_back_into_ranking": true
+  },
+  "protected_non_crypto_items": [
+    "2026년 도로공사",
+    "승진시험 자료 브리핑"
+  ]
+}
