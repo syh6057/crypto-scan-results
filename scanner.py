@@ -15,7 +15,7 @@ SUMMARY_FILE = "policy_latest_summary.json"
 HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-27.6"
+SUPPORTED_POLICY_VERSION = "2026-08-27.7"
 MAX_CANDLE_UNIVERSE = 260
 ACTIONABLE_TRADE_KRW = 1_000_000_000
 FORCE_SCAN_TRADE_KRW = 300_000_000
@@ -353,11 +353,23 @@ def update_scorecard(history, tickers, candle_cache, generated_at):
         start_ms = int(datetime.fromisoformat(item["recommended_at_utc"]).timestamp() * 1000)
         after = [b for b in bars if b["ts"] >= start_ms]
         current = float(ticker.get("trade_price") or item["entry_price"])
-        highs = [b["high"] for b in after] + [current]
-        lows = [b["low"] for b in after] + [current]
-        item["current_return_pct"] = rnd(pct(current, item["entry_price"]))
-        item["mfe_pct"] = rnd(pct(max(highs), item["entry_price"]))
-        item["mae_pct"] = rnd(pct(min(lows), item["entry_price"]))
+        current_return = rnd(pct(current, item["entry_price"]))
+        # Never compare Binance USDT candles with a Bithumb KRW entry.  Candle
+        # excursions are measured from a candle-native reference and merged
+        # with the synchronized KRW current return only as percentages.
+        candle_entry = item.get("candle_entry_price")
+        if candle_entry is None and after:
+            candle_entry = after[0]["open"]
+            item["candle_entry_price"] = rnd(candle_entry, 8)
+        if candle_entry and after:
+            candle_mfe = pct(max(b["high"] for b in after), candle_entry)
+            candle_mae = pct(min(b["low"] for b in after), candle_entry)
+            item["mfe_pct"] = rnd(max(current_return, candle_mfe))
+            item["mae_pct"] = rnd(min(current_return, candle_mae))
+        else:
+            item["mfe_pct"] = current_return
+            item["mae_pct"] = current_return
+        item["current_return_pct"] = current_return
         elapsed = (datetime.fromisoformat(generated_at) - datetime.fromisoformat(item["recommended_at_utc"])).total_seconds() / 60
         item.setdefault("checkpoints", {})
         for minute in checkpoints:
@@ -470,21 +482,29 @@ def main():
         additional.append({"base": base, "market": info["market"], "bithumb_krw_price": t.get("trade_price"), "bithumb_24h_change_pct": rnd(float(t.get("signed_change_rate") or 0) * 100), "bithumb_24h_trade_krw": rnd(t.get("acc_trade_price_24h"), 0), "status": "additional_data_required_not_deleted"})
     additional.sort(key=lambda r: r["bithumb_24h_trade_krw"] or 0, reverse=True)
 
-    actual_candidates = [r for r in path_candidates if r["execution_liquidity"] and r["high_beta_target_eligible"] and r["future_expansion_score"] >= 35]
+    def volume_confirmed(r):
+        return (r.get("vol_1h_vs_20h_x") or 0) >= 1.0 or (r.get("trade_value_delta_since_scan_krw") or 0) >= 100_000_000
+
+    def not_fading(r):
+        fast = r.get("price_change_since_scan_pct")
+        return fast is None or fast >= 0
+
+    actual_candidates = [r for r in path_candidates if r["execution_liquidity"] and r["high_beta_target_eligible"] and r["future_expansion_score"] >= 35 and r["failure_similarity_score"] < 40 and volume_confirmed(r) and not_fading(r)]
     actual_pick = actual_candidates[0] if actual_candidates else None
-    watch_pick = next((r for r in rows if r is not actual_pick and r["high_beta_target_eligible"] and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]), None)
+    watch_pick = next((r for r in path_candidates if r is not actual_pick and r["bithumb_24h_trade_krw"] >= 100_000_000 and r["failure_similarity_score"] < 40 and volume_confirmed(r) and not_fading(r)), None)
 
     history = update_scorecard(history, tickers, candle_cache, generated_at)
     if actual_pick:
         last = history[-1] if history else None
         if not last or last.get("base") != actual_pick["base"] or last.get("closed"):
-            history.append({"base": actual_pick["base"], "market": actual_pick["bithumb_market"], "recommended_at_utc": generated_at, "entry_price": actual_pick["bithumb_krw_price"], "policy_version": policy["policy_version"], "closed": False, "checkpoints": {}})
+            pick_bars = candle_cache.get(actual_pick["base"], {}).get("15m", [])
+            history.append({"base": actual_pick["base"], "market": actual_pick["bithumb_market"], "recommended_at_utc": generated_at, "entry_price": actual_pick["bithumb_krw_price"], "candle_source": actual_pick.get("candle_source"), "candle_entry_price": rnd(pick_bars[-1]["close"], 8) if pick_bars else None, "policy_version": policy["policy_version"], "closed": False, "checkpoints": {}})
 
     all_changes = [float(t.get("signed_change_rate") or 0) * 100 for t in tickers.values()]
     output = {
         "generated_at_utc": generated_at,
         "schema_version": policy["schema_version"],
-        "version": "v8.1-full-market-warning-aware",
+        "version": "v8.2-unit-safe-scorecard-hard-gates",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},

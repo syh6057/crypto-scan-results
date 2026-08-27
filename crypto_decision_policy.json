@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-27.6",
+  "policy_version": "2026-08-27.7",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -91,7 +91,9 @@
       "legacy_scanner_score"
     ],
     "failure_similarity_required": true,
-    "twenty_pct_resistance_path_required": true
+    "twenty_pct_resistance_path_required": true,
+    "actual_buy_hard_gates": "거래대금 10억원, 실패유사도 40 미만, 20h 평균 대비 1h 거래량 1배 이상 또는 회차간 거래대금 1억원 증가, 회차간 가격 비음수",
+    "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 회차간 가격 비음수"
   },
   "outputs": [
     "market_regime",
@@ -121,6 +123,7 @@
     ],
     "feed_back_into_ranking": true
   },
+  "scorecard_unit_rule": "MFE/MAE는 추천 거래소·통화와 같은 candle_entry_price를 기준으로 계산하고, 빗썸 KRW 현재수익률과는 퍼센트로만 통합한다.",
   "success_definition": "추천 설명이 아니라 제한된 시간 안의 실제 가격 상승으로 평가한다.",
   "protected_non_crypto_items": [
     "2026년 도로공사",
