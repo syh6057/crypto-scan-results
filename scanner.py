@@ -392,6 +392,31 @@ def update_scorecard(history, tickers, candle_cache, generated_at):
     return history
 
 
+
+def recommendation_feedback_adjustment(base, history):
+    """Feed realized recommendation quality back into future ranking.
+
+    Only evaluated checkpoints count, so a newly-created recommendation cannot
+    penalize or reward itself. Loss/MAE penalties are applied before any bonus.
+    """
+    adjustment = 0.0
+    for item in history[-30:]:
+        if item.get("base") != base or not item.get("checkpoints"):
+            continue
+        current = float(item.get("current_return_pct") or 0)
+        mfe = float(item.get("mfe_pct") or 0)
+        mae = float(item.get("mae_pct") or 0)
+        if current < 0:
+            adjustment -= min(15.0, -current * 2.0)
+        if mae < -3:
+            adjustment -= min(10.0, (-mae - 3) * 1.5)
+        if mfe < 1:
+            adjustment -= 3.0
+        if current >= 3 and mfe >= 5 and mae > -3:
+            adjustment += min(8.0, current * 0.5)
+    return rnd(max(-30.0, min(8.0, adjustment)))
+
+
 def main():
     policy = load_policy()
     success_reference = set(policy.get("reference_tickers", {}).get("success", []))
@@ -436,6 +461,8 @@ def main():
             hist = recent_rows(snapshot_history, base, 6)
             path = twenty_pct_path(price, k4)
             fes, failure = future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference, fast)
+            feedback_adjustment = recommendation_feedback_adjustment(base, history)
+            fes = rnd(fes + feedback_adjustment)
             market_warning = markets[base].get("market_warning", "NONE")
             if market_warning not in (None, "", "NONE"):
                 fes = rnd(fes - 8)
@@ -454,6 +481,7 @@ def main():
                 "failure_flags": failure_flags,
                 "reference_success_pattern": base in success_reference,
                 "reference_failure_pattern": base in failure_reference,
+                "recommendation_feedback_adjustment": feedback_adjustment,
                 "market_warning": market_warning,
                 "high_risk_market": market_warning not in (None, "", "NONE"),
                 "twenty_pct_path": path,
@@ -516,7 +544,7 @@ def main():
     output = {
         "generated_at_utc": generated_at,
         "schema_version": policy["schema_version"],
-        "version": "v8.3-beta-and-scorecard-hard-gates",
+        "version": "v8.4-feedback-beta-scorecard-hard-gates",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
