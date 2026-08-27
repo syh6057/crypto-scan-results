@@ -15,7 +15,7 @@ SUMMARY_FILE = "policy_latest_summary.json"
 HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-27.2"
+SUPPORTED_POLICY_VERSION = "2026-08-27.3"
 MAX_CANDLE_UNIVERSE = 180
 ACTIONABLE_TRADE_KRW = 1_000_000_000
 MAJOR_LOW_BETA = {"BTC", "ETH", "DOGE", "XRP", "SOL", "BNB"}
@@ -219,7 +219,7 @@ def twenty_pct_path(price, k4):
     return {"target_price": rnd(target, 8), "resistance_levels": highs[:5], "path_open": path_open}
 
 
-def future_expansion_score(base, ticker, m, hist, path):
+def future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference):
     trade = float(ticker.get("acc_trade_price_24h") or 0)
     change = float(ticker.get("signed_change_rate") or 0) * 100
     p60 = m.get("price_last_60m_pct") or 0
@@ -247,6 +247,10 @@ def future_expansion_score(base, ticker, m, hist, path):
     fes += 6 if path.get("path_open") else -6
     if base in MAJOR_LOW_BETA:
         fes -= 12
+    if base in success_reference:
+        fes += 8
+    if base in failure_reference:
+        fes -= 30
     failure, _ = failure_similarity(m, change)
     fes -= failure * 0.22
     return rnd(fes), failure
@@ -294,6 +298,8 @@ def update_scorecard(history, tickers, candle_cache, generated_at):
 
 def main():
     policy = load_policy()
+    success_reference = set(policy.get("reference_tickers", {}).get("success", []))
+    failure_reference = set(policy.get("reference_tickers", {}).get("failure", []))
     previous = load_json(RESULT_FILE, {})
     history = load_json(HISTORY_FILE, [])
     snapshot_history = load_json(SNAPSHOT_HISTORY_FILE, [])
@@ -330,7 +336,7 @@ def main():
             change = float(ticker.get("signed_change_rate") or 0) * 100
             hist = recent_rows(snapshot_history, base, 6)
             path = twenty_pct_path(price, k4)
-            fes, failure = future_expansion_score(base, ticker, m, hist, path)
+            fes, failure = future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference)
             failure_score, failure_flags = failure_similarity(m, change)
             stage = classify_stage(change, m, hist)
             row = {
@@ -344,6 +350,8 @@ def main():
                 "future_expansion_score": fes,
                 "failure_similarity_score": rnd(failure_score),
                 "failure_flags": failure_flags,
+                "reference_success_pattern": base in success_reference,
+                "reference_failure_pattern": base in failure_reference,
                 "twenty_pct_path": path,
                 "execution_liquidity": trade >= ACTIONABLE_TRADE_KRW,
                 "high_beta_target_eligible": base not in MAJOR_LOW_BETA,
@@ -365,10 +373,10 @@ def main():
 
     rows.sort(key=lambda r: r["future_expansion_score"], reverse=True)
     snapshot = {r["base"]: r for r in rows}
-    pre = [r for r in rows if r["momentum_stage"] == "pre_ignition" and r["failure_similarity_score"] < 60][:5]
-    accel = [r for r in rows if r["momentum_stage"] == "acceleration" and r["failure_similarity_score"] < 60][:3]
+    pre = [r for r in rows if r["momentum_stage"] == "pre_ignition" and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:5]
+    accel = [r for r in rows if r["momentum_stage"] == "acceleration" and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:3]
     exhausted = [r for r in rows if r["momentum_stage"] == "exhaustion"][:10]
-    path_candidates = [r for r in rows if r["twenty_pct_path"]["path_open"] and r["momentum_stage"] in {"pre_ignition", "acceleration"} and r["failure_similarity_score"] < 40][:10]
+    path_candidates = [r for r in rows if r["twenty_pct_path"]["path_open"] and r["momentum_stage"] in {"pre_ignition", "acceleration"} and r["failure_similarity_score"] < 40 and not r["reference_failure_pattern"]][:10]
 
     scanned = set(snapshot)
     additional = []
@@ -381,7 +389,7 @@ def main():
 
     actual_candidates = [r for r in path_candidates if r["execution_liquidity"] and r["high_beta_target_eligible"] and r["future_expansion_score"] >= 35]
     actual_pick = actual_candidates[0] if actual_candidates else None
-    watch_pick = next((r for r in rows if r is not actual_pick and r["high_beta_target_eligible"] and r["failure_similarity_score"] < 60), None)
+    watch_pick = next((r for r in rows if r is not actual_pick and r["high_beta_target_eligible"] and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]), None)
 
     history = update_scorecard(history, tickers, candle_cache, generated_at)
     if actual_pick:
