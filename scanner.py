@@ -15,7 +15,7 @@ SUMMARY_FILE = "policy_latest_summary.json"
 HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-27.5"
+SUPPORTED_POLICY_VERSION = "2026-08-27.6"
 MAX_CANDLE_UNIVERSE = 260
 ACTIONABLE_TRADE_KRW = 1_000_000_000
 FORCE_SCAN_TRADE_KRW = 300_000_000
@@ -319,8 +319,6 @@ def select_candle_universe(markets, tickers, current_market, previous_market):
     ranked = []
     forced = set()
     for base, info in markets.items():
-        if info.get("market_warning") not in (None, "", "NONE"):
-            continue
         t = tickers.get(info["market"], {})
         trade = float(t.get("acc_trade_price_24h") or 0)
         signed_change = float(t.get("signed_change_rate") or 0) * 100
@@ -414,6 +412,9 @@ def main():
             hist = recent_rows(snapshot_history, base, 6)
             path = twenty_pct_path(price, k4)
             fes, failure = future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference, fast)
+            market_warning = markets[base].get("market_warning", "NONE")
+            if market_warning not in (None, "", "NONE"):
+                fes = rnd(fes - 8)
             failure_score, failure_flags = failure_similarity(m, change)
             stage = classify_stage(change, m, hist, fast)
             row = {
@@ -429,6 +430,8 @@ def main():
                 "failure_flags": failure_flags,
                 "reference_success_pattern": base in success_reference,
                 "reference_failure_pattern": base in failure_reference,
+                "market_warning": market_warning,
+                "high_risk_market": market_warning not in (None, "", "NONE"),
                 "twenty_pct_path": path,
                 "execution_liquidity": trade >= ACTIONABLE_TRADE_KRW,
                 "high_beta_target_eligible": base not in MAJOR_LOW_BETA,
@@ -481,7 +484,7 @@ def main():
     output = {
         "generated_at_utc": generated_at,
         "schema_version": policy["schema_version"],
-        "version": "v8-full-market-fast-acceleration",
+        "version": "v8.1-full-market-warning-aware",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
