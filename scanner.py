@@ -15,9 +15,10 @@ SUMMARY_FILE = "policy_latest_summary.json"
 HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-27.4"
-MAX_CANDLE_UNIVERSE = 180
+SUPPORTED_POLICY_VERSION = "2026-08-27.5"
+MAX_CANDLE_UNIVERSE = 260
 ACTIONABLE_TRADE_KRW = 1_000_000_000
+FORCE_SCAN_TRADE_KRW = 300_000_000
 MAJOR_LOW_BETA = {"BTC", "ETH", "DOGE", "XRP", "SOL", "BNB"}
 STABLES = {"USDT", "USDC", "FDUSD", "USDS", "TUSD", "DAI", "PYUSD", "USDP", "USD1", "USDE"}
 
@@ -177,7 +178,7 @@ def slope(values):
     return vals[-1] - vals[0]
 
 
-def classify_stage(change24, m, hist):
+def classify_stage(change24, m, hist, fast):
     p60 = m.get("price_last_60m_pct") or 0
     wick = m.get("upper_wick_1h_pct") or 0
     persistence = m.get("vol_15m_persistence_x") or 0
@@ -185,11 +186,25 @@ def classify_stage(change24, m, hist):
     hl = bool(m.get("four_hour_low_rising"))
     prev_p60 = hist[-1].get("price_last_60m_pct") if hist else None
     turning = prev_p60 is not None and prev_p60 <= 0 < p60
-    if (change24 >= 10 and (wick >= 1.5 or persistence < 0.55)) or (change24 >= 15 and p60 < 0):
+    fast_price = fast.get("price_change_since_scan_pct") or 0
+    exhaustion_signals = sum([
+        wick >= 1.5,
+        persistence < 0.55,
+        p60 < -0.5,
+        positives <= 1,
+        fast_price < -0.5,
+    ])
+    # Price extension alone is never enough to declare exhaustion.  This keeps
+    # the policy's 8-25% acceleration band observable instead of deleting it.
+    if change24 >= 50 or (change24 >= 10 and exhaustion_signals >= 2):
         return "exhaustion"
-    if change24 <= 8 and hl and positives >= 2 and p60 >= 0 and (turning or persistence >= 0.8):
+    if 25 <= change24 < 50:
+        return "late"
+    if 0 <= change24 < 8 and hl and positives >= 2 and p60 >= 0 and (turning or persistence >= 0.8 or fast_price >= 0.4):
         return "pre_ignition"
-    if p60 > 0.4 and positives >= 2 and persistence >= 1.0 and change24 < 15:
+    if 8 <= change24 < 25 and positives >= 2 and persistence >= 0.8 and (p60 > 0.25 or fast_price >= 0.4):
+        return "acceleration"
+    if change24 < 25 and p60 > 0.4 and positives >= 2 and persistence >= 1.0:
         return "acceleration"
     return "developing"
 
@@ -226,7 +241,7 @@ def twenty_pct_path(krw_price, k4):
     }
 
 
-def future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference):
+def future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference, fast):
     trade = float(ticker.get("acc_trade_price_24h") or 0)
     change = float(ticker.get("signed_change_rate") or 0) * 100
     p60 = m.get("price_last_60m_pct") or 0
@@ -252,6 +267,17 @@ def future_expansion_score(base, ticker, m, hist, path, success_reference, failu
     fes += 5 if wick <= 0.6 else -min(wick, 3) * 3
     fes += min(math.log10(max(trade, 1)) - 8, 3) * 2
     fes += 6 if path.get("path_open") else -6
+    # Full-market scan-to-scan change is the fast path.  Completed 15m/1h bars
+    # remain structural confirmation, but a new mover no longer waits for them.
+    fast_price = fast.get("price_change_since_scan_pct") or 0
+    fast_change = fast.get("change24_delta_since_scan_pct") or 0
+    fast_trade = fast.get("trade_value_delta_since_scan_krw") or 0
+    fes += max(min(fast_price, 3), -3) * 8
+    fes += max(min(fast_change, 3), -3) * 4
+    if fast_trade >= 500_000_000:
+        fes += 10
+    elif fast_trade >= 100_000_000:
+        fes += 5
     if base in MAJOR_LOW_BETA:
         fes -= 12
     if base in success_reference:
@@ -263,17 +289,58 @@ def future_expansion_score(base, ticker, m, hist, path, success_reference, failu
     return rnd(fes), failure
 
 
-def select_candle_universe(markets, tickers, previous):
+def market_snapshot(markets, tickers, generated_at):
+    snapshot = {}
+    for base, info in markets.items():
+        t = tickers.get(info["market"], {})
+        snapshot[base] = {
+            "market": info["market"],
+            "price": rnd(t.get("trade_price"), 8),
+            "change24_pct": rnd(float(t.get("signed_change_rate") or 0) * 100),
+            "trade24_krw": rnd(t.get("acc_trade_price_24h"), 0),
+        }
+    return {"generated_at_utc": generated_at, "tickers": snapshot}
+
+
+def fast_market_metrics(base, current_market, previous_market):
+    current = current_market.get("tickers", {}).get(base, {})
+    previous = previous_market.get("tickers", {}).get(base, {})
+    current_trade = float(current.get("trade24_krw") or 0)
+    previous_trade = float(previous.get("trade24_krw") or 0)
+    return {
+        "price_change_since_scan_pct": rnd(pct(current.get("price"), previous.get("price"))),
+        "change24_delta_since_scan_pct": rnd((current.get("change24_pct") or 0) - (previous.get("change24_pct") or 0)) if previous else None,
+        "trade_value_delta_since_scan_krw": rnd(current_trade - previous_trade, 0) if previous else None,
+        "previous_market_scan_utc": previous_market.get("generated_at_utc") if previous else None,
+    }
+
+
+def select_candle_universe(markets, tickers, current_market, previous_market):
     ranked = []
+    forced = set()
     for base, info in markets.items():
         if info.get("market_warning") not in (None, "", "NONE"):
             continue
         t = tickers.get(info["market"], {})
         trade = float(t.get("acc_trade_price_24h") or 0)
-        change = abs(float(t.get("signed_change_rate") or 0) * 100)
-        ranked.append((trade + change * 100_000_000, base))
+        signed_change = float(t.get("signed_change_rate") or 0) * 100
+        change = abs(signed_change)
+        fast = fast_market_metrics(base, current_market, previous_market)
+        fast_price = fast.get("price_change_since_scan_pct") or 0
+        fast_change = fast.get("change24_delta_since_scan_pct") or 0
+        fast_trade = fast.get("trade_value_delta_since_scan_krw") or 0
+        ignition_bonus = 2_000_000_000 if 0 <= signed_change < 8 else 0
+        acceleration_bonus = 4_000_000_000 if 8 <= signed_change < 25 else 0
+        fast_bonus = max(fast_price, 0) * 2_000_000_000 + max(fast_change, 0) * 1_000_000_000
+        fast_trade_bonus = max(fast_trade, 0) * 4
+        ranked.append((trade + change * 100_000_000 + ignition_bonus + acceleration_bonus + fast_bonus + fast_trade_bonus, base))
+        # A CUDIS-type candidate (+9%, sub-1bn turnover) must receive candles.
+        if FORCE_SCAN_TRADE_KRW <= trade and 4 <= signed_change < 25:
+            forced.add(base)
+        if fast_price >= 0.5 or fast_change >= 0.5 or fast_trade >= 100_000_000:
+            forced.add(base)
     selected = {b for _, b in sorted(ranked, reverse=True)[:MAX_CANDLE_UNIVERSE]}
-    selected.update(previous.get("snapshot", {}).keys())
+    selected.update(forced)
     selected.update({"HOME", "PROM", "BICO", "TAO", "BIO", "SUI", "ONT", "TRX", "BANK", "ACE", "ME", "INIT"})
     return {b for b in selected if b in markets}
 
@@ -313,8 +380,10 @@ def main():
     generated_at = datetime.now(timezone.utc).isoformat()
     markets = get_bithumb_markets()
     tickers = get_bithumb_tickers(markets)
+    current_market = market_snapshot(markets, tickers, generated_at)
+    previous_market = previous.get("market_snapshot", {})
     binance_pairs, binance_tickers = get_binance_universe()
-    candle_bases = select_candle_universe(markets, tickers, previous)
+    candle_bases = select_candle_universe(markets, tickers, current_market, previous_market)
     btc_ticker = tickers.get("KRW-BTC", {})
     btc_change = float(btc_ticker.get("signed_change_rate") or 0) * 100
     rows, failures, candle_cache = [], [], {}
@@ -341,11 +410,12 @@ def main():
             price = float(ticker.get("trade_price") or 0)
             trade = float(ticker.get("acc_trade_price_24h") or 0)
             change = float(ticker.get("signed_change_rate") or 0) * 100
+            fast = fast_market_metrics(base, current_market, previous_market)
             hist = recent_rows(snapshot_history, base, 6)
             path = twenty_pct_path(price, k4)
-            fes, failure = future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference)
+            fes, failure = future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference, fast)
             failure_score, failure_flags = failure_similarity(m, change)
-            stage = classify_stage(change, m, hist)
+            stage = classify_stage(change, m, hist, fast)
             row = {
                 "base": base,
                 "bithumb_market": market,
@@ -364,6 +434,7 @@ def main():
                 "high_beta_target_eligible": base not in MAJOR_LOW_BETA,
                 "candle_source": candle_source,
                 "in_binance_bithumb_intersection": bool(symbol),
+                **fast,
                 **{k: rnd(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for k, v in m.items()},
             }
             if symbol:
@@ -381,9 +452,11 @@ def main():
     rows.sort(key=lambda r: r["future_expansion_score"], reverse=True)
     snapshot = {r["base"]: r for r in rows}
     pre = [r for r in rows if r["momentum_stage"] == "pre_ignition" and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:5]
-    accel = [r for r in rows if r["momentum_stage"] == "acceleration" and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:3]
+    accel = [r for r in rows if r["momentum_stage"] == "acceleration" and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:5]
+    late = [r for r in rows if r["momentum_stage"] == "late" and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:5]
     exhausted = [r for r in rows if r["momentum_stage"] == "exhaustion"][:10]
-    path_candidates = [r for r in rows if r["twenty_pct_path"]["path_open"] and r["momentum_stage"] in {"pre_ignition", "acceleration"} and r["failure_similarity_score"] < 40 and not r["reference_failure_pattern"]][:10]
+    path_candidates = [r for r in rows if r["twenty_pct_path"]["path_open"] and r["momentum_stage"] in {"pre_ignition", "acceleration"} and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:10]
+    fast_breakout = [r for r in rows if r["momentum_stage"] in {"pre_ignition", "acceleration"} and ((r.get("price_change_since_scan_pct") or 0) >= 0.8 or (r.get("change24_delta_since_scan_pct") or 0) >= 0.8) and not r["reference_failure_pattern"]][:10]
 
     scanned = set(snapshot)
     additional = []
@@ -408,23 +481,27 @@ def main():
     output = {
         "generated_at_utc": generated_at,
         "schema_version": policy["schema_version"],
-        "version": "v7-pre-ignition-fes",
+        "version": "v8-full-market-fast-acceleration",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
         "market_regime": {"btc_bithumb_24h_change_pct": rnd(btc_change), "bithumb_positive_breadth_pct": rnd(sum(1 for v in all_changes if v > 0) / max(len(all_changes), 1) * 100, 1)},
         "pre_ignition_top5": pre,
         "acceleration_top3": accel,
+        "acceleration_top5": accel,
+        "late_top5": late,
         "exhaustion_no_chase": exhausted,
+        "fast_breakout_alerts": fast_breakout,
         "twenty_pct_path_candidates": path_candidates,
         "additional_data_required": additional[:30],
         "actual_buy": actual_pick,
         "watch_pick": watch_pick,
         "recommendation_scorecard": history[-20:],
+        "market_snapshot": current_market,
         "snapshot": snapshot,
         "failed_sample": failures[:30],
     }
-    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top3", "exhaustion_no_chase", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "watch_pick", "recommendation_scorecard"]
+    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "watch_pick", "recommendation_scorecard"]
     summary = {k: output[k] for k in summary_keys}
     save_json(RESULT_FILE, output)
     save_json(SUMMARY_FILE, summary)

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-27.4",
+  "policy_version": "2026-08-27.5",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -36,6 +36,9 @@
       3,
       6
     ],
+    "persist_full_bithumb_ticker_snapshot_every_run": true,
+    "force_candle_collection_for_new_accelerators": true,
+    "fast_change_source": "full-market scan-to-scan price and trade-value deltas",
     "prefer_change_over_absolute_level": true,
     "resistance_path_unit_rule": "저항 경로는 OHLCV와 동일 통화 단위에서 계산하고, 타 거래소 현재가에는 비율로만 변환한다."
   },
@@ -45,8 +48,9 @@
     "missing_candles": "종목을 삭제하지 않고 additional_data_required로 유지한다."
   },
   "momentum_stages": {
-    "pre_ignition": "낮은 24h 상승률에서 4h higher-low, 15m 재가속, 60m 음→양 전환과 공급 감소가 누적되는 단계",
-    "acceleration": "가격 가속이 실제 시작됐지만 과열 전인 단계",
+    "pre_ignition": "24h 0~8%에서 4h higher-low, 15m 재가속, 60m 음→양 전환과 공급 감소가 누적되는 단계",
+    "acceleration": "24h 8~25%에서 가격·거래대금 가속이 실제 시작됐지만 과열 전인 단계",
+    "late": "24h 25~50%의 후기 단계. 상승률만으로 소진 처리하지 않고 구조 지속 여부를 별도 판정한다.",
     "exhaustion": "거래량 클라이맥스 후 감소, 긴 윗꼬리, 돌파 실패, 15m 지속성 소멸 또는 고점 급락"
   },
   "decision_order": [
@@ -92,6 +96,9 @@
     "market_regime",
     "pre_ignition_top5",
     "acceleration_top3",
+    "acceleration_top5",
+    "late_top5",
+    "fast_breakout_alerts",
     "exhaustion_no_chase",
     "twenty_pct_path_candidates",
     "actual_buy_or_no_buy",
