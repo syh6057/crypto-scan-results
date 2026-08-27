@@ -15,7 +15,7 @@ SUMMARY_FILE = "policy_latest_summary.json"
 HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-27.3"
+SUPPORTED_POLICY_VERSION = "2026-08-27.4"
 MAX_CANDLE_UNIVERSE = 180
 ACTIONABLE_TRADE_KRW = 1_000_000_000
 MAJOR_LOW_BETA = {"BTC", "ETH", "DOGE", "XRP", "SOL", "BNB"}
@@ -210,13 +210,20 @@ def failure_similarity(m, change24):
     }
 
 
-def twenty_pct_path(price, k4):
-    if not price or not k4:
-        return {"target_price": None, "resistance_levels": [], "path_open": False}
-    target = price * 1.2
-    highs = sorted({round(r["high"], 8) for r in k4[-8:] if price < r["high"] < target})
-    path_open = len(highs) <= 3
-    return {"target_price": rnd(target, 8), "resistance_levels": highs[:5], "path_open": path_open}
+def twenty_pct_path(krw_price, k4):
+    if not krw_price or not k4:
+        return {"target_price": None, "candle_reference_price": None, "resistance_levels_pct": [], "path_open": False}
+    reference_price = float(k4[-1]["close"])
+    reference_target = reference_price * 1.2
+    highs = sorted({float(r["high"]) for r in k4[-8:] if reference_price < float(r["high"]) < reference_target})
+    resistance_pcts = sorted({round((high / reference_price - 1) * 100, 2) for high in highs})
+    path_open = len(resistance_pcts) <= 3
+    return {
+        "target_price": rnd(krw_price * 1.2, 8),
+        "candle_reference_price": rnd(reference_price, 8),
+        "resistance_levels_pct": resistance_pcts[:5],
+        "path_open": path_open,
+    }
 
 
 def future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference):
