@@ -1,15 +1,30 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-27.2",
+  "policy_version": "2026-08-27.3",
   "project_name": "코인프로젝트",
   "objective": {
-    "horizon_hours": [1, 3, 6, 12, 48],
-    "target_additional_upside_pct": [20, 50],
+    "horizon_hours": [
+      1,
+      3,
+      6,
+      12,
+      48
+    ],
+    "target_additional_upside_pct": [
+      20,
+      50
+    ],
     "max_actual_buy_picks": 1,
     "max_watch_picks": 1,
     "description": "빗썸 KRW 전체에서 현재 최강 종목이 아니라 향후 +20% 이상 가격 확장이 가능한 점화 전·초기 후보를 찾는다."
   },
-  "data_priority": ["user_generated_github_scan", "user_latest_screenshot_or_explicit_value", "bithumb_official_public_market_data", "binance_official_public_market_data", "other_sources_for_context_only"],
+  "data_priority": [
+    "user_generated_github_scan",
+    "user_latest_screenshot_or_explicit_value",
+    "bithumb_official_public_market_data",
+    "binance_official_public_market_data",
+    "other_sources_for_context_only"
+  ],
   "data_rules": {
     "stale_data_behavior": "후보를 삭제하지 않고 조건부 랭킹을 끝까지 산출한다. 주문가 확정 직전에 GitHub 재실행 또는 최신 화면을 요청한다.",
     "search_snippet_is_live_price": false,
@@ -17,7 +32,10 @@
     "max_cross_exchange_timestamp_gap_seconds": 120,
     "recalculate_order_plan_if_price_moved_pct": 8,
     "never_treat_intersection_as_full_bithumb": true,
-    "compare_recent_snapshots": [3, 6],
+    "compare_recent_snapshots": [
+      3,
+      6
+    ],
     "prefer_change_over_absolute_level": true
   },
   "universes": {
@@ -30,7 +48,18 @@
     "acceleration": "가격 가속이 실제 시작됐지만 과열 전인 단계",
     "exhaustion": "거래량 클라이맥스 후 감소, 긴 윗꼬리, 돌파 실패, 15m 지속성 소멸 또는 고점 급락"
   },
-  "decision_order": ["ticker_and_unit_validation", "failure_pattern_rejection", "market_regime_and_breadth", "four_hour_structure_transition", "fifteen_minute_acceleration", "sixty_minute_price_confirmation", "supply_exhaustion", "non_overheated_check", "twenty_pct_resistance_path", "latest_price_order_plan_validation"],
+  "decision_order": [
+    "ticker_and_unit_validation",
+    "failure_pattern_rejection",
+    "market_regime_and_breadth",
+    "four_hour_structure_transition",
+    "fifteen_minute_acceleration",
+    "sixty_minute_price_confirmation",
+    "supply_exhaustion",
+    "non_overheated_check",
+    "twenty_pct_resistance_path",
+    "latest_price_order_plan_validation"
+  ],
   "success_examples": {
     "HOME": "4h higher-low, 15m 양봉 지속, 최근60m 양전, 짧은 윗꼬리, 낮은 24h 상승률의 가격전환 초입",
     "PROM": "폭발 후 추격하지 말고 폭발 1~6시간 전 상태와 닮은 다음 후보를 탐색",
@@ -45,16 +74,69 @@
     "CYS": "검색 캐시 가격을 실시간가로 오인하지 않는다."
   },
   "future_expansion_score": {
-    "priority": ["four_hour_structure_transition", "fifteen_minute_acceleration", "sixty_minute_negative_to_positive", "trade_value_acceleration_relative_to_price", "sell_pressure_decline", "low_24h_extension", "execution_liquidity", "legacy_scanner_score"],
+    "priority": [
+      "four_hour_structure_transition",
+      "fifteen_minute_acceleration",
+      "sixty_minute_negative_to_positive",
+      "trade_value_acceleration_relative_to_price",
+      "sell_pressure_decline",
+      "low_24h_extension",
+      "execution_liquidity",
+      "legacy_scanner_score"
+    ],
     "failure_similarity_required": true,
     "twenty_pct_resistance_path_required": true
   },
-  "outputs": ["market_regime", "pre_ignition_top5", "acceleration_top3", "exhaustion_no_chase", "twenty_pct_path_candidates", "actual_buy_or_no_buy", "watch_pick", "recommendation_scorecard"],
+  "outputs": [
+    "market_regime",
+    "pre_ignition_top5",
+    "acceleration_top3",
+    "exhaustion_no_chase",
+    "twenty_pct_path_candidates",
+    "actual_buy_or_no_buy",
+    "watch_pick",
+    "recommendation_scorecard"
+  ],
   "recommendation_tracking": {
-    "evaluation_minutes": [60, 180, 360, 720, 1440],
-    "metrics": ["return_pct", "mfe_pct", "mae_pct"],
+    "evaluation_minutes": [
+      60,
+      180,
+      360,
+      720,
+      1440
+    ],
+    "metrics": [
+      "return_pct",
+      "mfe_pct",
+      "mae_pct"
+    ],
     "feed_back_into_ranking": true
   },
   "success_definition": "추천 설명이 아니라 제한된 시간 안의 실제 가격 상승으로 평가한다.",
-  "protected_non_crypto_items": ["2026년 도로공사", "승진시험 자료 브리핑"]
+  "protected_non_crypto_items": [
+    "2026년 도로공사",
+    "승진시험 자료 브리핑"
+  ],
+  "reference_tickers": {
+    "success": [
+      "PROM",
+      "ONT",
+      "BICO",
+      "BIOT",
+      "NESTRY"
+    ],
+    "failure": [
+      "PLUME",
+      "DOGE",
+      "ETC",
+      "BANK",
+      "LA",
+      "ACE",
+      "CYS"
+    ]
+  },
+  "reference_ticker_rules": {
+    "success": "급등 전 공통신호 유사도 가점에 사용하되 티커 자체만으로 추천하지 않는다.",
+    "failure": "영구 반례로 점수 감점하며 실제매수와 관찰픽에서 제외한다. 시장 랭킹에는 반례 추적용으로 유지한다."
+  }
 }
