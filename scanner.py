@@ -378,7 +378,7 @@ def update_scorecard(history, tickers, candle_cache, generated_at):
         for key, value in list(item["checkpoints"].items()):
             values = [value.get("return_pct"), value.get("mfe_pct"), value.get("mae_pct")]
             if any(v is not None and abs(float(v)) >= 50 for v in values):
-                invalid[key] = {**value, "reason": "legacy_unit_mismatch_quarantined"}
+                invalid[key] = {"reason": "legacy_unit_mismatch_quarantined"}
                 del item["checkpoints"][key]
         if not invalid:
             item.pop("invalid_checkpoints", None)
