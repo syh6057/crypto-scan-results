@@ -30,19 +30,30 @@ jobs:
       - name: Install dependencies
         run: python -m pip install requests
 
-      - name: Run crypto scanner
+      - name: Validate canonical policy and scanner syntax
+        run: |
+          python -m py_compile scanner.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          policy = json.loads(Path("crypto_decision_policy.json").read_text(encoding="utf-8"))
+          assert policy["schema_version"] == 1
+          assert policy["policy_version"] == "2026-08-27.1"
+          PY
+
+      - name: Run policy-driven crypto scanner
         run: python scanner.py
 
-      - name: Commit refreshed scan_result.json
+      - name: Commit refreshed policy-driven results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add scan_result.json
+          git add scan_result.json latest_summary.json recommendation_history.json
 
           if git diff --cached --quiet; then
-            echo "No scan_result.json changes to commit."
+            echo "No scan output changes to commit."
           else
-            git commit -m "Update 5-minute crypto scan"
+            git commit -m "Update policy-driven crypto scan"
             git push
           fi
