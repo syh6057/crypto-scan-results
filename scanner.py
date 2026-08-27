@@ -19,7 +19,7 @@ SUPPORTED_POLICY_VERSION = "2026-08-27.7"
 MAX_CANDLE_UNIVERSE = 260
 ACTIONABLE_TRADE_KRW = 1_000_000_000
 FORCE_SCAN_TRADE_KRW = 300_000_000
-MAJOR_LOW_BETA = {"BTC", "ETH", "DOGE", "XRP", "SOL", "BNB"}
+MAJOR_LOW_BETA = {"BTC", "ETH", "DOGE", "XRP", "SOL", "BNB", "TRX", "LINK", "LTC", "BCH", "ADA", "XLM", "DOT"}
 STABLES = {"USDT", "USDC", "FDUSD", "USDS", "TUSD", "DAI", "PYUSD", "USDP", "USD1", "USDE"}
 
 session = requests.Session()
@@ -372,6 +372,16 @@ def update_scorecard(history, tickers, candle_cache, generated_at):
         item["current_return_pct"] = current_return
         elapsed = (datetime.fromisoformat(generated_at) - datetime.fromisoformat(item["recommended_at_utc"])).total_seconds() / 60
         item.setdefault("checkpoints", {})
+        # Quarantine legacy scorecard values created by cross-currency candle
+        # comparisons.  They must never flow into ranking or user reports.
+        invalid = item.setdefault("invalid_checkpoints", {})
+        for key, value in list(item["checkpoints"].items()):
+            values = [value.get("return_pct"), value.get("mfe_pct"), value.get("mae_pct")]
+            if any(v is not None and abs(float(v)) >= 50 for v in values):
+                invalid[key] = {**value, "reason": "legacy_unit_mismatch_quarantined"}
+                del item["checkpoints"][key]
+        if not invalid:
+            item.pop("invalid_checkpoints", None)
         for minute in checkpoints:
             if elapsed >= minute and str(minute) not in item["checkpoints"]:
                 item["checkpoints"][str(minute)] = {"return_pct": item["current_return_pct"], "mfe_pct": item["mfe_pct"], "mae_pct": item["mae_pct"]}
@@ -489,7 +499,7 @@ def main():
         fast = r.get("price_change_since_scan_pct")
         return fast is None or fast >= 0
 
-    actual_candidates = [r for r in path_candidates if r["execution_liquidity"] and r["high_beta_target_eligible"] and r["future_expansion_score"] >= 35 and r["failure_similarity_score"] < 40 and volume_confirmed(r) and not_fading(r)]
+    actual_candidates = [r for r in path_candidates if r["execution_liquidity"] and r["high_beta_target_eligible"] and (r.get("recent_4h_max_body_pct") or 0) >= 2.0 and r["future_expansion_score"] >= 35 and r["failure_similarity_score"] < 40 and volume_confirmed(r) and not_fading(r)]
     actual_pick = actual_candidates[0] if actual_candidates else None
     watch_pick = next((r for r in path_candidates if r is not actual_pick and r["bithumb_24h_trade_krw"] >= 100_000_000 and r["failure_similarity_score"] < 40 and volume_confirmed(r) and not_fading(r)), None)
 
@@ -504,7 +514,7 @@ def main():
     output = {
         "generated_at_utc": generated_at,
         "schema_version": policy["schema_version"],
-        "version": "v8.2-unit-safe-scorecard-hard-gates",
+        "version": "v8.3-beta-and-scorecard-hard-gates",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
