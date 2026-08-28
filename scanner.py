@@ -15,7 +15,17 @@ SUMMARY_FILE = "policy_latest_summary.json"
 HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-27.7"
+SUPPORTED_POLICY_VERSION = "2026-08-28.1"
+GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
+RISK_LOOKBACK = "3d"
+MIN_MARKET_BREADTH_PCT = 35.0
+NEGATIVE_TERMS = [
+    "hack", "hacked", "exploit", "breach", "attack", "stolen",
+    "delist", "delisting", "suspension", "suspended", "warning",
+    "lawsuit", "investigation", "fraud", "scam", "insolvency",
+    "shutdown", "closure", "terminate", "termination",
+    "token unlock", "unlock", "vesting", "dump", "rug pull",
+]
 MAX_CANDLE_UNIVERSE = 260
 ACTIONABLE_TRADE_KRW = 1_000_000_000
 FORCE_SCAN_TRADE_KRW = 300_000_000
@@ -40,6 +50,58 @@ def get_json(url, params=None, retries=4, timeout=25):
             error = exc
             time.sleep(1 + attempt)
     raise error
+
+
+def external_risk_check(base, english_name):
+    """Fail closed: any lookup failure or negative event blocks actual_buy."""
+    name = (english_name or "").strip()
+    identity = f'"{name}"' if name else f'"{base} crypto"'
+    negative_query = " OR ".join(f'"{term}"' for term in NEGATIVE_TERMS)
+    query = f'{identity} ({negative_query})'
+    try:
+        payload = get_json(
+            GDELT_DOC_API,
+            {
+                "query": query,
+                "mode": "ArtList",
+                "maxrecords": 25,
+                "timespan": RISK_LOOKBACK,
+                "format": "json",
+                "sort": "DateDesc",
+            },
+            retries=3,
+            timeout=30,
+        )
+        articles = payload.get("articles", []) if isinstance(payload, dict) else []
+        hits = [
+            {
+                "title": str(article.get("title") or "").strip(),
+                "url": article.get("url"),
+                "seen_date": article.get("seendate"),
+            }
+            for article in articles
+            if str(article.get("title") or "").strip()
+        ][:10]
+        return {
+            "status": "negative_found" if hits else "clear",
+            "checked": True,
+            "buy_allowed": not bool(hits),
+            "lookback": RISK_LOOKBACK,
+            "query": query,
+            "hits": hits,
+            "reason": "recent_negative_event_found" if hits else "no_recent_negative_event_found",
+        }
+    except Exception as exc:
+        return {
+            "status": "unavailable",
+            "checked": False,
+            "buy_allowed": False,
+            "lookback": RISK_LOOKBACK,
+            "query": query,
+            "hits": [],
+            "reason": "risk_lookup_failed",
+            "error": str(exc),
+        }
 
 
 def load_json(path, default):
@@ -529,9 +591,78 @@ def main():
         fast = r.get("price_change_since_scan_pct")
         return fast is None or fast >= 0
 
-    actual_candidates = [r for r in path_candidates if r["execution_liquidity"] and r["high_beta_target_eligible"] and (r.get("recent_4h_max_body_pct") or 0) >= 2.0 and r["future_expansion_score"] >= 35 and r["failure_similarity_score"] < 40 and volume_confirmed(r) and not_fading(r)]
-    actual_pick = actual_candidates[0] if actual_candidates else None
-    watch_pick = next((r for r in path_candidates if r is not actual_pick and r["bithumb_24h_trade_krw"] >= 100_000_000 and r["failure_similarity_score"] < 40 and volume_confirmed(r) and not_fading(r)), None)
+    breadth_pct = rnd(sum(1 for t in tickers.values() if float(t.get("signed_change_rate") or 0) > 0) / max(len(tickers), 1) * 100, 1)
+
+    # Full technical hard gates. Missing data is a failure, never an implicit pass.
+    technical_candidates = [
+        r for r in path_candidates
+        if breadth_pct is not None and breadth_pct >= MIN_MARKET_BREADTH_PCT
+        and r.get("execution_liquidity") is True
+        and r.get("high_beta_target_eligible") is True
+        and r.get("market_warning") in (None, "", "NONE")
+        and r.get("reference_failure_pattern") is False
+        and r.get("failure_similarity_score") is not None and r["failure_similarity_score"] < 40
+        and r.get("bithumb_24h_change_pct") is not None and 0 <= r["bithumb_24h_change_pct"] <= 5
+        and r.get("binance_24h_change_pct") is not None and 0 <= r["binance_24h_change_pct"] <= 8
+        and r.get("four_hour_low_rising") is True
+        and r.get("vol_15m_persistence_x") is not None and r["vol_15m_persistence_x"] >= 1.2
+        and r.get("vol_1h_vs_20h_x") is not None and r["vol_1h_vs_20h_x"] >= 1.2
+        and r.get("price_last_60m_pct") is not None and 0 <= r["price_last_60m_pct"] <= 2
+        and r.get("upper_wick_1h_pct") is not None and r["upper_wick_1h_pct"] <= 1.5
+        and r.get("recent_4h_max_body_pct") is not None and r["recent_4h_max_body_pct"] <= 4
+        and r.get("future_expansion_score") is not None and r["future_expansion_score"] >= 35
+        and volume_confirmed(r)
+        and not_fading(r)
+    ]
+
+    # Risk verification is applied only after every technical gate passes.
+    # It is deliberately fail-closed: unavailable/negative/not-checked => no buy.
+    risk_scan = {
+        "provider": "GDELT_DOC_API",
+        "lookback": RISK_LOOKBACK,
+        "fail_closed": True,
+        "market_breadth_required_pct": MIN_MARKET_BREADTH_PCT,
+        "market_breadth_actual_pct": breadth_pct,
+        "checked": [],
+    }
+    blocked_buy_candidates = []
+    verified_candidates = []
+    for candidate in technical_candidates[:10]:
+        risk = external_risk_check(
+            candidate["base"],
+            markets.get(candidate["base"], {}).get("english_name"),
+        )
+        candidate["risk_verification"] = risk
+        candidate["buy_alert_allowed"] = bool(risk.get("checked") and risk.get("buy_allowed"))
+        risk_scan["checked"].append({
+            "base": candidate["base"],
+            "status": risk.get("status"),
+            "buy_allowed": candidate["buy_alert_allowed"],
+            "reason": risk.get("reason"),
+        })
+        if candidate["buy_alert_allowed"]:
+            verified_candidates.append(candidate)
+        else:
+            blocked_buy_candidates.append({
+                "base": candidate["base"],
+                "reason": risk.get("reason"),
+                "risk_verification": risk,
+            })
+        time.sleep(0.15)
+
+    actual_pick = verified_candidates[0] if verified_candidates else None
+    watch_pick = next(
+        (
+            r for r in path_candidates
+            if r is not actual_pick
+            and r.get("bithumb_24h_trade_krw", 0) >= 100_000_000
+            and r.get("failure_similarity_score", 100) < 40
+            and r.get("market_warning") in (None, "", "NONE")
+            and volume_confirmed(r)
+            and not_fading(r)
+        ),
+        None,
+    )
 
     history = update_scorecard(history, tickers, candle_cache, generated_at)
     if actual_pick:
@@ -544,7 +675,7 @@ def main():
     output = {
         "generated_at_utc": generated_at,
         "schema_version": policy["schema_version"],
-        "version": "v8.4-feedback-beta-scorecard-hard-gates",
+        "version": "v9-negative-event-fail-closed",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
@@ -559,12 +690,14 @@ def main():
         "additional_data_required": additional[:30],
         "actual_buy": actual_pick,
         "watch_pick": watch_pick,
+        "risk_scan": risk_scan,
+        "blocked_buy_candidates": blocked_buy_candidates,
         "recommendation_scorecard": history[-20:],
         "market_snapshot": current_market,
         "snapshot": snapshot,
         "failed_sample": failures[:30],
     }
-    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "watch_pick", "recommendation_scorecard"]
+    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "recommendation_scorecard"]
     summary = {k: output[k] for k in summary_keys}
     save_json(RESULT_FILE, output)
     save_json(SUMMARY_FILE, summary)
