@@ -235,25 +235,15 @@ def recent_rows(snapshot_history, base, count=6):
 
 
 SNAPSHOT_HISTORY_FIELDS = (
-    "base",
-    "bithumb_market",
     "bithumb_krw_price",
     "bithumb_24h_trade_krw",
     "bithumb_24h_change_pct",
     "momentum_stage",
     "future_expansion_score",
-    "failure_similarity_score",
-    "market_warning",
     "high_risk_market",
-    "price_change_since_scan_pct",
-    "change24_delta_since_scan_pct",
-    "trade_value_delta_since_scan_krw",
     "vol_1h_vs_20h_x",
-    "vol_15m_persistence_x",
     "price_last_60m_pct",
     "recent_15m_positive_count",
-    "upper_wick_1h_pct",
-    "four_hour_low_rising",
 )
 
 
@@ -755,7 +745,8 @@ def main():
     save_json(SUMMARY_FILE, summary)
     save_json(HISTORY_FILE, history)
     snapshot_history.append({"generated_at_utc": generated_at, "snapshot": compact_snapshot(snapshot)})
-    save_json(SNAPSHOT_HISTORY_FILE, snapshot_history[-SNAPSHOT_HISTORY_LIMIT:])
+    with open(SNAPSHOT_HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(snapshot_history[-SNAPSHOT_HISTORY_LIMIT:], f, ensure_ascii=False, separators=(",", ":"))
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
