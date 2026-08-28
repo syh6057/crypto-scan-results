@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-27.7",
+  "policy_version": "2026-08-28.1",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -64,6 +64,7 @@
     "supply_exhaustion",
     "non_overheated_check",
     "twenty_pct_resistance_path",
+    "external_negative_event_verification",
     "latest_price_order_plan_validation"
   ],
   "success_examples": {
@@ -92,7 +93,7 @@
     ],
     "failure_similarity_required": true,
     "twenty_pct_resistance_path_required": true,
-    "actual_buy_hard_gates": "거래대금 10억원, 실패유사도 40 미만, 20h 평균 대비 1h 거래량 1배 이상 또는 회차간 거래대금 1억원 증가, 회차간 가격 비음수",
+    "actual_buy_hard_gates": "시장 상승종목비율 35% 이상, 빗썸 24h 상승률 0~5%, 바이낸스 24h 상승률 0~8%, 거래대금 10억원, 4h higher-low=true, 15m 지속성 1.2배 이상, 최근60m 0~2%, 1h 거래량 20h 평균 1.2배 이상, 윗꼬리 1.5% 이하, 실패유사도 40 미만, 거래유의 없음, 외부 악재검증 clear. 하나라도 누락/실패면 actual_buy=null.",
     "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 회차간 가격 비음수"
   },
   "outputs": [
@@ -106,7 +107,9 @@
     "twenty_pct_path_candidates",
     "actual_buy_or_no_buy",
     "watch_pick",
-    "recommendation_scorecard"
+    "recommendation_scorecard",
+    "risk_scan",
+    "blocked_buy_candidates"
   ],
   "recommendation_tracking": {
     "evaluation_minutes": [
@@ -150,5 +153,22 @@
   "reference_ticker_rules": {
     "success": "급등 전 공통신호 유사도 가점에 사용하되 티커 자체만으로 추천하지 않는다.",
     "failure": "영구 반례로 점수 감점하며 실제매수와 관찰픽에서 제외한다. 시장 랭킹에는 반례 추적용으로 유지한다."
+  },
+  "risk_verification": {
+    "required_before_actual_buy": true,
+    "fail_closed": true,
+    "lookback": "3d",
+    "categories": [
+      "hack_or_exploit",
+      "delisting_or_suspension",
+      "market_warning",
+      "lawsuit_or_investigation",
+      "fraud_or_scam",
+      "insolvency",
+      "service_shutdown",
+      "token_unlock_or_vesting",
+      "large_supply_or_dump_risk"
+    ],
+    "behavior": "악재 발견, 조회 실패, 조회 누락, 모호한 종목 식별 중 하나라도 있으면 actual_buy=null. 관찰목록에는 위험사유와 함께 유지한다."
   }
 }
