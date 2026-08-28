@@ -40,15 +40,49 @@ jobs:
         run: |
           python -m py_compile scanner.py
           python - <<'PY'
+          import ast
           import json
           from pathlib import Path
+
           policy = json.loads(Path("crypto_decision_policy.json").read_text(encoding="utf-8"))
-          assert policy["schema_version"] == 1
-          assert policy["policy_version"] == "2026-08-27.7"
+          tree = ast.parse(Path("scanner.py").read_text(encoding="utf-8"))
+          constants = {}
+          for node in tree.body:
+              if isinstance(node, ast.Assign) and len(node.targets) == 1:
+                  target = node.targets[0]
+                  if isinstance(target, ast.Name) and target.id in {
+                      "SUPPORTED_POLICY_SCHEMA",
+                      "SUPPORTED_POLICY_VERSION",
+                  }:
+                      constants[target.id] = ast.literal_eval(node.value)
+
+          assert policy["schema_version"] == constants["SUPPORTED_POLICY_SCHEMA"], (
+              "schema_version mismatch between policy and scanner"
+          )
+          assert policy["policy_version"] == constants["SUPPORTED_POLICY_VERSION"], (
+              "policy_version mismatch between policy and scanner"
+          )
           PY
 
       - name: Run policy-driven crypto scanner
         run: python scanner.py
+
+      - name: Validate generated policy-driven results
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          policy = json.loads(Path("crypto_decision_policy.json").read_text(encoding="utf-8"))
+          for output_name in ("policy_scan_result.json", "policy_latest_summary.json"):
+              output = json.loads(Path(output_name).read_text(encoding="utf-8"))
+              assert output["schema_version"] == policy["schema_version"], (
+                  f"{output_name}: schema_version mismatch"
+              )
+              assert output["policy_version"] == policy["policy_version"], (
+                  f"{output_name}: policy_version mismatch"
+              )
+          PY
 
       - name: Commit refreshed policy-driven results
         run: |
