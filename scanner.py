@@ -14,6 +14,7 @@ RESULT_FILE = "policy_scan_result.json"
 SUMMARY_FILE = "policy_latest_summary.json"
 HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
+SNAPSHOT_HISTORY_LIMIT = 6
 SUPPORTED_POLICY_SCHEMA = 1
 SUPPORTED_POLICY_VERSION = "2026-08-28.1"
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
@@ -231,6 +232,57 @@ def recent_rows(snapshot_history, base, count=6):
         if row:
             out.append(row)
     return out
+
+
+SNAPSHOT_HISTORY_FIELDS = (
+    "base",
+    "bithumb_market",
+    "bithumb_krw_price",
+    "bithumb_24h_trade_krw",
+    "bithumb_24h_change_pct",
+    "momentum_stage",
+    "future_expansion_score",
+    "failure_similarity_score",
+    "market_warning",
+    "high_risk_market",
+    "price_change_since_scan_pct",
+    "change24_delta_since_scan_pct",
+    "trade_value_delta_since_scan_krw",
+    "vol_1h_vs_20h_x",
+    "vol_15m_persistence_x",
+    "price_last_60m_pct",
+    "recent_15m_positive_count",
+    "upper_wick_1h_pct",
+    "four_hour_low_rising",
+)
+
+
+def compact_snapshot(snapshot):
+    """Keep only fields used by cross-run scoring and monitoring.
+
+    Full candidate rows remain in policy_scan_result.json.  Repeating them in
+    every history entry made the history file several megabytes large and some
+    GitHub readers returned an empty body for it.
+    """
+    return {
+        base: {key: row.get(key) for key in SNAPSHOT_HISTORY_FIELDS if key in row}
+        for base, row in snapshot.items()
+    }
+
+
+def compact_snapshot_history(history):
+    compacted = []
+    for item in history[-SNAPSHOT_HISTORY_LIMIT:]:
+        if not isinstance(item, dict):
+            continue
+        snapshot = item.get("snapshot")
+        if not isinstance(snapshot, dict):
+            continue
+        compacted.append({
+            "generated_at_utc": item.get("generated_at_utc"),
+            "snapshot": compact_snapshot(snapshot),
+        })
+    return compacted
 
 
 def slope(values):
@@ -485,7 +537,7 @@ def main():
     failure_reference = set(policy.get("reference_tickers", {}).get("failure", []))
     previous = load_json(RESULT_FILE, {})
     history = load_json(HISTORY_FILE, [])
-    snapshot_history = load_json(SNAPSHOT_HISTORY_FILE, [])
+    snapshot_history = compact_snapshot_history(load_json(SNAPSHOT_HISTORY_FILE, []))
     generated_at = datetime.now(timezone.utc).isoformat()
     markets = get_bithumb_markets()
     tickers = get_bithumb_tickers(markets)
@@ -702,8 +754,8 @@ def main():
     save_json(RESULT_FILE, output)
     save_json(SUMMARY_FILE, summary)
     save_json(HISTORY_FILE, history)
-    snapshot_history.append({"generated_at_utc": generated_at, "snapshot": snapshot})
-    save_json(SNAPSHOT_HISTORY_FILE, snapshot_history[-12:])
+    snapshot_history.append({"generated_at_utc": generated_at, "snapshot": compact_snapshot(snapshot)})
+    save_json(SNAPSHOT_HISTORY_FILE, snapshot_history[-SNAPSHOT_HISTORY_LIMIT:])
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
