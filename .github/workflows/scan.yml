@@ -94,6 +94,7 @@ jobs:
 
           for attempt in 1 2 3; do
             git fetch origin main
+            git restore --staged --worktree policy_scan_result.json policy_latest_summary.json policy_recommendation_history.json policy_snapshot_history.json
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
             git add policy_scan_result.json policy_latest_summary.json policy_recommendation_history.json policy_snapshot_history.json
