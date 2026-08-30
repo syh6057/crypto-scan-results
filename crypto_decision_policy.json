@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-28.1",
+  "policy_version": "2026-08-30.1",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -15,6 +15,7 @@
       50
     ],
     "max_actual_buy_picks": 1,
+    "max_probe_buy_picks": 1,
     "max_watch_picks": 1,
     "description": "빗썸 KRW 전체에서 현재 최강 종목이 아니라 향후 +20% 이상 가격 확장이 가능한 점화 전·초기 후보를 찾는다."
   },
@@ -38,7 +39,7 @@
     ],
     "persist_full_bithumb_ticker_snapshot_every_run": true,
     "force_candle_collection_for_new_accelerators": true,
-    "fast_change_source": "full-market scan-to-scan price and trade-value deltas",
+    "fast_change_source": "full-market scan-to-scan price and trade-value deltas normalized to five minutes",
     "prefer_change_over_absolute_level": true,
     "resistance_path_unit_rule": "저항 경로는 OHLCV와 동일 통화 단위에서 계산하고, 타 거래소 현재가에는 비율로만 변환한다."
   },
@@ -93,8 +94,9 @@
     ],
     "failure_similarity_required": true,
     "twenty_pct_resistance_path_required": true,
-    "actual_buy_hard_gates": "시장 상승종목비율 35% 이상, 빗썸 24h 상승률 0~5%, 바이낸스 24h 상승률 0~8%, 거래대금 10억원, 4h higher-low=true, 15m 지속성 1.2배 이상, 최근60m 0~2%, 1h 거래량 20h 평균 1.2배 이상, 윗꼬리 1.5% 이하, 실패유사도 40 미만, 거래유의 없음, 외부 악재검증 clear. 하나라도 누락/실패면 actual_buy=null.",
-    "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 회차간 가격 비음수"
+    "actual_buy_hard_gates": "시장 상승종목비율 35% 이상, 빗썸 24h 상승률 0~5%, 바이낸스 24h 상승률 0~8%, 거래대금 10억원, 4h higher-low=true, 15m 지속성 1.2배 이상, 최근60m 0~2%, 1h 거래량 20h 평균 1.2배 이상, 윗꼬리 1.5% 이하, 실패유사도 40 미만, 거래유의 없음, 3회 연속 신호 유지, 빗썸 실행시장 봉 확인, 외부 악재검증 clear. 하나라도 누락/실패면 actual_buy=null.",
+    "probe_buy_hard_gates": "거래대금 3억원, 실패유사도 40 미만, 4h higher-low=true, 15m 지속성 0.8배 이상, 최근60m -0.2~2.5%, 3회 연속 신호 유지, 빗썸 실행시장 봉 확인, 외부 악재검증 clear. 최대 비중 15%이며 actual_buy와 구분한다.",
+    "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 정규화 회차간 가격 비음수, 2회 연속 신호 유지. watch_pick은 주문가격·매수 지시 생성이 금지된다."
   },
   "outputs": [
     "market_regime",
@@ -106,6 +108,7 @@
     "exhaustion_no_chase",
     "twenty_pct_path_candidates",
     "actual_buy_or_no_buy",
+    "probe_buy_or_no_buy",
     "watch_pick",
     "recommendation_scorecard",
     "risk_scan",
@@ -113,10 +116,9 @@
   ],
   "recommendation_tracking": {
     "evaluation_minutes": [
+      15,
       60,
-      180,
-      360,
-      720,
+      240,
       1440
     ],
     "metrics": [
@@ -126,12 +128,10 @@
     ],
     "feed_back_into_ranking": true
   },
-  "scorecard_unit_rule": "MFE/MAE는 추천 거래소·통화와 같은 candle_entry_price를 기준으로 계산하고, 빗썸 KRW 현재수익률과는 퍼센트로만 통합한다.",
+  "scorecard_unit_rule": "MFE/MAE는 추천 거래소·통화와 같은 candle_entry_price를 기준으로 15분·1시간·4시간·24시간 각각의 독립 구간에서 계산하고, 빗썸 KRW 현재수익률과는 퍼센트로만 통합한다.",
+  "privacy_rule": "공개 산출물에는 보유수량, 평단, 매수금액, 총자산, 가용현금, 계정 식별자, 사용자 화면 또는 개인 포트폴리오를 저장하지 않는다.",
   "success_definition": "추천 설명이 아니라 제한된 시간 안의 실제 가격 상승으로 평가한다.",
-  "protected_non_crypto_items": [
-    "2026년 도로공사",
-    "승진시험 자료 브리핑"
-  ],
+  "protected_non_crypto_items": [],
   "reference_tickers": {
     "success": [
       "PROM",
