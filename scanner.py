@@ -2,6 +2,7 @@ import json
 import math
 import os
 import time
+from copy import deepcopy
 from datetime import datetime, timezone
 from statistics import mean
 
@@ -16,7 +17,7 @@ HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SNAPSHOT_HISTORY_LIMIT = 6
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-28.1"
+SUPPORTED_POLICY_VERSION = "2026-08-30.1"
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 RISK_LOOKBACK = "3d"
 MIN_MARKET_BREADTH_PCT = 35.0
@@ -29,7 +30,11 @@ NEGATIVE_TERMS = [
 ]
 MAX_CANDLE_UNIVERSE = 260
 ACTIONABLE_TRADE_KRW = 1_000_000_000
+PROBE_TRADE_KRW = 300_000_000
 FORCE_SCAN_TRADE_KRW = 300_000_000
+SIGNAL_STABILITY_RUNS = 3
+WATCH_STABILITY_RUNS = 2
+TRACKING_MINUTES = (15, 60, 240, 1440)
 MAJOR_LOW_BETA = {"BTC", "ETH", "DOGE", "XRP", "SOL", "BNB", "TRX", "LINK", "LTC", "BCH", "ADA", "XLM", "DOT"}
 STABLES = {"USDT", "USDC", "FDUSD", "USDS", "TUSD", "DAI", "PYUSD", "USDP", "USD1", "USDE"}
 
@@ -181,7 +186,15 @@ def get_binance_universe():
 def binance_bars(symbol, interval, limit):
     rows = get_json(BINANCE_BASE + "/api/v3/klines", {"symbol": symbol, "interval": interval, "limit": limit})
     now_ms = int(time.time() * 1000)
-    return [{"ts": int(r[0]), "open": float(r[1]), "high": float(r[2]), "low": float(r[3]), "close": float(r[4]), "volume": float(r[5])} for r in rows if int(r[6]) < now_ms]
+    return [{
+        "ts": int(r[0]),
+        "open": float(r[1]),
+        "high": float(r[2]),
+        "low": float(r[3]),
+        "close": float(r[4]),
+        "volume": float(r[5]),
+        "quote_volume": float(r[7]),
+    } for r in rows if int(r[6]) < now_ms]
 
 
 def bithumb_bars(market, unit, limit):
@@ -196,7 +209,15 @@ def bithumb_bars(market, unit, limit):
         ts = int(datetime.fromisoformat(text).replace(tzinfo=timezone.utc).timestamp() * 1000)
         if ts + interval_ms > now_ms:
             continue
-        out.append({"ts": ts, "open": float(row["opening_price"]), "high": float(row["high_price"]), "low": float(row["low_price"]), "close": float(row["trade_price"]), "volume": float(row["candle_acc_trade_volume"])})
+        out.append({
+            "ts": ts,
+            "open": float(row["opening_price"]),
+            "high": float(row["high_price"]),
+            "low": float(row["low_price"]),
+            "close": float(row["trade_price"]),
+            "volume": float(row["candle_acc_trade_volume"]),
+            "quote_volume": float(row.get("candle_acc_trade_price") or 0),
+        })
     return sorted(out, key=lambda x: x["ts"])
 
 
@@ -207,6 +228,9 @@ def candle_metrics(k15, k1, k4):
     avg20 = mean(r["volume"] for r in k1[-21:-1])
     old15 = mean(r["volume"] for r in k15[-8:-4])
     new15 = mean(r["volume"] for r in k15[-4:])
+    old15_turnover = mean(r.get("quote_volume", 0) for r in k15[-8:-4])
+    new15_turnover = mean(r.get("quote_volume", 0) for r in k15[-4:])
+    avg20_turnover = mean(r.get("quote_volume", 0) for r in k1[-21:-1])
     lows = [r["low"] for r in k4[-3:]]
     pos_seq = [1 if r["close"] >= r["open"] else 0 for r in k15[-4:]]
     return {
@@ -215,6 +239,8 @@ def candle_metrics(k15, k1, k4):
         "price_1h_pct": pct(latest["close"], latest["open"]),
         "price_4h_pct": pct(k4[-1]["close"], k4[-1]["open"]),
         "vol_15m_persistence_x": new15 / old15 if old15 else None,
+        "turnover_15m_persistence_x": new15_turnover / old15_turnover if old15_turnover else None,
+        "turnover_1h_vs_20h_x": latest.get("quote_volume", 0) / avg20_turnover if avg20_turnover else None,
         "price_last_60m_pct": pct(k15[-1]["close"], k15[-4]["open"]),
         "recent_15m_positive_count": sum(pos_seq),
         "positive_15m_sequence": pos_seq,
@@ -225,9 +251,19 @@ def candle_metrics(k15, k1, k4):
     }
 
 
-def recent_rows(snapshot_history, base, count=6):
+def recent_rows(snapshot_history, base, count=6, current_time=None):
     out = []
     for snap in snapshot_history[-count:]:
+        if current_time and snap.get("generated_at_utc"):
+            try:
+                age_minutes = (
+                    datetime.fromisoformat(current_time)
+                    - datetime.fromisoformat(snap["generated_at_utc"])
+                ).total_seconds() / 60
+                if age_minutes < 0 or age_minutes > 30:
+                    continue
+            except Exception:
+                continue
         row = snap.get("snapshot", {}).get(base)
         if row:
             out.append(row)
@@ -242,8 +278,15 @@ SNAPSHOT_HISTORY_FIELDS = (
     "future_expansion_score",
     "high_risk_market",
     "vol_1h_vs_20h_x",
+    "turnover_1h_vs_20h_x",
+    "turnover_15m_persistence_x",
     "price_last_60m_pct",
     "recent_15m_positive_count",
+    "failure_similarity_score",
+    "four_hour_low_rising",
+    "upper_wick_1h_pct",
+    "price_change_since_scan_pct",
+    "trade_value_delta_since_scan_krw",
 )
 
 
@@ -282,6 +325,36 @@ def slope(values):
     return vals[-1] - vals[0]
 
 
+def consecutive_signal_runs(hist, current, max_runs=SIGNAL_STABILITY_RUNS):
+    """Count consecutive scans that retain a usable early-momentum structure."""
+    rows = (hist + [current])[-max_runs:]
+    count = 0
+    for row in reversed(rows):
+        if (
+            row.get("momentum_stage") not in {"pre_ignition", "acceleration"}
+            or (row.get("failure_similarity_score") or 0) >= 40
+            or row.get("four_hour_low_rising") is not True
+            or (row.get("price_last_60m_pct") or 0) < -0.2
+        ):
+            break
+        count += 1
+    return count
+
+
+def success_pattern_similarity(m, change24):
+    """Compare features, not ticker names, with the stored pre-breakout pattern."""
+    checks = [
+        bool(m.get("four_hour_low_rising")),
+        (m.get("recent_15m_positive_count") or 0) >= 2,
+        (m.get("vol_15m_persistence_x") or 0) >= 0.8,
+        0 <= (m.get("price_last_60m_pct") or 0) <= 2.5,
+        (m.get("upper_wick_1h_pct") or 99) <= 0.8,
+        0 <= change24 <= 8,
+        max(m.get("vol_1h_vs_20h_x") or 0, m.get("turnover_1h_vs_20h_x") or 0) >= 1.0,
+    ]
+    return sum(checks) / len(checks) * 100
+
+
 def classify_stage(change24, m, hist, fast):
     p60 = m.get("price_last_60m_pct") or 0
     wick = m.get("upper_wick_1h_pct") or 0
@@ -290,7 +363,7 @@ def classify_stage(change24, m, hist, fast):
     hl = bool(m.get("four_hour_low_rising"))
     prev_p60 = hist[-1].get("price_last_60m_pct") if hist else None
     turning = prev_p60 is not None and prev_p60 <= 0 < p60
-    fast_price = fast.get("price_change_since_scan_pct") or 0
+    fast_price = normalized_fast_price(fast)
     exhaustion_signals = sum([
         wick >= 1.5,
         persistence < 0.55,
@@ -308,7 +381,7 @@ def classify_stage(change24, m, hist, fast):
         return "pre_ignition"
     if 8 <= change24 < 25 and positives >= 2 and persistence >= 0.8 and (p60 > 0.25 or fast_price >= 0.4):
         return "acceleration"
-    if change24 < 25 and p60 > 0.4 and positives >= 2 and persistence >= 1.0:
+    if 0 <= change24 < 25 and p60 > 0.4 and positives >= 2 and persistence >= 1.0:
         return "acceleration"
     return "developing"
 
@@ -373,9 +446,9 @@ def future_expansion_score(base, ticker, m, hist, path, success_reference, failu
     fes += 6 if path.get("path_open") else -6
     # Full-market scan-to-scan change is the fast path.  Completed 15m/1h bars
     # remain structural confirmation, but a new mover no longer waits for them.
-    fast_price = fast.get("price_change_since_scan_pct") or 0
+    fast_price = normalized_fast_price(fast)
     fast_change = fast.get("change24_delta_since_scan_pct") or 0
-    fast_trade = fast.get("trade_value_delta_since_scan_krw") or 0
+    fast_trade = normalized_fast_trade(fast)
     fes += max(min(fast_price, 3), -3) * 8
     fes += max(min(fast_change, 3), -3) * 4
     if fast_trade >= 500_000_000:
@@ -384,8 +457,10 @@ def future_expansion_score(base, ticker, m, hist, path, success_reference, failu
         fes += 5
     if base in MAJOR_LOW_BETA:
         fes -= 12
-    if base in success_reference:
-        fes += 8
+    # Success examples are feature templates. Merely reusing a historical
+    # winner's ticker must not create a bonus.
+    pattern_similarity = success_pattern_similarity(m, change)
+    fes += max(0, pattern_similarity - 50) * 0.16
     if base in failure_reference:
         fes -= 30
     failure, _ = failure_similarity(m, change)
@@ -411,12 +486,36 @@ def fast_market_metrics(base, current_market, previous_market):
     previous = previous_market.get("tickers", {}).get(base, {})
     current_trade = float(current.get("trade24_krw") or 0)
     previous_trade = float(previous.get("trade24_krw") or 0)
+    interval_minutes = None
+    try:
+        interval_minutes = (
+            datetime.fromisoformat(current_market["generated_at_utc"])
+            - datetime.fromisoformat(previous_market["generated_at_utc"])
+        ).total_seconds() / 60
+    except Exception:
+        pass
+    price_change = rnd(pct(current.get("price"), previous.get("price")))
+    trade_delta = rnd(current_trade - previous_trade, 0) if previous else None
+    normalizer = 5 / interval_minutes if interval_minutes and interval_minutes > 0 else None
     return {
-        "price_change_since_scan_pct": rnd(pct(current.get("price"), previous.get("price"))),
+        "price_change_since_scan_pct": price_change,
         "change24_delta_since_scan_pct": rnd((current.get("change24_pct") or 0) - (previous.get("change24_pct") or 0)) if previous else None,
-        "trade_value_delta_since_scan_krw": rnd(current_trade - previous_trade, 0) if previous else None,
+        "trade_value_delta_since_scan_krw": trade_delta,
+        "scan_interval_minutes": rnd(interval_minutes),
+        "price_change_per_5m_pct": rnd(price_change * normalizer) if price_change is not None and normalizer else None,
+        "trade_value_delta_per_5m_krw": rnd(trade_delta * normalizer, 0) if trade_delta is not None and normalizer else None,
         "previous_market_scan_utc": previous_market.get("generated_at_utc") if previous else None,
     }
+
+
+def normalized_fast_price(fast):
+    value = fast.get("price_change_per_5m_pct")
+    return value if value is not None else (fast.get("price_change_since_scan_pct") or 0)
+
+
+def normalized_fast_trade(fast):
+    value = fast.get("trade_value_delta_per_5m_krw")
+    return value if value is not None else (fast.get("trade_value_delta_since_scan_krw") or 0)
 
 
 def select_candle_universe(markets, tickers, current_market, previous_market):
@@ -428,9 +527,9 @@ def select_candle_universe(markets, tickers, current_market, previous_market):
         signed_change = float(t.get("signed_change_rate") or 0) * 100
         change = abs(signed_change)
         fast = fast_market_metrics(base, current_market, previous_market)
-        fast_price = fast.get("price_change_since_scan_pct") or 0
+        fast_price = normalized_fast_price(fast)
         fast_change = fast.get("change24_delta_since_scan_pct") or 0
-        fast_trade = fast.get("trade_value_delta_since_scan_krw") or 0
+        fast_trade = normalized_fast_trade(fast)
         ignition_bonus = 2_000_000_000 if 0 <= signed_change < 8 else 0
         acceleration_bonus = 4_000_000_000 if 8 <= signed_change < 25 else 0
         fast_bonus = max(fast_price, 0) * 2_000_000_000 + max(fast_change, 0) * 1_000_000_000
@@ -448,7 +547,7 @@ def select_candle_universe(markets, tickers, current_market, previous_market):
 
 
 def update_scorecard(history, tickers, candle_cache, generated_at):
-    checkpoints = [60, 180, 360, 720, 1440]
+    checkpoints = TRACKING_MINUTES
     for item in history:
         ticker = tickers.get(item.get("market"))
         if not ticker or item.get("closed"):
@@ -476,6 +575,16 @@ def update_scorecard(history, tickers, candle_cache, generated_at):
         item["current_return_pct"] = current_return
         elapsed = (datetime.fromisoformat(generated_at) - datetime.fromisoformat(item["recommended_at_utc"])).total_seconds() / 60
         item.setdefault("checkpoints", {})
+        if item.get("policy_version") != SUPPORTED_POLICY_VERSION:
+            if item["checkpoints"]:
+                item["legacy_checkpoints"] = {
+                    key: {**value, "reason": "legacy_tracking_window_not_comparable"}
+                    for key, value in item["checkpoints"].items()
+                }
+                item["checkpoints"] = {}
+            if elapsed >= 1440:
+                item["closed"] = True
+            continue
         # Quarantine legacy scorecard values created by cross-currency candle
         # comparisons.  They must never flow into ranking or user reports.
         invalid = item.setdefault("invalid_checkpoints", {})
@@ -489,8 +598,27 @@ def update_scorecard(history, tickers, candle_cache, generated_at):
         if not invalid:
             item.pop("invalid_checkpoints", None)
         for minute in checkpoints:
-            if elapsed >= minute and str(minute) not in item["checkpoints"]:
-                item["checkpoints"][str(minute)] = {"return_pct": item["current_return_pct"], "mfe_pct": item["mfe_pct"], "mae_pct": item["mae_pct"]}
+            key = str(minute)
+            if elapsed < minute or key in item["checkpoints"]:
+                continue
+            cutoff_ms = start_ms + minute * 60_000
+            window = [b for b in after if b["ts"] < cutoff_ms]
+            if candle_entry and window:
+                checkpoint_return = rnd(pct(window[-1]["close"], candle_entry))
+                checkpoint_mfe = rnd(pct(max(b["high"] for b in window), candle_entry))
+                checkpoint_mae = rnd(pct(min(b["low"] for b in window), candle_entry))
+                quality = "exact_candle_window"
+            else:
+                checkpoint_return = item["current_return_pct"]
+                checkpoint_mfe = item["mfe_pct"]
+                checkpoint_mae = item["mae_pct"]
+                quality = "synchronized_price_fallback"
+            item["checkpoints"][key] = {
+                "return_pct": checkpoint_return,
+                "mfe_pct": checkpoint_mfe,
+                "mae_pct": checkpoint_mae,
+                "quality": quality,
+            }
         if elapsed >= 1440:
             item["closed"] = True
     return history
@@ -505,6 +633,8 @@ def recommendation_feedback_adjustment(base, history):
     """
     adjustment = 0.0
     for item in history[-30:]:
+        if item.get("policy_version") != SUPPORTED_POLICY_VERSION:
+            continue
         if item.get("base") != base or not item.get("checkpoints"):
             continue
         current = float(item.get("current_return_pct") or 0)
@@ -521,6 +651,92 @@ def recommendation_feedback_adjustment(base, history):
     return rnd(max(-30.0, min(8.0, adjustment)))
 
 
+def bithumb_execution_confirmation(candidate):
+    """Order eligibility is always confirmed on the execution venue."""
+    try:
+        market = candidate["bithumb_market"]
+        metrics = candle_metrics(
+            bithumb_bars(market, 15, 100),
+            bithumb_bars(market, 60, 22),
+            bithumb_bars(market, 240, 10),
+        )
+        if not metrics:
+            raise ValueError("insufficient_bithumb_candles")
+        confirmed = (
+            metrics.get("four_hour_low_rising") is True
+            and (metrics.get("price_last_60m_pct") or 0) >= -0.2
+            and (metrics.get("recent_15m_positive_count") or 0) >= 2
+        )
+        return {
+            "checked": True,
+            "confirmed": confirmed,
+            "source": "bithumb_official",
+            "four_hour_low_rising": metrics.get("four_hour_low_rising"),
+            "price_last_60m_pct": rnd(metrics.get("price_last_60m_pct")),
+            "recent_15m_positive_count": metrics.get("recent_15m_positive_count"),
+            "reason": "confirmed" if confirmed else "execution_venue_structure_not_confirmed",
+        }
+    except Exception as exc:
+        return {
+            "checked": False,
+            "confirmed": False,
+            "source": "bithumb_official",
+            "reason": "execution_venue_check_failed",
+            "error": str(exc),
+        }
+
+
+def decorate_action(row, action_class, execution_allowed, max_position_fraction):
+    if not row:
+        return None
+    result = deepcopy(row)
+    result["action_class"] = action_class
+    result["execution_plan_allowed"] = execution_allowed
+    result["max_position_fraction"] = max_position_fraction
+    return result
+
+
+def append_signal_history(history, selected, signal_type, generated_at, candle_cache):
+    if not selected:
+        return history
+    for item in reversed(history[-30:]):
+        if item.get("base") == selected["base"] and item.get("signal_type", "actual_buy") == signal_type and not item.get("closed"):
+            return history
+    pick_bars = candle_cache.get(selected["base"], {}).get("15m", [])
+    history.append({
+        "base": selected["base"],
+        "market": selected["bithumb_market"],
+        "signal_type": signal_type,
+        "recommended_at_utc": generated_at,
+        "entry_price": selected["bithumb_krw_price"],
+        "candle_source": selected.get("candle_source"),
+        "candle_entry_price": rnd(pick_bars[-1]["close"], 8) if pick_bars else None,
+        "policy_version": SUPPORTED_POLICY_VERSION,
+        "closed": False,
+        "checkpoints": {},
+    })
+    return history
+
+
+PRIVATE_OUTPUT_KEYS = {
+    "holdings", "portfolio", "average_buy_price", "avg_buy_price", "purchase_amount",
+    "asset_balance", "account_balance", "available_cash", "user_id", "email", "phone",
+    "보유수량", "평균매수가", "매수금액", "총자산", "가용현금",
+}
+
+
+def assert_public_output_safe(value):
+    if isinstance(value, dict):
+        forbidden = PRIVATE_OUTPUT_KEYS.intersection(value)
+        if forbidden:
+            raise RuntimeError(f"PRIVATE_OUTPUT_FIELD_BLOCKED:{','.join(sorted(forbidden))}")
+        for nested in value.values():
+            assert_public_output_safe(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            assert_public_output_safe(nested)
+
+
 def main():
     policy = load_policy()
     success_reference = set(policy.get("reference_tickers", {}).get("success", []))
@@ -535,6 +751,12 @@ def main():
     previous_market = previous.get("market_snapshot", {})
     binance_pairs, binance_tickers = get_binance_universe()
     candle_bases = select_candle_universe(markets, tickers, current_market, previous_market)
+    # Keep exact 15m/1h/4h/24h evaluation available even after a prior signal
+    # drops out of the current ranking universe.
+    candle_bases.update({
+        item.get("base") for item in history
+        if not item.get("closed") and item.get("base") in markets
+    })
     btc_ticker = tickers.get("KRW-BTC", {})
     btc_change = float(btc_ticker.get("signed_change_rate") or 0) * 100
     rows, failures, candle_cache = [], [], {}
@@ -545,7 +767,7 @@ def main():
         symbol = binance_pairs.get(base)
         try:
             if symbol:
-                k15 = binance_bars(symbol, "15m", 12)
+                k15 = binance_bars(symbol, "15m", 100)
                 k1 = binance_bars(symbol, "1h", 22)
                 k4 = binance_bars(symbol, "4h", 10)
                 candle_source = "binance_official"
@@ -562,7 +784,7 @@ def main():
             trade = float(ticker.get("acc_trade_price_24h") or 0)
             change = float(ticker.get("signed_change_rate") or 0) * 100
             fast = fast_market_metrics(base, current_market, previous_market)
-            hist = recent_rows(snapshot_history, base, 6)
+            hist = recent_rows(snapshot_history, base, 6, generated_at)
             path = twenty_pct_path(price, k4)
             fes, failure = future_expansion_score(base, ticker, m, hist, path, success_reference, failure_reference, fast)
             feedback_adjustment = recommendation_feedback_adjustment(base, history)
@@ -596,6 +818,8 @@ def main():
                 **fast,
                 **{k: rnd(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for k, v in m.items()},
             }
+            row["success_pattern_similarity_score"] = rnd(success_pattern_similarity(m, change))
+            row["signal_stability_runs"] = consecutive_signal_runs(hist, row)
             if symbol:
                 bt = binance_tickers.get(symbol, {})
                 row["binance_symbol"] = symbol
@@ -615,7 +839,7 @@ def main():
     late = [r for r in rows if r["momentum_stage"] == "late" and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:5]
     exhausted = [r for r in rows if r["momentum_stage"] == "exhaustion"][:10]
     path_candidates = [r for r in rows if r["twenty_pct_path"]["path_open"] and r["momentum_stage"] in {"pre_ignition", "acceleration"} and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:10]
-    fast_breakout = [r for r in rows if r["momentum_stage"] in {"pre_ignition", "acceleration"} and ((r.get("price_change_since_scan_pct") or 0) >= 0.8 or (r.get("change24_delta_since_scan_pct") or 0) >= 0.8) and not r["reference_failure_pattern"]][:10]
+    fast_breakout = [r for r in rows if r["momentum_stage"] in {"pre_ignition", "acceleration"} and (normalized_fast_price(r) >= 0.8 or (r.get("change24_delta_since_scan_pct") or 0) >= 0.8) and not r["reference_failure_pattern"]][:10]
 
     scanned = set(snapshot)
     additional = []
@@ -627,11 +851,13 @@ def main():
     additional.sort(key=lambda r: r["bithumb_24h_trade_krw"] or 0, reverse=True)
 
     def volume_confirmed(r):
-        return (r.get("vol_1h_vs_20h_x") or 0) >= 1.0 or (r.get("trade_value_delta_since_scan_krw") or 0) >= 100_000_000
+        return (
+            max(r.get("vol_1h_vs_20h_x") or 0, r.get("turnover_1h_vs_20h_x") or 0) >= 1.0
+            or normalized_fast_trade(r) >= 100_000_000
+        )
 
     def not_fading(r):
-        fast = r.get("price_change_since_scan_pct")
-        return fast is None or fast >= 0
+        return normalized_fast_price(r) >= 0
 
     breadth_pct = rnd(sum(1 for t in tickers.values() if float(t.get("signed_change_rate") or 0) > 0) / max(len(tickers), 1) * 100, 1)
 
@@ -653,6 +879,30 @@ def main():
         and r.get("upper_wick_1h_pct") is not None and r["upper_wick_1h_pct"] <= 1.5
         and r.get("recent_4h_max_body_pct") is not None and r["recent_4h_max_body_pct"] <= 4
         and r.get("future_expansion_score") is not None and r["future_expansion_score"] >= 35
+        and r.get("signal_stability_runs", 0) >= SIGNAL_STABILITY_RUNS
+        and volume_confirmed(r)
+        and not_fading(r)
+    ]
+
+    # A probe is explicitly not a full recommendation. It permits only a small
+    # first tranche after the same stability and execution-venue checks.
+    probe_candidates = [
+        r for r in rows
+        if r.get("twenty_pct_path", {}).get("path_open") is True
+        and r.get("momentum_stage") in {"pre_ignition", "acceleration"}
+        and breadth_pct is not None and breadth_pct >= MIN_MARKET_BREADTH_PCT
+        and r.get("bithumb_24h_trade_krw", 0) >= PROBE_TRADE_KRW
+        and r.get("high_beta_target_eligible") is True
+        and r.get("market_warning") in (None, "", "NONE")
+        and r.get("reference_failure_pattern") is False
+        and r.get("failure_similarity_score", 100) < 40
+        and r.get("bithumb_24h_change_pct") is not None and 0 <= r["bithumb_24h_change_pct"] <= 12
+        and r.get("four_hour_low_rising") is True
+        and r.get("vol_15m_persistence_x", 0) >= 0.8
+        and r.get("price_last_60m_pct") is not None and -0.2 <= r["price_last_60m_pct"] <= 2.5
+        and r.get("upper_wick_1h_pct", 99) <= 1.2
+        and r.get("future_expansion_score", -999) >= 30
+        and r.get("signal_stability_runs", 0) >= SIGNAL_STABILITY_RUNS
         and volume_confirmed(r)
         and not_fading(r)
     ]
@@ -668,56 +918,95 @@ def main():
         "checked": [],
     }
     blocked_buy_candidates = []
-    verified_candidates = []
-    for candidate in technical_candidates[:10]:
-        risk = external_risk_check(
-            candidate["base"],
-            markets.get(candidate["base"], {}).get("english_name"),
-        )
+    verified_actual = []
+    verified_probe = []
+    candidate_classes = []
+    seen = set()
+    for action_class, candidates in (("actual_buy", technical_candidates), ("probe_buy", probe_candidates)):
+        for candidate in candidates[:10]:
+            key = (candidate["base"], action_class)
+            if key not in seen:
+                candidate_classes.append((action_class, candidate))
+                seen.add(key)
+    risk_cache = {}
+    execution_cache = {}
+    for action_class, candidate in candidate_classes:
+        base = candidate["base"]
+        execution = execution_cache.get(base)
+        if execution is None:
+            execution = bithumb_execution_confirmation(candidate)
+            execution_cache[base] = execution
+        candidate["bithumb_execution_confirmation"] = execution
+        if not execution.get("confirmed"):
+            blocked_buy_candidates.append({
+                "base": base,
+                "action_class": action_class,
+                "reason": execution.get("reason"),
+                "bithumb_execution_confirmation": execution,
+            })
+            continue
+        risk = risk_cache.get(base)
+        if risk is None:
+            risk = external_risk_check(base, markets.get(base, {}).get("english_name"))
+            risk_cache[base] = risk
         candidate["risk_verification"] = risk
         candidate["buy_alert_allowed"] = bool(risk.get("checked") and risk.get("buy_allowed"))
         risk_scan["checked"].append({
-            "base": candidate["base"],
+            "base": base,
+            "action_class": action_class,
             "status": risk.get("status"),
             "buy_allowed": candidate["buy_alert_allowed"],
             "reason": risk.get("reason"),
         })
         if candidate["buy_alert_allowed"]:
-            verified_candidates.append(candidate)
+            if action_class == "actual_buy":
+                verified_actual.append(candidate)
+            else:
+                verified_probe.append(candidate)
         else:
             blocked_buy_candidates.append({
-                "base": candidate["base"],
+                "base": base,
+                "action_class": action_class,
                 "reason": risk.get("reason"),
                 "risk_verification": risk,
             })
         time.sleep(0.15)
 
-    actual_pick = verified_candidates[0] if verified_candidates else None
-    watch_pick = next(
-        (
-            r for r in path_candidates
-            if r is not actual_pick
-            and r.get("bithumb_24h_trade_krw", 0) >= 100_000_000
-            and r.get("failure_similarity_score", 100) < 40
-            and r.get("market_warning") in (None, "", "NONE")
-            and volume_confirmed(r)
-            and not_fading(r)
-        ),
-        None,
-    )
+    actual_pick = decorate_action(verified_actual[0] if verified_actual else None, "actual_buy", True, 0.30)
+    probe_source = next((r for r in verified_probe if not actual_pick or r["base"] != actual_pick["base"]), None)
+    probe_pick = decorate_action(probe_source, "probe_buy", True, 0.15)
+
+    watch_pool = [
+        r for r in rows
+        if r.get("twenty_pct_path", {}).get("path_open") is True
+        and r.get("momentum_stage") in {"pre_ignition", "acceleration"}
+        and r.get("bithumb_24h_trade_krw", 0) >= 100_000_000
+        and r.get("failure_similarity_score", 100) < 40
+        and r.get("market_warning") in (None, "", "NONE")
+        and r.get("reference_failure_pattern") is False
+        and r.get("signal_stability_runs", 0) >= WATCH_STABILITY_RUNS
+        and volume_confirmed(r)
+        and not_fading(r)
+        and (not actual_pick or r["base"] != actual_pick["base"])
+        and (not probe_pick or r["base"] != probe_pick["base"])
+    ]
+    watch_source = watch_pool[0] if watch_pool else None
+    previous_watch_base = (previous.get("watch_pick") or {}).get("base")
+    previous_watch = next((r for r in watch_pool if r["base"] == previous_watch_base), None)
+    if previous_watch and watch_source and previous_watch["future_expansion_score"] >= watch_source["future_expansion_score"] - 15:
+        watch_source = previous_watch
+    watch_pick = decorate_action(watch_source, "watch_only", False, 0.0)
 
     history = update_scorecard(history, tickers, candle_cache, generated_at)
-    if actual_pick:
-        last = history[-1] if history else None
-        if not last or last.get("base") != actual_pick["base"] or last.get("closed"):
-            pick_bars = candle_cache.get(actual_pick["base"], {}).get("15m", [])
-            history.append({"base": actual_pick["base"], "market": actual_pick["bithumb_market"], "recommended_at_utc": generated_at, "entry_price": actual_pick["bithumb_krw_price"], "candle_source": actual_pick.get("candle_source"), "candle_entry_price": rnd(pick_bars[-1]["close"], 8) if pick_bars else None, "policy_version": policy["policy_version"], "closed": False, "checkpoints": {}})
+    history = append_signal_history(history, actual_pick, "actual_buy", generated_at, candle_cache)
+    history = append_signal_history(history, probe_pick, "probe_buy", generated_at, candle_cache)
+    history = append_signal_history(history, watch_pick, "watch_pick", generated_at, candle_cache)
 
     all_changes = [float(t.get("signed_change_rate") or 0) * 100 for t in tickers.values()]
     output = {
         "generated_at_utc": generated_at,
         "schema_version": policy["schema_version"],
-        "version": "v9-negative-event-fail-closed",
+        "version": "v10-calibrated-stable-signals",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
@@ -731,6 +1020,7 @@ def main():
         "twenty_pct_path_candidates": path_candidates,
         "additional_data_required": additional[:30],
         "actual_buy": actual_pick,
+        "probe_buy": probe_pick,
         "watch_pick": watch_pick,
         "risk_scan": risk_scan,
         "blocked_buy_candidates": blocked_buy_candidates,
@@ -739,8 +1029,11 @@ def main():
         "snapshot": snapshot,
         "failed_sample": failures[:30],
     }
-    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "recommendation_scorecard"]
+    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "probe_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "recommendation_scorecard"]
     summary = {k: output[k] for k in summary_keys}
+    assert_public_output_safe(output)
+    assert_public_output_safe(summary)
+    assert_public_output_safe(history)
     save_json(RESULT_FILE, output)
     save_json(SUMMARY_FILE, summary)
     save_json(HISTORY_FILE, history)
