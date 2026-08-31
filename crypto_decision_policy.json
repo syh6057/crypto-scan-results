@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-30.1",
+  "policy_version": "2026-08-31.1",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -41,7 +41,8 @@
     "force_candle_collection_for_new_accelerators": true,
     "fast_change_source": "full-market scan-to-scan price and trade-value deltas normalized to five minutes",
     "prefer_change_over_absolute_level": true,
-    "resistance_path_unit_rule": "저항 경로는 OHLCV와 동일 통화 단위에서 계산하고, 타 거래소 현재가에는 비율로만 변환한다."
+    "resistance_path_unit_rule": "저항 경로는 OHLCV와 동일 통화 단위에서 계산하고, 타 거래소 현재가에는 비율로만 변환한다.",
+    "fast_breakout_confirmation": "신규 경보는 2회 연속 구조 유지 또는 회차간 가격 +0.8%와 정규화 거래대금 +1억원 동시 충족으로 잡음성 교체를 줄인다."
   },
   "universes": {
     "bithumb_full_krw": "모든 빗썸 KRW ticker를 평가하고 후보군에는 빗썸 자체 15m·1h·4h OHLCV를 확보한다.",
@@ -79,7 +80,8 @@
     "LORENZO_BANK_ACE": "빠른 단타에서 가격 확인과 상대강도가 부족한 정체 후보를 강등한다.",
     "ONT_TRX": "거래량 급증만 있고 가격이 따라오지 않거나 4h 구조가 약하면 탈락한다.",
     "PLUME": "거래량 증가만 있고 4h higher-low=false 또는 최근60m 가격 확인 실패면 탈락한다.",
-    "CYS": "검색 캐시 가격을 실시간가로 오인하지 않는다."
+    "CYS": "검색 캐시 가격을 실시간가로 오인하지 않는다.",
+    "OPPORTUNITY_COST": "BOB 7.127원 관찰 후 4h MFE +19.04%, 0G 관찰 후 MFE +41.94%를 실행단계로 승격하지 못한 사례. 중복 하드게이트가 네 가지 필수 실행조건을 덮어쓰지 못하게 한다."
   },
   "future_expansion_score": {
     "priority": [
@@ -94,8 +96,8 @@
     ],
     "failure_similarity_required": true,
     "twenty_pct_resistance_path_required": true,
-    "actual_buy_hard_gates": "시장 상승종목비율 35% 이상, 빗썸 24h 상승률 0~5%, 바이낸스 24h 상승률 0~8%, 거래대금 10억원, 4h higher-low=true, 15m 지속성 1.2배 이상, 최근60m 0~2%, 1h 거래량 20h 평균 1.2배 이상, 윗꼬리 1.5% 이하, 실패유사도 40 미만, 거래유의 없음, 3회 연속 신호 유지, 빗썸 실행시장 봉 확인, 외부 악재검증 clear. 하나라도 누락/실패면 actual_buy=null.",
-    "probe_buy_hard_gates": "거래대금 3억원, 실패유사도 40 미만, 4h higher-low=true, 15m 지속성 0.8배 이상, 최근60m -0.2~2.5%, 3회 연속 신호 유지, 빗썸 실행시장 봉 확인, 외부 악재검증 clear. 최대 비중 15%이며 actual_buy와 구분한다.",
+    "actual_buy_hard_gates": "거래대금 10억원 이상, 실패유사도 40 미만, 1h 거래량이 20h 평균 1배 이상 또는 회차간 거래대금 1억원 이상 증가, 회차간 가격 비음수. 거래유의·실패 참조 티커 제외, 빗썸 실행시장 봉과 외부 악재검증 clear 필수. 시장 breadth·좁은 24h 상승률 구간·3회 연속 신호는 랭킹 정보이며 단독 거부조건으로 사용하지 않는다.",
+    "probe_buy_hard_gates": "거래대금 3억원 이상, 실패유사도 40 미만, 회차간 가격 비음수, 거래량 확인, 2회 연속 신호 유지, 거래유의 없음, 빗썸 실행시장 봉과 외부 악재검증 clear. 최대 비중 10%이며 actual_buy와 구분한다.",
     "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 정규화 회차간 가격 비음수, 2회 연속 신호 유지. watch_pick은 주문가격·매수 지시 생성이 금지된다."
   },
   "outputs": [
