@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-31.1",
+  "policy_version": "2026-08-31.2",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -42,7 +42,10 @@
     "fast_change_source": "full-market scan-to-scan price and trade-value deltas normalized to five minutes",
     "prefer_change_over_absolute_level": true,
     "resistance_path_unit_rule": "저항 경로는 OHLCV와 동일 통화 단위에서 계산하고, 타 거래소 현재가에는 비율로만 변환한다.",
-    "fast_breakout_confirmation": "신규 경보는 2회 연속 구조 유지 또는 회차간 가격 +0.8%와 정규화 거래대금 +1억원 동시 충족으로 잡음성 교체를 줄인다."
+    "fast_breakout_confirmation": "신규 경보는 2회 연속 구조 유지 또는 회차간 가격 +0.8%와 정규화 거래대금 +1억원 동시 충족으로 잡음성 교체를 줄인다.",
+    "execution_candle_source_rule": "빗썸 KRW 주문·단계·저항·손절 판단은 모든 종목에 빗썸 공식 15m·1h·4h 봉만 사용한다. Binance 봉은 교차검증용이며 KRW 주문가 계산에 사용하지 않는다.",
+    "market_timestamp_rule": "스캔 시작시각과 빗썸 ticker 관측시각을 분리 저장한다. 주문가격은 더 최신인 사용자 빗썸 화면 또는 동기화된 빗썸 ticker를 우선한다.",
+    "live_screen_override_rule": "사용자 빗썸 화면이 GitHub 스냅샷보다 최신이면 화면 현재가를 주문가격 계산에 사용하고, GitHub는 구조·회차 변화 판단에만 사용한다."
   },
   "universes": {
     "bithumb_full_krw": "모든 빗썸 KRW ticker를 평가하고 후보군에는 빗썸 자체 15m·1h·4h OHLCV를 확보한다.",
@@ -54,7 +57,7 @@
     "pre_ignition": "24h 0~8%에서 4h higher-low, 15m 재가속, 60m 음→양 전환과 공급 감소가 누적되는 단계",
     "acceleration": "24h 8~25%에서 가격·거래대금 가속이 실제 시작됐지만 과열 전인 단계",
     "late": "24h 25~50%의 후기 단계. 상승률만으로 소진 처리하지 않고 구조 지속 여부를 별도 판정한다.",
-    "exhaustion": "거래량 클라이맥스 후 감소, 긴 윗꼬리, 돌파 실패, 15m 지속성 소멸 또는 고점 급락"
+    "exhaustion": "거래량 클라이맥스 후 감소, 긴 윗꼬리, 돌파 실패, 15m 지속성 소멸 또는 고점 급락. 최근60m 음전과 양봉수 감소처럼 상관된 가격 신호 두 개만으로는 소진 판정하지 않으며, 회차간 가격 재상승·4h higher-low·거래 지속성이 동시 확인되면 acceleration 재가속을 우선한다."
   },
   "decision_order": [
     "ticker_and_unit_validation",
@@ -81,7 +84,8 @@
     "ONT_TRX": "거래량 급증만 있고 가격이 따라오지 않거나 4h 구조가 약하면 탈락한다.",
     "PLUME": "거래량 증가만 있고 4h higher-low=false 또는 최근60m 가격 확인 실패면 탈락한다.",
     "CYS": "검색 캐시 가격을 실시간가로 오인하지 않는다.",
-    "OPPORTUNITY_COST": "BOB 7.127원 관찰 후 4h MFE +19.04%, 0G 관찰 후 MFE +41.94%를 실행단계로 승격하지 못한 사례. 중복 하드게이트가 네 가지 필수 실행조건을 덮어쓰지 못하게 한다."
+    "OPPORTUNITY_COST": "BOB 7.127원 관찰 후 4h MFE +19.04%, 0G 관찰 후 MFE +41.94%를 실행단계로 승격하지 못한 사례. 중복 하드게이트가 네 가지 필수 실행조건을 덮어쓰지 못하게 한다.",
+    "BOB_REACCELERATION": "BOB처럼 8~25% 구간에서 최근60m가 음전했어도 회차간 가격 재상승, 4h higher-low, 거래 지속성, 짧은 윗꼬리가 함께 유지되면 소진으로 단정하지 않고 재가속으로 분류한다."
   },
   "future_expansion_score": {
     "priority": [

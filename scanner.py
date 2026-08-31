@@ -17,7 +17,7 @@ HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SNAPSHOT_HISTORY_LIMIT = 6
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-31.1"
+SUPPORTED_POLICY_VERSION = "2026-08-31.2"
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 RISK_LOOKBACK = "3d"
 MIN_MARKET_BREADTH_PCT = 35.0
@@ -364,6 +364,7 @@ def classify_stage(change24, m, hist, fast):
     prev_p60 = hist[-1].get("price_last_60m_pct") if hist else None
     turning = prev_p60 is not None and prev_p60 <= 0 < p60
     fast_price = normalized_fast_price(fast)
+    fast_trade = normalized_fast_trade(fast)
     exhaustion_signals = sum([
         wick >= 1.5,
         persistence < 0.55,
@@ -371,9 +372,26 @@ def classify_stage(change24, m, hist, fast):
         positives <= 1,
         fast_price < -0.5,
     ])
-    # Price extension alone is never enough to declare exhaustion.  This keeps
-    # the policy's 8-25% acceleration band observable instead of deleting it.
-    if change24 >= 50 or (change24 >= 10 and exhaustion_signals >= 2):
+    # A strong scan-to-scan recovery with intact 4h structure is reacceleration,
+    # not exhaustion.  Two correlated price-only weakness flags (p60/positive
+    # candle count) cannot override positive fast price and persistent turnover.
+    reaccelerating = (
+        8 <= change24 < 25
+        and hl
+        and persistence >= 0.8
+        and wick < 1.5
+        and fast_price >= 0.5
+        and fast_trade >= 0
+    )
+    if reaccelerating:
+        return "acceleration"
+    structural_exhaustion = (
+        exhaustion_signals >= 2
+        and (wick >= 1.5 or persistence < 0.55 or fast_price < -0.5)
+    )
+    # Price extension alone is never enough to declare exhaustion.  Require at
+    # least one supply/flow failure in addition to multiple exhaustion signals.
+    if change24 >= 50 or (change24 >= 10 and structural_exhaustion):
         return "exhaustion"
     if 25 <= change24 < 50:
         return "late"
@@ -472,11 +490,21 @@ def market_snapshot(markets, tickers, generated_at):
     snapshot = {}
     for base, info in markets.items():
         t = tickers.get(info["market"], {})
+        ticker_timestamp = t.get("timestamp")
+        observed_at = None
+        if ticker_timestamp:
+            try:
+                observed_at = datetime.fromtimestamp(
+                    float(ticker_timestamp) / 1000, timezone.utc
+                ).isoformat()
+            except Exception:
+                observed_at = None
         snapshot[base] = {
             "market": info["market"],
             "price": rnd(t.get("trade_price"), 8),
             "change24_pct": rnd(float(t.get("signed_change_rate") or 0) * 100),
             "trade24_krw": rnd(t.get("acc_trade_price_24h"), 0),
+            "price_observed_at_utc": observed_at,
         }
     return {"generated_at_utc": generated_at, "tickers": snapshot}
 
@@ -744,9 +772,12 @@ def main():
     previous = load_json(RESULT_FILE, {})
     history = load_json(HISTORY_FILE, [])
     snapshot_history = compact_snapshot_history(load_json(SNAPSHOT_HISTORY_FILE, []))
-    generated_at = datetime.now(timezone.utc).isoformat()
+    scan_started_at = datetime.now(timezone.utc).isoformat()
     markets = get_bithumb_markets()
     tickers = get_bithumb_tickers(markets)
+    # Timestamp the market snapshot after the batched Bithumb ticker reads.
+    # Per-ticker exchange timestamps are preserved inside market_snapshot.
+    generated_at = datetime.now(timezone.utc).isoformat()
     current_market = market_snapshot(markets, tickers, generated_at)
     previous_market = previous.get("market_snapshot", {})
     binance_pairs, binance_tickers = get_binance_universe()
@@ -766,16 +797,13 @@ def main():
         ticker = tickers.get(market, {})
         symbol = binance_pairs.get(base)
         try:
-            if symbol:
-                k15 = binance_bars(symbol, "15m", 100)
-                k1 = binance_bars(symbol, "1h", 22)
-                k4 = binance_bars(symbol, "4h", 10)
-                candle_source = "binance_official"
-            else:
-                k15 = bithumb_bars(market, 15, 100)
-                k1 = bithumb_bars(market, 60, 22)
-                k4 = bithumb_bars(market, 240, 10)
-                candle_source = "bithumb_official"
+            # All KRW execution structure and order levels must use Bithumb
+            # candles. Binance remains an auxiliary 24h cross-check only; using
+            # USDT candles here caused unit/time mismatches against KRW prices.
+            k15 = bithumb_bars(market, 15, 100)
+            k1 = bithumb_bars(market, 60, 22)
+            k4 = bithumb_bars(market, 240, 10)
+            candle_source = "bithumb_official"
             candle_cache[base] = {"15m": k15, "1h": k1, "4h": k4}
             m = candle_metrics(k15, k1, k4)
             if not m:
@@ -1003,6 +1031,7 @@ def main():
     all_changes = [float(t.get("signed_change_rate") or 0) * 100 for t in tickers.values()]
     output = {
         "generated_at_utc": generated_at,
+        "scan_started_at_utc": scan_started_at,
         "schema_version": policy["schema_version"],
         "version": "v11-opportunity-aware-gates",
         "policy_version": policy["policy_version"],
