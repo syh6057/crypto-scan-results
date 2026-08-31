@@ -17,7 +17,7 @@ HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SNAPSHOT_HISTORY_LIMIT = 6
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-30.1"
+SUPPORTED_POLICY_VERSION = "2026-08-31.1"
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 RISK_LOOKBACK = "3d"
 MIN_MARKET_BREADTH_PCT = 35.0
@@ -390,7 +390,7 @@ def failure_similarity(m, change24):
     volume_spike_no_price = (m.get("vol_1h_vs_20h_x") or 0) >= 1.5 and (m.get("price_last_60m_pct") or 0) <= 0.1
     weak4h = not bool(m.get("four_hour_low_rising"))
     long_wick = (m.get("upper_wick_1h_pct") or 0) >= 1.5
-    overheated = change24 >= 12
+    overheated = change24 >= 25 or (change24 >= 12 and (m.get("price_last_60m_pct") or 0) >= 6 and (m.get("upper_wick_1h_pct") or 0) >= 1.5)
     no_persistence = (m.get("recent_15m_positive_count") or 0) <= 1 or (m.get("vol_15m_persistence_x") or 0) < 0.55
     flags = [volume_spike_no_price, weak4h, long_wick, overheated, no_persistence]
     return sum(1 for x in flags if x) / len(flags) * 100, {
@@ -839,7 +839,18 @@ def main():
     late = [r for r in rows if r["momentum_stage"] == "late" and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:5]
     exhausted = [r for r in rows if r["momentum_stage"] == "exhaustion"][:10]
     path_candidates = [r for r in rows if r["twenty_pct_path"]["path_open"] and r["momentum_stage"] in {"pre_ignition", "acceleration"} and r["failure_similarity_score"] < 60 and not r["reference_failure_pattern"]][:10]
-    fast_breakout = [r for r in rows if r["momentum_stage"] in {"pre_ignition", "acceleration"} and (normalized_fast_price(r) >= 0.8 or (r.get("change24_delta_since_scan_pct") or 0) >= 0.8) and not r["reference_failure_pattern"]][:10]
+    fast_breakout = [
+        r for r in rows
+        if r["momentum_stage"] in {"pre_ignition", "acceleration"}
+        and (
+            r.get("signal_stability_runs", 0) >= WATCH_STABILITY_RUNS
+            or (
+                normalized_fast_price(r) >= 0.8
+                and normalized_fast_trade(r) >= 100_000_000
+            )
+        )
+        and not r["reference_failure_pattern"]
+    ][:10]
 
     scanned = set(snapshot)
     additional = []
@@ -862,24 +873,19 @@ def main():
     breadth_pct = rnd(sum(1 for t in tickers.values() if float(t.get("signed_change_rate") or 0) > 0) / max(len(tickers), 1) * 100, 1)
 
     # Full technical hard gates. Missing data is a failure, never an implicit pass.
+    # The execution gate follows the policy's four measurable requirements:
+    # >= KRW 1bn turnover, failure similarity < 40, confirmed volume or
+    # scan-to-scan turnover acceleration, and non-negative scan-to-scan price.
+    # Breadth, a narrow 24h band and three-run stability remain ranking context;
+    # they must not silently veto a liquid early accelerator.
     technical_candidates = [
-        r for r in path_candidates
-        if breadth_pct is not None and breadth_pct >= MIN_MARKET_BREADTH_PCT
-        and r.get("execution_liquidity") is True
+        r for r in rows
+        if r.get("momentum_stage") in {"pre_ignition", "acceleration"}
+        and r.get("bithumb_24h_trade_krw", 0) >= ACTIONABLE_TRADE_KRW
         and r.get("high_beta_target_eligible") is True
         and r.get("market_warning") in (None, "", "NONE")
         and r.get("reference_failure_pattern") is False
         and r.get("failure_similarity_score") is not None and r["failure_similarity_score"] < 40
-        and r.get("bithumb_24h_change_pct") is not None and 0 <= r["bithumb_24h_change_pct"] <= 5
-        and r.get("binance_24h_change_pct") is not None and 0 <= r["binance_24h_change_pct"] <= 8
-        and r.get("four_hour_low_rising") is True
-        and r.get("vol_15m_persistence_x") is not None and r["vol_15m_persistence_x"] >= 1.2
-        and r.get("vol_1h_vs_20h_x") is not None and r["vol_1h_vs_20h_x"] >= 1.2
-        and r.get("price_last_60m_pct") is not None and 0 <= r["price_last_60m_pct"] <= 2
-        and r.get("upper_wick_1h_pct") is not None and r["upper_wick_1h_pct"] <= 1.5
-        and r.get("recent_4h_max_body_pct") is not None and r["recent_4h_max_body_pct"] <= 4
-        and r.get("future_expansion_score") is not None and r["future_expansion_score"] >= 35
-        and r.get("signal_stability_runs", 0) >= SIGNAL_STABILITY_RUNS
         and volume_confirmed(r)
         and not_fading(r)
     ]
@@ -888,21 +894,13 @@ def main():
     # first tranche after the same stability and execution-venue checks.
     probe_candidates = [
         r for r in rows
-        if r.get("twenty_pct_path", {}).get("path_open") is True
-        and r.get("momentum_stage") in {"pre_ignition", "acceleration"}
-        and breadth_pct is not None and breadth_pct >= MIN_MARKET_BREADTH_PCT
+        if r.get("momentum_stage") in {"pre_ignition", "acceleration"}
         and r.get("bithumb_24h_trade_krw", 0) >= PROBE_TRADE_KRW
         and r.get("high_beta_target_eligible") is True
         and r.get("market_warning") in (None, "", "NONE")
         and r.get("reference_failure_pattern") is False
         and r.get("failure_similarity_score", 100) < 40
-        and r.get("bithumb_24h_change_pct") is not None and 0 <= r["bithumb_24h_change_pct"] <= 12
-        and r.get("four_hour_low_rising") is True
-        and r.get("vol_15m_persistence_x", 0) >= 0.8
-        and r.get("price_last_60m_pct") is not None and -0.2 <= r["price_last_60m_pct"] <= 2.5
-        and r.get("upper_wick_1h_pct", 99) <= 1.2
-        and r.get("future_expansion_score", -999) >= 30
-        and r.get("signal_stability_runs", 0) >= SIGNAL_STABILITY_RUNS
+        and r.get("signal_stability_runs", 0) >= WATCH_STABILITY_RUNS
         and volume_confirmed(r)
         and not_fading(r)
     ]
@@ -1006,7 +1004,7 @@ def main():
     output = {
         "generated_at_utc": generated_at,
         "schema_version": policy["schema_version"],
-        "version": "v10-calibrated-stable-signals",
+        "version": "v11-opportunity-aware-gates",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
