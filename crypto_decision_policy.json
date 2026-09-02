@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-09-02.2",
+  "policy_version": "2026-09-02.3",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -17,7 +17,8 @@
     "max_actual_buy_picks": 1,
     "max_probe_buy_picks": 1,
     "max_watch_picks": 1,
-    "description": "빗썸 KRW 전체에서 현재 최강 종목이 아니라 향후 +20% 이상 가격 확장이 가능한 점화 전·초기 후보를 찾는다."
+    "description": "빗썸 KRW 전체에서 현재 최강 종목이 아니라 향후 +20% 이상 가격 확장이 가능한 점화 전·초기 후보를 찾는다.",
+    "max_best_available_picks": 1
   },
   "data_priority": [
     "user_generated_github_scan",
@@ -48,7 +49,8 @@
     "live_screen_override_rule": "사용자 빗썸 화면이 GitHub 스냅샷보다 최신이면 화면 현재가를 주문가격 계산에 사용하고, GitHub는 구조·회차 변화 판단에만 사용한다.",
     "replacement_trade_rule": "손절·축소 직후 교체매매는 actual_buy 또는 strict_early_probe가 모든 해당 하드게이트와 악재검증을 통과한 경우에만 허용한다. strict_early_probe는 가용현금 10%까지만 허용하고 추가매수는 actual_buy 승격 전까지 금지한다. watch_pick·단계별 1위는 교체매수 근거로 사용할 수 없다.",
     "portfolio_exit_rule": "보유종목 전량매도는 사용자 지정 행동가격과 함께 15분 지속성 저하, 최근60분 음전, 회차간 가격 -0.5% 이하, 거래대금 감소, 긴 윗꼬리·고점 대비 4% 하락, 4h 구조 붕괴 중 독립 신호 최소 2개가 확인될 때만 허용한다. 새 행동가격을 임의 생성하지 않는다.",
-    "averaging_down_rule": "물타기는 actual_buy 하드게이트와 동일한 실행 검증을 다시 통과하고 4h higher-low가 확인될 때만 허용한다. 평단 하락만을 목적으로 한 추가매수는 금지한다."
+    "averaging_down_rule": "물타기는 actual_buy 하드게이트와 동일한 실행 검증을 다시 통과하고 4h higher-low가 확인될 때만 허용한다. 평단 하락만을 목적으로 한 추가매수는 금지한다.",
+    "always_select_one_rule": "매 회차 actual_buy·probe_buy·watch_pick과 별도로 best_available_pick을 정확히 1개 출력한다. 하드게이트 미달이어도 후보를 null로 지우지 않고 execution_plan_allowed=false와 차단사유를 함께 기록한다."
   },
   "universes": {
     "bithumb_full_krw": "모든 빗썸 KRW ticker를 평가하고 후보군에는 빗썸 자체 15m·1h·4h OHLCV를 확보한다.",
@@ -105,7 +107,8 @@
     "twenty_pct_resistance_path_required": true,
     "actual_buy_hard_gates": "거래대금 10억원 이상, 실패유사도 40 미만, 1h 거래량이 20h 평균 1배 이상 또는 회차간 거래대금 1억원 이상 증가, 회차간 가격 비음수. 거래유의·실패 참조 티커 제외, 빗썸 실행시장 봉과 외부 악재검증 clear 필수. 시장 breadth·좁은 24h 상승률 구간·3회 연속 신호는 랭킹 정보이며 단독 거부조건으로 사용하지 않는다.",
     "probe_buy_hard_gates": "조기 포착 전용 strict_early_probe. pre_ignition, 24h 0~8%, 거래대금 3억원 이상, 실패유사도 40 미만, 회차간 가격 0~2%, 1h 거래량 1배 이상 또는 거래대금 +1억원, 15m 지속성 1.2~5배, 최근60m 0~3%, 4h higher-low=true, 윗꼬리 1.5% 이하, 2회 연속 신호, 거래유의 없음, 빗썸 실행시장 봉과 외부 악재검증 clear를 모두 요구한다. 가용현금 최대 10%만 허용하며 actual_buy 승격 전 추가매수와 24h 8% 이상 추격진입을 금지한다.",
-    "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 정규화 회차간 가격 비음수, 2회 연속 신호 유지. watch_pick은 주문가격·매수 지시 생성이 금지된다."
+    "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 정규화 회차간 가격 비음수, 2회 연속 신호 유지. watch_pick은 주문가격·매수 지시 생성이 금지된다.",
+    "best_available_pick_rule": "실행 허가와 후보 선정을 분리한다. actual_buy, strict_early_probe, watch_pick 순으로 우선하고 모두 없으면 pre_ignition·acceleration 중 반증이 가장 적고 미래확장점수가 높은 1개를 반드시 선택한다. 선택 자체는 매수 지시가 아니다."
   },
   "outputs": [
     "market_regime",
@@ -116,6 +119,7 @@
     "fast_breakout_alerts",
     "exhaustion_no_chase",
     "twenty_pct_path_candidates",
+    "best_available_pick",
     "actual_buy_or_no_buy",
     "probe_buy_or_no_buy",
     "watch_pick",
