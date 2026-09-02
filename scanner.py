@@ -17,7 +17,7 @@ HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SNAPSHOT_HISTORY_LIMIT = 6
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-08-31.2"
+SUPPORTED_POLICY_VERSION = "2026-09-02.1"
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 RISK_LOOKBACK = "3d"
 MIN_MARKET_BREADTH_PCT = 35.0
@@ -1023,6 +1023,34 @@ def main():
         watch_source = previous_watch
     watch_pick = decorate_action(watch_source, "watch_only", False, 0.0)
 
+    # Realized-loss replacement trades are intentionally stricter than watch or
+    # probe signals. Public scan outputs never know the user's cash or holdings;
+    # they only state whether deployment is technically allowed.
+    cash_deployment_decision = {
+        "allowed": actual_pick is not None,
+        "required_signal_class": "actual_buy",
+        "selected_base": actual_pick.get("base") if actual_pick else None,
+        "probe_buy_is_replacement_permission": False,
+        "watch_pick_is_replacement_permission": False,
+        "available_cash_source": "latest_user_screen_or_explicit_value_only",
+        "reason": "actual_buy_verified" if actual_pick else "no_verified_actual_buy",
+    }
+    portfolio_exit_guardrails = {
+        "full_exit_requires_explicit_action_price": True,
+        "minimum_independent_weakness_signals": 2,
+        "weakness_signals": [
+            "vol_15m_persistence_below_0_8",
+            "price_last_60m_negative",
+            "scan_price_change_at_or_below_minus_0_5",
+            "trade_value_decrease",
+            "long_upper_wick_or_four_pct_high_drawdown",
+            "four_hour_structure_break",
+        ],
+        "single_signal_full_exit_forbidden": True,
+        "invent_new_action_price_forbidden": True,
+        "averaging_down_requires_actual_buy_gates_and_four_hour_higher_low": True,
+    }
+
     history = update_scorecard(history, tickers, candle_cache, generated_at)
     history = append_signal_history(history, actual_pick, "actual_buy", generated_at, candle_cache)
     history = append_signal_history(history, probe_pick, "probe_buy", generated_at, candle_cache)
@@ -1051,12 +1079,14 @@ def main():
         "watch_pick": watch_pick,
         "risk_scan": risk_scan,
         "blocked_buy_candidates": blocked_buy_candidates,
+        "cash_deployment_decision": cash_deployment_decision,
+        "portfolio_exit_guardrails": portfolio_exit_guardrails,
         "recommendation_scorecard": history[-20:],
         "market_snapshot": current_market,
         "snapshot": snapshot,
         "failed_sample": failures[:30],
     }
-    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "probe_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "recommendation_scorecard"]
+    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "probe_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "cash_deployment_decision", "portfolio_exit_guardrails", "recommendation_scorecard"]
     summary = {k: output[k] for k in summary_keys}
     assert_public_output_safe(output)
     assert_public_output_safe(summary)
