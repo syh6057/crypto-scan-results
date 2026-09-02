@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-09-02.1",
+  "policy_version": "2026-09-02.2",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -46,7 +46,7 @@
     "execution_candle_source_rule": "빗썸 KRW 주문·단계·저항·손절 판단은 모든 종목에 빗썸 공식 15m·1h·4h 봉만 사용한다. Binance 봉은 교차검증용이며 KRW 주문가 계산에 사용하지 않는다.",
     "market_timestamp_rule": "스캔 시작시각과 빗썸 ticker 관측시각을 분리 저장한다. 주문가격은 더 최신인 사용자 빗썸 화면 또는 동기화된 빗썸 ticker를 우선한다.",
     "live_screen_override_rule": "사용자 빗썸 화면이 GitHub 스냅샷보다 최신이면 화면 현재가를 주문가격 계산에 사용하고, GitHub는 구조·회차 변화 판단에만 사용한다.",
-    "replacement_trade_rule": "손절·축소 직후 교체매매는 actual_buy가 존재하고 모든 하드게이트와 악재검증을 통과한 경우에만 허용한다. probe_buy·watch_pick·단계별 1위는 교체매수 근거로 사용할 수 없다.",
+    "replacement_trade_rule": "손절·축소 직후 교체매매는 actual_buy 또는 strict_early_probe가 모든 해당 하드게이트와 악재검증을 통과한 경우에만 허용한다. strict_early_probe는 가용현금 10%까지만 허용하고 추가매수는 actual_buy 승격 전까지 금지한다. watch_pick·단계별 1위는 교체매수 근거로 사용할 수 없다.",
     "portfolio_exit_rule": "보유종목 전량매도는 사용자 지정 행동가격과 함께 15분 지속성 저하, 최근60분 음전, 회차간 가격 -0.5% 이하, 거래대금 감소, 긴 윗꼬리·고점 대비 4% 하락, 4h 구조 붕괴 중 독립 신호 최소 2개가 확인될 때만 허용한다. 새 행동가격을 임의 생성하지 않는다.",
     "averaging_down_rule": "물타기는 actual_buy 하드게이트와 동일한 실행 검증을 다시 통과하고 4h higher-low가 확인될 때만 허용한다. 평단 하락만을 목적으로 한 추가매수는 금지한다."
   },
@@ -104,7 +104,7 @@
     "failure_similarity_required": true,
     "twenty_pct_resistance_path_required": true,
     "actual_buy_hard_gates": "거래대금 10억원 이상, 실패유사도 40 미만, 1h 거래량이 20h 평균 1배 이상 또는 회차간 거래대금 1억원 이상 증가, 회차간 가격 비음수. 거래유의·실패 참조 티커 제외, 빗썸 실행시장 봉과 외부 악재검증 clear 필수. 시장 breadth·좁은 24h 상승률 구간·3회 연속 신호는 랭킹 정보이며 단독 거부조건으로 사용하지 않는다.",
-    "probe_buy_hard_gates": "거래대금 3억원 이상, 실패유사도 40 미만, 회차간 가격 비음수, 거래량 확인, 2회 연속 신호 유지, 거래유의 없음, 빗썸 실행시장 봉과 외부 악재검증 clear. 최대 비중 10%이며 actual_buy와 구분한다.",
+    "probe_buy_hard_gates": "조기 포착 전용 strict_early_probe. pre_ignition, 24h 0~8%, 거래대금 3억원 이상, 실패유사도 40 미만, 회차간 가격 0~2%, 1h 거래량 1배 이상 또는 거래대금 +1억원, 15m 지속성 1.2~5배, 최근60m 0~3%, 4h higher-low=true, 윗꼬리 1.5% 이하, 2회 연속 신호, 거래유의 없음, 빗썸 실행시장 봉과 외부 악재검증 clear를 모두 요구한다. 가용현금 최대 10%만 허용하며 actual_buy 승격 전 추가매수와 24h 8% 이상 추격진입을 금지한다.",
     "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 정규화 회차간 가격 비음수, 2회 연속 신호 유지. watch_pick은 주문가격·매수 지시 생성이 금지된다."
   },
   "outputs": [
