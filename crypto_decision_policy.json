@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-09-02.3",
+  "policy_version": "2026-09-02.4",
   "project_name": "코인프로젝트",
   "objective": {
     "horizon_hours": [
@@ -50,7 +50,8 @@
     "replacement_trade_rule": "손절·축소 직후 교체매매는 actual_buy 또는 strict_early_probe가 모든 해당 하드게이트와 악재검증을 통과한 경우에만 허용한다. strict_early_probe는 가용현금 10%까지만 허용하고 추가매수는 actual_buy 승격 전까지 금지한다. watch_pick·단계별 1위는 교체매수 근거로 사용할 수 없다.",
     "portfolio_exit_rule": "보유종목 전량매도는 사용자 지정 행동가격과 함께 15분 지속성 저하, 최근60분 음전, 회차간 가격 -0.5% 이하, 거래대금 감소, 긴 윗꼬리·고점 대비 4% 하락, 4h 구조 붕괴 중 독립 신호 최소 2개가 확인될 때만 허용한다. 새 행동가격을 임의 생성하지 않는다.",
     "averaging_down_rule": "물타기는 actual_buy 하드게이트와 동일한 실행 검증을 다시 통과하고 4h higher-low가 확인될 때만 허용한다. 평단 하락만을 목적으로 한 추가매수는 금지한다.",
-    "always_select_one_rule": "매 회차 actual_buy·probe_buy·watch_pick과 별도로 best_available_pick을 정확히 1개 출력한다. 하드게이트 미달이어도 후보를 null로 지우지 않고 execution_plan_allowed=false와 차단사유를 함께 기록한다."
+    "always_select_one_rule": "매 회차 actual_buy·probe_buy·watch_pick과 별도로 best_available_pick을 정확히 1개 출력한다. 하드게이트 미달이어도 후보를 null로 지우지 않고 execution_plan_allowed=false와 차단사유를 함께 기록한다.",
+    "threshold_miss_correction": "T(Threshold)는 24h +4.26%, 거래대금 2.90억원에서 pre_ignition, +5.11%·3.72억원에서 fast_breakout으로 포착됐지만 15m 지속성 6.68배와 최근60m +3.21%가 기존 strict probe 상한을 소폭 초과했고 기존 watch_pick 고착이 신규 선두를 덮어 사용자 알림·선행진입으로 승격되지 못했다. 24h 4~8%, 4h higher-low, 실패유사도 40 미만, 회차간 가격 +0.5~2%, 거래대금 3억원 이상, 1h 거래량 1배 이상, 윗꼬리 1.2% 이하이면 15m 지속성 1.2~8배·최근60m 0~4%의 momentum_probe를 허용하고 신규 fast leader가 기존 watch보다 우선한다."
   },
   "universes": {
     "bithumb_full_krw": "모든 빗썸 KRW ticker를 평가하고 후보군에는 빗썸 자체 15m·1h·4h OHLCV를 확보한다.",
@@ -106,7 +107,7 @@
     "failure_similarity_required": true,
     "twenty_pct_resistance_path_required": true,
     "actual_buy_hard_gates": "거래대금 10억원 이상, 실패유사도 40 미만, 1h 거래량이 20h 평균 1배 이상 또는 회차간 거래대금 1억원 이상 증가, 회차간 가격 비음수. 거래유의·실패 참조 티커 제외, 빗썸 실행시장 봉과 외부 악재검증 clear 필수. 시장 breadth·좁은 24h 상승률 구간·3회 연속 신호는 랭킹 정보이며 단독 거부조건으로 사용하지 않는다.",
-    "probe_buy_hard_gates": "조기 포착 전용 strict_early_probe. pre_ignition, 24h 0~8%, 거래대금 3억원 이상, 실패유사도 40 미만, 회차간 가격 0~2%, 1h 거래량 1배 이상 또는 거래대금 +1억원, 15m 지속성 1.2~5배, 최근60m 0~3%, 4h higher-low=true, 윗꼬리 1.5% 이하, 2회 연속 신호, 거래유의 없음, 빗썸 실행시장 봉과 외부 악재검증 clear를 모두 요구한다. 가용현금 최대 10%만 허용하며 actual_buy 승격 전 추가매수와 24h 8% 이상 추격진입을 금지한다.",
+    "probe_buy_hard_gates": "조기 포착 전용 strict_early_probe. 기본형은 pre_ignition, 24h 0~8%, 거래대금 3억원 이상, 실패유사도 40 미만, 회차간 가격 0~2%, 1h 거래량 1배 이상 또는 거래대금 +1억원, 15m 지속성 1.2~5배, 최근60m 0~3%, 4h higher-low=true, 윗꼬리 1.5% 이하, 2회 연속 신호를 요구한다. T 보정 momentum_probe는 24h 4~8%, 거래대금 3억원 이상, 회차간 가격 +0.5~2%, 1h 거래량 1배 이상, 15m 지속성 1.2~8배, 최근60m 0~4%, 4h higher-low=true, 윗꼬리 1.2% 이하, 2회 연속 신호를 요구한다. 두 유형 모두 거래유의 없음, 빗썸 실행시장 봉과 외부 악재검증 clear가 필수이며 가용현금 최대 10%만 허용하고 actual_buy 승격 전 추가매수와 24h 8% 이상 추격진입을 금지한다.",
     "watch_hard_gates": "거래대금 1억원, 실패유사도 40 미만, 실제 거래량 확인, 정규화 회차간 가격 비음수, 2회 연속 신호 유지. watch_pick은 주문가격·매수 지시 생성이 금지된다.",
     "best_available_pick_rule": "실행 허가와 후보 선정을 분리한다. actual_buy, strict_early_probe, watch_pick 순으로 우선하고 모두 없으면 pre_ignition·acceleration 중 반증이 가장 적고 미래확장점수가 높은 1개를 반드시 선택한다. 선택 자체는 매수 지시가 아니다."
   },
@@ -117,6 +118,7 @@
     "acceleration_top5",
     "late_top5",
     "fast_breakout_alerts",
+    "fast_breakout_leader",
     "exhaustion_no_chase",
     "twenty_pct_path_candidates",
     "best_available_pick",
