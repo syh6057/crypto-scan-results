@@ -17,7 +17,7 @@ HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SNAPSHOT_HISTORY_LIMIT = 6
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-09-02.3"
+SUPPORTED_POLICY_VERSION = "2026-09-02.4"
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 RISK_LOOKBACK = "3d"
 MIN_MARKET_BREADTH_PCT = 35.0
@@ -920,7 +920,7 @@ def main():
 
     # A probe is explicitly not a full recommendation. It permits only a small
     # first tranche after the same stability and execution-venue checks.
-    probe_candidates = [
+    standard_probe_candidates = [
         r for r in rows
         if r.get("momentum_stage") == "pre_ignition"
         and r.get("bithumb_24h_trade_krw", 0) >= PROBE_TRADE_KRW
@@ -938,6 +938,37 @@ def main():
         and volume_confirmed(r)
         and not_fading(r)
     ]
+
+    # T/Threshold miss correction: T was already a clean pre-ignition signal
+    # at +5.11% with KRW 372m turnover, 8.53x 1h volume and an intact 4h
+    # higher-low, but two narrow upper bounds (15m 6.68x > 5x and 60m
+    # +3.21% > 3%) blocked the probe before its later +46% expansion.  Keep the
+    # strict probe, but add a bounded momentum-probe lane for confirmed 4-8%
+    # ignition.  This still forbids >=8% chase entries.
+    momentum_probe_candidates = [
+        r for r in rows
+        if r.get("momentum_stage") == "pre_ignition"
+        and r.get("bithumb_24h_trade_krw", 0) >= PROBE_TRADE_KRW
+        and 4 <= (r.get("bithumb_24h_change_pct") or 0) < 8
+        and r.get("high_beta_target_eligible") is True
+        and r.get("market_warning") in (None, "", "NONE")
+        and r.get("reference_failure_pattern") is False
+        and r.get("failure_similarity_score", 100) < 40
+        and r.get("signal_stability_runs", 0) >= WATCH_STABILITY_RUNS
+        and r.get("four_hour_low_rising") is True
+        and 1.2 <= (r.get("vol_15m_persistence_x") or 0) <= 8.0
+        and 0 <= (r.get("price_last_60m_pct") or 0) <= 4.0
+        and 0.5 <= normalized_fast_price(r) <= 2.0
+        and (r.get("upper_wick_1h_pct") or 0) <= 1.2
+        and max(r.get("vol_1h_vs_20h_x") or 0, r.get("turnover_1h_vs_20h_x") or 0) >= 1.0
+        and not_fading(r)
+    ]
+    probe_candidates = []
+    probe_seen = set()
+    for candidate in standard_probe_candidates + momentum_probe_candidates:
+        if candidate["base"] not in probe_seen:
+            probe_candidates.append(candidate)
+            probe_seen.add(candidate["base"])
 
     # Risk verification is applied only after every technical gate passes.
     # It is deliberately fail-closed: unavailable/negative/not-checked => no buy.
@@ -1023,9 +1054,16 @@ def main():
         and (not probe_pick or r["base"] != probe_pick["base"])
     ]
     watch_source = watch_pool[0] if watch_pool else None
+    fast_breakout_leader = fast_breakout[0] if fast_breakout else None
     previous_watch_base = (previous.get("watch_pick") or {}).get("base")
     previous_watch = next((r for r in watch_pool if r["base"] == previous_watch_base), None)
-    if previous_watch and watch_source and previous_watch["future_expansion_score"] >= watch_source["future_expansion_score"] - 15:
+    challenger_is_fast_leader = bool(
+        fast_breakout_leader
+        and watch_source
+        and fast_breakout_leader.get("base") == watch_source.get("base")
+        and fast_breakout_leader.get("base") != previous_watch_base
+    )
+    if previous_watch and watch_source and not challenger_is_fast_leader and previous_watch["future_expansion_score"] >= watch_source["future_expansion_score"] - 15:
         watch_source = previous_watch
     watch_pick = decorate_action(watch_source, "watch_only", False, 0.0)
 
@@ -1119,13 +1157,14 @@ def main():
     history = append_signal_history(history, probe_pick, "probe_buy", generated_at, candle_cache)
     history = append_signal_history(history, watch_pick, "watch_pick", generated_at, candle_cache)
     history = append_signal_history(history, best_available_pick, "best_available_pick", generated_at, candle_cache)
+    history = append_signal_history(history, fast_breakout_leader, "fast_breakout_leader", generated_at, candle_cache)
 
     all_changes = [float(t.get("signed_change_rate") or 0) * 100 for t in tickers.values()]
     output = {
         "generated_at_utc": generated_at,
         "scan_started_at_utc": scan_started_at,
         "schema_version": policy["schema_version"],
-        "version": "v12-always-one-best-pick",
+        "version": "v13-threshold-miss-correction",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
@@ -1136,6 +1175,7 @@ def main():
         "late_top5": late,
         "exhaustion_no_chase": exhausted,
         "fast_breakout_alerts": fast_breakout,
+        "fast_breakout_leader": fast_breakout_leader,
         "twenty_pct_path_candidates": path_candidates,
         "additional_data_required": additional[:30],
         "best_available_pick": best_available_pick,
@@ -1151,7 +1191,7 @@ def main():
         "snapshot": snapshot,
         "failed_sample": failures[:30],
     }
-    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "best_available_pick", "actual_buy", "probe_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "cash_deployment_decision", "portfolio_exit_guardrails", "recommendation_scorecard"]
+    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "fast_breakout_leader", "twenty_pct_path_candidates", "additional_data_required", "best_available_pick", "actual_buy", "probe_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "cash_deployment_decision", "portfolio_exit_guardrails", "recommendation_scorecard"]
     summary = {k: output[k] for k in summary_keys}
     assert_public_output_safe(output)
     assert_public_output_safe(summary)
