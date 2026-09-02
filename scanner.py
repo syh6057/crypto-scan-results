@@ -17,7 +17,7 @@ HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SNAPSHOT_HISTORY_LIMIT = 6
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-09-02.2"
+SUPPORTED_POLICY_VERSION = "2026-09-02.3"
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 RISK_LOOKBACK = "3d"
 MIN_MARKET_BREADTH_PCT = 35.0
@@ -1029,6 +1029,60 @@ def main():
         watch_source = previous_watch
     watch_pick = decorate_action(watch_source, "watch_only", False, 0.0)
 
+    # Selection and execution are deliberately separate. The scanner must always
+    # preserve one best candidate so opportunity-cost misses remain visible even
+    # when no order is permitted by the hard gates.
+    def selection_blockers(r):
+        blockers = []
+        if r.get("bithumb_24h_trade_krw", 0) < ACTIONABLE_TRADE_KRW:
+            blockers.append("actual_buy_trade_value_below_1bn_krw")
+        if r.get("failure_similarity_score", 100) >= 40:
+            blockers.append("failure_similarity_at_or_above_40")
+        if not volume_confirmed(r):
+            blockers.append("volume_confirmation_missing")
+        if not not_fading(r):
+            blockers.append("scan_to_scan_price_negative")
+        if r.get("four_hour_low_rising") is not True:
+            blockers.append("four_hour_higher_low_missing")
+        if r.get("market_warning") not in (None, "", "NONE"):
+            blockers.append("market_warning")
+        if r.get("reference_failure_pattern") is True:
+            blockers.append("reference_failure_pattern")
+        return blockers
+
+    fallback_pool = [
+        r for r in rows
+        if r.get("momentum_stage") in {"pre_ignition", "acceleration"}
+        and r.get("market_warning") in (None, "", "NONE")
+        and r.get("reference_failure_pattern") is False
+        and r.get("failure_similarity_score", 100) < 60
+        and 0 <= (r.get("bithumb_24h_change_pct") or 0) <= 25
+        and (r.get("price_last_60m_pct") or 0) >= 0
+        and r.get("four_hour_low_rising") is True
+    ]
+    broad_fallback_pool = [
+        r for r in rows
+        if r.get("momentum_stage") in {"pre_ignition", "acceleration"}
+        and r.get("reference_failure_pattern") is False
+        and r.get("failure_similarity_score", 100) < 60
+    ]
+    selected_source = actual_pick or probe_pick or watch_pick
+    if selected_source:
+        best_available_pick = deepcopy(selected_source)
+        best_available_pick["selection_source"] = selected_source.get("action_class")
+    else:
+        fallback_source = (fallback_pool or broad_fallback_pool or rows or [None])[0]
+        best_available_pick = decorate_action(fallback_source, "best_available_only", False, 0.0)
+        if best_available_pick:
+            best_available_pick["selection_source"] = "ranked_fallback"
+    if best_available_pick:
+        best_available_pick["selection_rank"] = 1
+        best_available_pick["selection_status"] = (
+            "order_allowed" if best_available_pick.get("execution_plan_allowed")
+            else "rank_1_but_no_buy"
+        )
+        best_available_pick["blocked_by"] = selection_blockers(best_available_pick)
+
     # Realized-loss replacement trades are intentionally stricter than watch or
     # probe signals. Public scan outputs never know the user's cash or holdings;
     # they only state whether deployment is technically allowed.
@@ -1064,13 +1118,14 @@ def main():
     history = append_signal_history(history, actual_pick, "actual_buy", generated_at, candle_cache)
     history = append_signal_history(history, probe_pick, "probe_buy", generated_at, candle_cache)
     history = append_signal_history(history, watch_pick, "watch_pick", generated_at, candle_cache)
+    history = append_signal_history(history, best_available_pick, "best_available_pick", generated_at, candle_cache)
 
     all_changes = [float(t.get("signed_change_rate") or 0) * 100 for t in tickers.values()]
     output = {
         "generated_at_utc": generated_at,
         "scan_started_at_utc": scan_started_at,
         "schema_version": policy["schema_version"],
-        "version": "v11-opportunity-aware-gates",
+        "version": "v12-always-one-best-pick",
         "policy_version": policy["policy_version"],
         "policy_file": POLICY_FILE,
         "universe": {"bithumb_krw_total": len(markets), "binance_bithumb_intersection_total": len(set(markets) & set(binance_pairs)), "candidate_candles_scanned": len(rows), "additional_data_required_count": len(additional), "failed": len(failures)},
@@ -1083,6 +1138,7 @@ def main():
         "fast_breakout_alerts": fast_breakout,
         "twenty_pct_path_candidates": path_candidates,
         "additional_data_required": additional[:30],
+        "best_available_pick": best_available_pick,
         "actual_buy": actual_pick,
         "probe_buy": probe_pick,
         "watch_pick": watch_pick,
@@ -1095,7 +1151,7 @@ def main():
         "snapshot": snapshot,
         "failed_sample": failures[:30],
     }
-    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "actual_buy", "probe_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "cash_deployment_decision", "portfolio_exit_guardrails", "recommendation_scorecard"]
+    summary_keys = ["generated_at_utc", "schema_version", "version", "policy_version", "universe", "market_regime", "pre_ignition_top5", "acceleration_top5", "late_top5", "exhaustion_no_chase", "fast_breakout_alerts", "twenty_pct_path_candidates", "additional_data_required", "best_available_pick", "actual_buy", "probe_buy", "watch_pick", "risk_scan", "blocked_buy_candidates", "cash_deployment_decision", "portfolio_exit_guardrails", "recommendation_scorecard"]
     summary = {k: output[k] for k in summary_keys}
     assert_public_output_safe(output)
     assert_public_output_safe(summary)
