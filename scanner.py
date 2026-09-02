@@ -17,7 +17,7 @@ HISTORY_FILE = "policy_recommendation_history.json"
 SNAPSHOT_HISTORY_FILE = "policy_snapshot_history.json"
 SNAPSHOT_HISTORY_LIMIT = 6
 SUPPORTED_POLICY_SCHEMA = 1
-SUPPORTED_POLICY_VERSION = "2026-09-02.1"
+SUPPORTED_POLICY_VERSION = "2026-09-02.2"
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 RISK_LOOKBACK = "3d"
 MIN_MARKET_BREADTH_PCT = 35.0
@@ -922,13 +922,19 @@ def main():
     # first tranche after the same stability and execution-venue checks.
     probe_candidates = [
         r for r in rows
-        if r.get("momentum_stage") in {"pre_ignition", "acceleration"}
+        if r.get("momentum_stage") == "pre_ignition"
         and r.get("bithumb_24h_trade_krw", 0) >= PROBE_TRADE_KRW
+        and 0 <= (r.get("bithumb_24h_change_pct") or 0) <= 8
         and r.get("high_beta_target_eligible") is True
         and r.get("market_warning") in (None, "", "NONE")
         and r.get("reference_failure_pattern") is False
         and r.get("failure_similarity_score", 100) < 40
         and r.get("signal_stability_runs", 0) >= WATCH_STABILITY_RUNS
+        and r.get("four_hour_low_rising") is True
+        and 1.2 <= (r.get("vol_15m_persistence_x") or 0) <= 5.0
+        and 0 <= (r.get("price_last_60m_pct") or 0) <= 3.0
+        and 0 <= normalized_fast_price(r) <= 2.0
+        and (r.get("upper_wick_1h_pct") or 0) <= 1.5
         and volume_confirmed(r)
         and not_fading(r)
     ]
@@ -1000,7 +1006,7 @@ def main():
 
     actual_pick = decorate_action(verified_actual[0] if verified_actual else None, "actual_buy", True, 0.30)
     probe_source = next((r for r in verified_probe if not actual_pick or r["base"] != actual_pick["base"]), None)
-    probe_pick = decorate_action(probe_source, "probe_buy", True, 0.15)
+    probe_pick = decorate_action(probe_source, "probe_buy", True, 0.10)
 
     watch_pool = [
         r for r in rows
@@ -1026,14 +1032,17 @@ def main():
     # Realized-loss replacement trades are intentionally stricter than watch or
     # probe signals. Public scan outputs never know the user's cash or holdings;
     # they only state whether deployment is technically allowed.
+    deploy_pick = actual_pick or probe_pick
     cash_deployment_decision = {
-        "allowed": actual_pick is not None,
-        "required_signal_class": "actual_buy",
-        "selected_base": actual_pick.get("base") if actual_pick else None,
-        "probe_buy_is_replacement_permission": False,
+        "allowed": deploy_pick is not None,
+        "required_signal_class": "actual_buy_or_strict_early_probe",
+        "selected_base": deploy_pick.get("base") if deploy_pick else None,
+        "selected_signal_class": deploy_pick.get("action_class") if deploy_pick else None,
+        "max_cash_fraction": deploy_pick.get("max_position_fraction") if deploy_pick else 0.0,
+        "probe_buy_is_replacement_permission": probe_pick is not None,
         "watch_pick_is_replacement_permission": False,
         "available_cash_source": "latest_user_screen_or_explicit_value_only",
-        "reason": "actual_buy_verified" if actual_pick else "no_verified_actual_buy",
+        "reason": "verified_deployment_signal" if deploy_pick else "no_verified_deployment_signal",
     }
     portfolio_exit_guardrails = {
         "full_exit_requires_explicit_action_price": True,
