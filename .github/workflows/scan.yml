@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - "scanner.py"
+      - "scanner_v14.py"
+      - "test_scanner.py"
+      - "test_scanner_v14.py"
       - "crypto_decision_policy.json"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
@@ -38,7 +41,8 @@ jobs:
 
       - name: Validate canonical policy and scanner syntax
         run: |
-          python -m py_compile scanner.py
+          python -m py_compile scanner.py scanner_v14.py test_scanner.py test_scanner_v14.py
+          python -m unittest test_scanner.py test_scanner_v14.py
           python - <<'PY'
           import ast
           import json
@@ -64,8 +68,8 @@ jobs:
           )
           PY
 
-      - name: Run policy-driven crypto scanner
-        run: python scanner.py
+      - name: Run policy-driven crypto scanner with full-market radar
+        run: python scanner_v14.py
 
       - name: Validate generated policy-driven results
         run: |
@@ -81,6 +85,12 @@ jobs:
               )
               assert output["policy_version"] == policy["policy_version"], (
                   f"{output_name}: policy_version mismatch"
+              )
+              assert output["version"] == "v14-full-market-breakout-radar", (
+                  f"{output_name}: scanner v14 post-processing missing"
+              )
+              assert "full_market_breakout_radar" in output, (
+                  f"{output_name}: full-market radar missing"
               )
           PY
 
