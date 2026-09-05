@@ -5,11 +5,15 @@ from copy import deepcopy
 import scanner
 
 VERSION = "v14-full-market-breakout-radar"
-RADAR_CANDLE_FORCE_LIMIT = 60
+CANDLE_CONFIRMATION_BUDGET = 180
+RADAR_CANDLE_FORCE_LIMIT = 30
 RADAR_OUTPUT_LIMIT = 20
+ALWAYS_CONFIRM = {"HOME", "PROM", "BICO", "TAO", "BIO", "SUI", "ONT", "TRX", "BANK", "ACE", "ME", "INIT"}
 
 _original_select_candle_universe = scanner.select_candle_universe
+_original_bithumb_bars = scanner.bithumb_bars
 _capture = {}
+_active_history_markets = set()
 
 
 def _fast_values(fast):
@@ -59,27 +63,63 @@ def _radar_score(change24, trade24, fast):
     return round(score, 2)
 
 
+def _base_confirmation_score(base, markets, tickers, current_market, previous_market):
+    info = markets.get(base) or {}
+    ticker = tickers.get(info.get("market"), {})
+    change24 = float(ticker.get("signed_change_rate") or 0) * 100
+    trade24 = float(ticker.get("acc_trade_price_24h") or 0)
+    fast = scanner.fast_market_metrics(base, current_market, previous_market)
+    fast_price, fast_change, fast_trade = _fast_values(fast)
+    return (
+        trade24
+        + max(change24, 0) * 100_000_000
+        + max(fast_price, 0) * 2_000_000_000
+        + max(fast_change, 0) * 1_000_000_000
+        + max(fast_trade, 0) * 4
+    )
+
+
 def _patched_select_candle_universe(markets, tickers, current_market, previous_market):
-    selected = set(_original_select_candle_universe(markets, tickers, current_market, previous_market))
-    ranked = []
+    original_selected = set(_original_select_candle_universe(markets, tickers, current_market, previous_market))
+    confirmation_ranked = sorted(
+        original_selected,
+        key=lambda base: _base_confirmation_score(base, markets, tickers, current_market, previous_market),
+        reverse=True,
+    )
+    selected = set(confirmation_ranked[:CANDLE_CONFIRMATION_BUDGET])
+
+    radar_ranked = []
     for base, info in markets.items():
         ticker = tickers.get(info["market"], {})
         change24 = float(ticker.get("signed_change_rate") or 0) * 100
         trade24 = float(ticker.get("acc_trade_price_24h") or 0)
         fast = scanner.fast_market_metrics(base, current_market, previous_market)
         if _is_radar_candidate(change24, trade24, fast):
-            ranked.append((_radar_score(change24, trade24, fast), base))
-    ranked.sort(reverse=True)
-    selected.update(base for _, base in ranked[:RADAR_CANDLE_FORCE_LIMIT])
+            radar_ranked.append((_radar_score(change24, trade24, fast), base))
+    radar_ranked.sort(reverse=True)
+    selected.update(base for _, base in radar_ranked[:RADAR_CANDLE_FORCE_LIMIT])
+    selected.update(base for base in ALWAYS_CONFIRM if base in markets)
+
     _capture.clear()
     _capture.update({
         "markets": markets,
         "tickers": tickers,
         "current_market": current_market,
         "previous_market": previous_market,
-        "forced_radar_bases": [base for _, base in ranked[:RADAR_CANDLE_FORCE_LIMIT]],
+        "forced_radar_bases": [base for _, base in radar_ranked[:RADAR_CANDLE_FORCE_LIMIT]],
+        "original_candle_universe_count": len(original_selected),
+        "budgeted_candle_universe_count": len(selected),
     })
     return selected
+
+
+def _patched_bithumb_bars(market, unit, limit):
+    # Most candidates need only recent structure. Preserve 100 x 15m bars for
+    # live scorecard entries so 24h MFE/MAE windows remain exact.
+    effective_limit = limit
+    if unit == 15 and limit >= 100 and market not in _active_history_markets:
+        effective_limit = 20
+    return _original_bithumb_bars(market, unit, effective_limit)
 
 
 def _build_full_market_radar(current_market, previous_market, markets, snapshot):
@@ -250,7 +290,11 @@ def _postprocess(previous_result):
     result["mover_detection_audit"] = _build_mover_detection_audit(result, radar)
     result["scanner_diagnostics"] = {
         "full_market_ticker_radar": True,
+        "original_candle_universe_count": _capture.get("original_candle_universe_count"),
+        "budgeted_candle_universe_count": _capture.get("budgeted_candle_universe_count"),
+        "candle_confirmation_budget": CANDLE_CONFIRMATION_BUDGET,
         "forced_candle_confirmation_limit": RADAR_CANDLE_FORCE_LIMIT,
+        "reduced_non_history_15m_payload": True,
         "market_warning_detection_separated_from_execution": True,
         "rank_churn_does_not_invalidate_intact_structure": True,
         "additional_data_sorted_by_breakout_priority": True,
@@ -280,12 +324,20 @@ def _postprocess(previous_result):
         "high_risk_breakout_leader": result.get("high_risk_breakout_leader"),
         "continuity_signals": result.get("continuity_signals"),
         "mover_detection_audit": result.get("mover_detection_audit"),
+        "scanner_diagnostics": result.get("scanner_diagnostics"),
     }, ensure_ascii=False, indent=2))
 
 
 def main():
     previous_result = scanner.load_json(scanner.RESULT_FILE, {})
+    history = scanner.load_json(scanner.HISTORY_FILE, [])
+    _active_history_markets.clear()
+    _active_history_markets.update(
+        item.get("market") for item in history
+        if not item.get("closed") and item.get("market")
+    )
     scanner.select_candle_universe = _patched_select_candle_universe
+    scanner.bithumb_bars = _patched_bithumb_bars
     scanner.main()
     _postprocess(previous_result)
 
