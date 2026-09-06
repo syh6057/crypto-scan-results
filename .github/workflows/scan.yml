@@ -1,19 +1,12 @@
-name: 5-minute crypto scan
+name: 5-minute v16 beam scan
 
 on:
   push:
     branches: [main]
     paths:
-      - "scanner.py"
-      - "scanner_v14.py"
-      - "scanner_v15.py"
-      - "test_scanner.py"
-      - "test_scanner_v14.py"
-      - "test_scanner_v15.py"
-      - "crypto_decision_policy.json"
+      - "scanner_v16.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
-
   schedule:
     - cron: "*/5 * * * *"
 
@@ -21,14 +14,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: five-minute-crypto-scan
+  group: v16-beam-scan
   cancel-in-progress: true
 
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,90 +33,56 @@ jobs:
       - name: Install dependencies
         run: python -m pip install requests
 
-      - name: Validate canonical policy and scanner syntax
-        run: |
-          python -m py_compile scanner.py scanner_v14.py scanner_v15.py test_scanner.py test_scanner_v14.py test_scanner_v15.py
-          python -m unittest test_scanner.py test_scanner_v14.py test_scanner_v15.py
-          python - <<'PY'
-          import ast
-          import json
-          from pathlib import Path
+      - name: Validate v16 syntax
+        run: python -m py_compile scanner_v16.py
 
-          policy = json.loads(Path("crypto_decision_policy.json").read_text(encoding="utf-8"))
-          tree = ast.parse(Path("scanner.py").read_text(encoding="utf-8"))
-          constants = {}
-          for node in tree.body:
-              if isinstance(node, ast.Assign) and len(node.targets) == 1:
-                  target = node.targets[0]
-                  if isinstance(target, ast.Name) and target.id in {
-                      "SUPPORTED_POLICY_SCHEMA",
-                      "SUPPORTED_POLICY_VERSION",
-                  }:
-                      constants[target.id] = ast.literal_eval(node.value)
+      - name: Run Bithumb all-KRW two-track beam scanner
+        run: python scanner_v16.py
 
-          assert policy["schema_version"] == constants["SUPPORTED_POLICY_SCHEMA"], (
-              "schema_version mismatch between policy and scanner"
-          )
-          assert policy["policy_version"] == constants["SUPPORTED_POLICY_VERSION"], (
-              "policy_version mismatch between policy and scanner"
-          )
-          PY
-
-      - name: Run policy-driven crypto scanner with gap-breakout catcher
-        run: python scanner_v15.py
-
-      - name: Validate generated policy-driven results
+      - name: Validate fresh outputs and health
         run: |
           python - <<'PY'
           import json
+          from datetime import datetime, timezone
           from pathlib import Path
 
-          policy = json.loads(Path("crypto_decision_policy.json").read_text(encoding="utf-8"))
-          for output_name in ("policy_scan_result.json", "policy_latest_summary.json"):
-              output = json.loads(Path(output_name).read_text(encoding="utf-8"))
-              assert output["schema_version"] == policy["schema_version"], (
-                  f"{output_name}: schema_version mismatch"
-              )
-              assert output["policy_version"] == policy["policy_version"], (
-                  f"{output_name}: policy_version mismatch"
-              )
-              assert output["version"] == "v15-gap-breakout-catcher", (
-                  f"{output_name}: scanner v15 post-processing missing"
-              )
-              assert "full_market_breakout_radar" in output, (
-                  f"{output_name}: full-market radar missing"
-              )
-              assert "gap_breakout_alerts" in output, (
-                  f"{output_name}: gap-breakout alerts missing"
-              )
+          for name in ("beam_scan_result.json", "beam_latest_summary.json"):
+              p = Path(name)
+              assert p.exists() and p.stat().st_size > 0, f"{name} missing"
+              x = json.loads(p.read_text(encoding="utf-8"))
+              assert x.get("source_version") == "v16-bithumb-beam-two-track", f"{name}: wrong version"
+
+          x = json.loads(Path("beam_latest_summary.json").read_text(encoding="utf-8"))
+          h = x.get("health") or {}
+          print("health:", h)
+          print("top2:", [(r.get("base"), r.get("beam_score"), (r.get("entry_plan") or {}).get("status")) for r in x.get("trade_candidates", [])])
+          assert h.get("stage1_success", 0) > 0, "No Bithumb candle data"
+          assert len(x.get("trade_candidates", [])) >= 2, "Need two ranked outputs"
+          ts = datetime.fromisoformat(x["generated_at_utc"])
+          age = (datetime.now(timezone.utc) - ts).total_seconds()
+          assert age < 900, f"stale result: {age}s"
           PY
 
-      - name: Commit refreshed policy-driven results
+      - name: Commit refreshed v16 results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           output_dir="$(mktemp -d)"
-          cp policy_scan_result.json policy_latest_summary.json policy_recommendation_history.json policy_snapshot_history.json "$output_dir/"
-
+          cp beam_scan_result.json beam_latest_summary.json "$output_dir/"
           for attempt in 1 2 3; do
             git fetch origin main
-            git restore --staged --worktree policy_scan_result.json policy_latest_summary.json policy_recommendation_history.json policy_snapshot_history.json
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add policy_scan_result.json policy_latest_summary.json policy_recommendation_history.json policy_snapshot_history.json
-
+            git add beam_scan_result.json beam_latest_summary.json
             if git diff --cached --quiet; then
-              echo "No scan output changes to commit."
+              echo "No v16 output changes to commit."
               exit 0
             fi
-
-            git commit -m "Update isolated policy-driven crypto scan"
+            git commit -m "Update v16 beam scan results"
             if git push origin main; then
               exit 0
             fi
-            echo "Push raced with another update; retrying on latest main ($attempt/3)."
+            echo "Push raced with another update; retrying ($attempt/3)."
           done
-
-          echo "Unable to publish scan outputs after 3 attempts."
+          echo "Unable to publish v16 scan outputs after 3 attempts."
           exit 1
