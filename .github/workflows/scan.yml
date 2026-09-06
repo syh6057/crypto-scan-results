@@ -1,10 +1,11 @@
-name: 5-minute v16 beam scan
+name: 5-minute calibrated beam scan
 
 on:
   push:
     branches: [main]
     paths:
       - "scanner_v16.py"
+      - "scanner_v17.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -14,7 +15,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: v16-beam-scan
+  group: calibrated-beam-scan
   cancel-in-progress: true
 
 jobs:
@@ -33,56 +34,57 @@ jobs:
       - name: Install dependencies
         run: python -m pip install requests
 
-      - name: Validate v16 syntax
-        run: python -m py_compile scanner_v16.py
+      - name: Validate scanner syntax
+        run: python -m py_compile scanner_v16.py scanner_v17.py
 
-      - name: Run Bithumb all-KRW two-track beam scanner
-        run: python scanner_v16.py
+      - name: Run calibrated Bithumb all-KRW beam scanner
+        run: python scanner_v17.py
 
-      - name: Validate fresh outputs and health
+      - name: Validate fresh outputs and two-candidate contract
         run: |
           python - <<'PY'
           import json
           from datetime import datetime, timezone
           from pathlib import Path
 
-          for name in ("beam_scan_result.json", "beam_latest_summary.json"):
+          required = ("beam_scan_result.json", "beam_latest_summary.json", "beam_top10_compact.json", "beam_state.json")
+          for name in required:
               p = Path(name)
               assert p.exists() and p.stat().st_size > 0, f"{name} missing"
-              x = json.loads(p.read_text(encoding="utf-8"))
-              assert x.get("source_version") == "v16-bithumb-beam-two-track", f"{name}: wrong version"
 
           x = json.loads(Path("beam_latest_summary.json").read_text(encoding="utf-8"))
+          assert x.get("source_version") == "v17-beam-calibrated-fast-state"
           h = x.get("health") or {}
           print("health:", h)
-          print("top2:", [(r.get("base"), r.get("beam_score"), (r.get("entry_plan") or {}).get("status")) for r in x.get("trade_candidates", [])])
+          top2 = x.get("trade_candidates") or []
+          print("top2:", [(r.get("base"), r.get("beam_score"), (r.get("entry_plan") or {}).get("status")) for r in top2])
           assert h.get("stage1_success", 0) > 0, "No Bithumb candle data"
-          assert len(x.get("trade_candidates", [])) >= 2, "Need two ranked outputs"
+          assert len(top2) >= 2, "Need two beam-ranked outputs"
           ts = datetime.fromisoformat(x["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale result: {age}s"
           PY
 
-      - name: Commit refreshed v16 results
+      - name: Commit refreshed calibrated results and state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json "$output_dir/"
           for attempt in 1 2 3; do
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json
             if git diff --cached --quiet; then
-              echo "No v16 output changes to commit."
+              echo "No calibrated output changes to commit."
               exit 0
             fi
-            git commit -m "Update v16 beam scan results"
+            git commit -m "Update calibrated beam scan results"
             if git push origin main; then
               exit 0
             fi
             echo "Push raced with another update; retrying ($attempt/3)."
           done
-          echo "Unable to publish v16 scan outputs after 3 attempts."
+          echo "Unable to publish calibrated scan outputs after 3 attempts."
           exit 1
