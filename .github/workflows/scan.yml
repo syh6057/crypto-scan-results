@@ -40,6 +40,35 @@ jobs:
       - name: Run calibrated Bithumb all-KRW beam scanner
         run: python scanner_v17.py
 
+      - name: Build compact review output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path("beam_scan_result.json").read_text(encoding="utf-8"))
+          def slim(r):
+              return {
+                  "base":r.get("base"), "market":r.get("market"), "korean_name":r.get("korean_name"),
+                  "price_krw":r.get("price_krw"), "change_24h_pct":r.get("change_24h_pct"),
+                  "trade_24h_krw":r.get("trade_24h_krw"), "track":r.get("track"),
+                  "beam_score":r.get("beam_score"), "signature":r.get("beam_signature_count"),
+                  "status":(r.get("entry_plan") or {}).get("status"), "entry_plan":r.get("entry_plan"),
+                  "sector":r.get("sector"), "sector_rotation_reason":r.get("sector_rotation_reason"),
+                  "fast_5m":r.get("fast_5m"), "m5":r.get("m5"), "m15":r.get("m15"),
+                  "h1":r.get("h1"), "h4":r.get("h4"), "d1":r.get("d1"),
+                  "orderbook":r.get("orderbook"), "trade_flow":r.get("trade_flow"),
+                  "warning":r.get("warning_flag"), "beam_eligible":r.get("beam_eligible")
+              }
+          top=(x.get("stage2_ranked") or [])[:10]
+          out={
+              "generated_at_utc":x.get("generated_at_utc"), "source_version":x.get("source_version"),
+              "health":x.get("health"), "calibration":x.get("calibration"),
+              "top10":[slim(r) for r in top],
+              "trade_candidates":[slim(r) for r in (x.get("trade_candidates") or [])[:2]],
+          }
+          Path("beam_top10_compact.json").write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding="utf-8")
+          PY
+
       - name: Validate fresh outputs and two-candidate contract
         run: |
           python - <<'PY'
