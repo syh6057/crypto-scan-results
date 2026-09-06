@@ -6,6 +6,7 @@ on:
     paths:
       - "scanner_v16.py"
       - "scanner_v17.py"
+      - "scanner_v18.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -35,85 +36,77 @@ jobs:
         run: python -m pip install requests
 
       - name: Validate scanner syntax
-        run: python -m py_compile scanner_v16.py scanner_v17.py
+        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py
 
-      - name: Run calibrated Bithumb all-KRW beam scanner
-        run: python scanner_v17.py
-
-      - name: Build compact review output
+      - name: Run v18 early-beam scan with intrarun micro-sample
         run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          x=json.loads(Path("beam_scan_result.json").read_text(encoding="utf-8"))
-          def slim(r):
-              return {
-                  "base":r.get("base"), "market":r.get("market"), "korean_name":r.get("korean_name"),
-                  "price_krw":r.get("price_krw"), "change_24h_pct":r.get("change_24h_pct"),
-                  "trade_24h_krw":r.get("trade_24h_krw"), "track":r.get("track"),
-                  "beam_score":r.get("beam_score"), "signature":r.get("beam_signature_count"),
-                  "status":(r.get("entry_plan") or {}).get("status"), "entry_plan":r.get("entry_plan"),
-                  "sector":r.get("sector"), "sector_rotation_reason":r.get("sector_rotation_reason"),
-                  "fast_5m":r.get("fast_5m"), "m5":r.get("m5"), "m15":r.get("m15"),
-                  "h1":r.get("h1"), "h4":r.get("h4"), "d1":r.get("d1"),
-                  "orderbook":r.get("orderbook"), "trade_flow":r.get("trade_flow"),
-                  "warning":r.get("warning_flag"), "beam_eligible":r.get("beam_eligible")
-              }
-          top=(x.get("stage2_ranked") or [])[:10]
-          out={
-              "generated_at_utc":x.get("generated_at_utc"), "source_version":x.get("source_version"),
-              "health":x.get("health"), "calibration":x.get("calibration"),
-              "top10":[slim(r) for r in top],
-              "trade_candidates":[slim(r) for r in (x.get("trade_candidates") or [])[:2]],
-          }
-          Path("beam_top10_compact.json").write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding="utf-8")
-          PY
+          # First full snapshot establishes a fresh local state even when GitHub's scheduler arrives late.
+          python scanner_v18.py
+          # A second snapshot inside the same Action reduces dependence on scheduler jitter.
+          sleep 75
+          python scanner_v18.py
 
-      - name: Validate fresh outputs and two-candidate contract
+      - name: Validate fresh outputs and hard-gate contract
         run: |
           python - <<'PY'
           import json
           from datetime import datetime, timezone
           from pathlib import Path
 
-          required = ("beam_scan_result.json", "beam_latest_summary.json", "beam_top10_compact.json", "beam_state.json")
+          required = (
+              "beam_scan_result.json",
+              "beam_latest_summary.json",
+              "beam_top10_compact.json",
+              "beam_state.json",
+              "beam_first_seen.json",
+          )
           for name in required:
               p = Path(name)
               assert p.exists() and p.stat().st_size > 0, f"{name} missing"
 
           x = json.loads(Path("beam_latest_summary.json").read_text(encoding="utf-8"))
-          assert x.get("source_version") == "v17-beam-calibrated-fast-state"
+          assert x.get("source_version") == "v18-hard-gated-first-detection"
           h = x.get("health") or {}
           print("health:", h)
+          print("hard_gate_policy:", x.get("hard_gate_policy"))
           top2 = x.get("trade_candidates") or []
-          print("top2:", [(r.get("base"), r.get("beam_score"), (r.get("entry_plan") or {}).get("status")) for r in top2])
+          print("top2:", [(r.get("base"), r.get("track"), r.get("change_24h_pct"), r.get("beam_score"), r.get("status")) for r in top2])
           assert h.get("stage1_success", 0) > 0, "No Bithumb candle data"
-          assert len(top2) >= 2, "Need two beam-ranked outputs"
+          assert len(top2) >= 2, "Need two hard-gated beam-ranked outputs"
+          for r in top2:
+              chg = float(r.get("change_24h_pct") or 0)
+              track = r.get("track")
+              if track == "PRE_IGNITION":
+                  assert 0 <= chg < 8, (r.get("base"), track, chg)
+              elif track == "ACCELERATOR":
+                  assert 8 <= chg <= 20, (r.get("base"), track, chg)
+              else:
+                  assert track == "REACCELERATION_SPECIAL", (r.get("base"), track, chg)
           ts = datetime.fromisoformat(x["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale result: {age}s"
           PY
 
-      - name: Commit refreshed calibrated results and state
+      - name: Commit refreshed v18 results and tracking state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json "$output_dir/"
           for attempt in 1 2 3; do
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json
             if git diff --cached --quiet; then
-              echo "No calibrated output changes to commit."
+              echo "No v18 output changes to commit."
               exit 0
             fi
-            git commit -m "Update calibrated beam scan results"
+            git commit -m "Update v18 hard-gated beam scan results"
             if git push origin main; then
               exit 0
             fi
             echo "Push raced with another update; retrying ($attempt/3)."
           done
-          echo "Unable to publish calibrated scan outputs after 3 attempts."
+          echo "Unable to publish v18 scan outputs after 3 attempts."
           exit 1
