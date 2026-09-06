@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-06T22:18:25.524577+00:00",
+  "generated_at_utc": "2026-09-06T22:28:17.950718+00:00",
   "source_version": "v18-hard-gated-first-detection",
   "expert_version": "v19-expert-lock-predictive",
   "health": {
@@ -8,11 +8,11 @@
     "warnings": [],
     "markets_total": 472,
     "tickers_loaded": 472,
-    "stage1_requested": 144,
-    "stage1_success": 144,
+    "stage1_requested": 143,
+    "stage1_success": 143,
     "stage1_success_ratio": 100.0,
     "stage2_success": 30,
-    "runtime_sec": 50.3
+    "runtime_sec": 46.7
   },
   "target_archetype": "ARB/FLOCK/RAY/TEMCO-like early-beam",
   "method_note": "Pattern similarity is a rule-based expert heuristic, not a historical backtest probability.",
@@ -26,50 +26,53 @@
       "base": "XAN",
       "market": "KRW-XAN",
       "korean_name": "아노마",
-      "price_krw": 28.16,
-      "change_24h_pct": 15.45,
+      "price_krw": 28.33,
+      "change_24h_pct": 16.97,
       "track": "ACCELERATOR",
-      "expert_status": "PREDICT_BUY",
-      "expert_score": 222.39,
-      "pattern_similarity": 74.0,
-      "expert_confidence": 85.7,
-      "score_trend_vs_prev": 37.03,
-      "seen_streak": 13,
+      "expert_status": "PREDICT_WAIT",
+      "expert_score": 187.47,
+      "pattern_similarity": 76.0,
+      "expert_confidence": 86.8,
+      "score_trend_vs_prev": 11.02,
+      "seen_streak": 15,
       "expert_reasons": [
-        "turnover>=4x",
+        "controlled_5m_price_response",
         "15m_volume_persists",
         "15m_low_rising",
         "score_strengthening",
         "multi_scan_persistence"
       ],
-      "expert_penalties": [],
+      "expert_penalties": [
+        "weak_buy_flow",
+        "ask_depth_dominates"
+      ],
       "entry_plan": {
         "status": "ENTER_CANDIDATE",
-        "reference_price_krw": 28.16,
-        "do_not_chase_above_krw": 28.864,
-        "invalidation_krw": 27.25888,
-        "target_1_krw": 30.4128,
-        "target_2_krw": 32.384,
-        "target_3_krw": 35.2
+        "reference_price_krw": 28.33,
+        "do_not_chase_above_krw": 29.03825,
+        "invalidation_krw": 27.42344,
+        "target_1_krw": 30.5964,
+        "target_2_krw": 32.5795,
+        "target_3_krw": 35.4125
       },
       "fast_5m": {
         "available": true,
         "elapsed_min": 1.5,
-        "price_change_per_5m_pct": 2.663,
-        "change24_delta_per_5m_pct": 3.6,
-        "trade_value_delta_per_5m_krw": 85220761,
-        "turnover_intensity_vs_even_5m_x": 5.94
+        "price_change_per_5m_pct": 1.136,
+        "change24_delta_per_5m_pct": 2.54,
+        "trade_value_delta_per_5m_krw": 50962302,
+        "turnover_intensity_vs_even_5m_x": 3.46
       },
       "m5": {
-        "last_close": 27.41,
-        "last_price_pct": -0.04,
-        "vol_spike_x": 1.57,
-        "vol_persistence_x": 0.8,
+        "last_close": 27.98,
+        "last_price_pct": 1.52,
+        "vol_spike_x": 3.8,
+        "vol_persistence_x": 1.21,
         "recent_positive_count": 3,
-        "upper_wick_pct": 0.51,
-        "low_rising": false,
+        "upper_wick_pct": 0.86,
+        "low_rising": true,
         "close_above_ma": true,
-        "range_pct": 3.1
+        "range_pct": 4.87
       },
       "m15": {
         "last_close": 27.02,
@@ -105,15 +108,15 @@
         "range_pct": 15.24
       },
       "orderbook": {
-        "bid_depth_top5_krw": 3820821.0,
-        "ask_depth_top5_krw": 2476305.0,
-        "bid_ask_depth_ratio": 1.54,
-        "spread_pct": 0.178
+        "bid_depth_top5_krw": 3219676.0,
+        "ask_depth_top5_krw": 35797177.0,
+        "bid_ask_depth_ratio": 0.09,
+        "spread_pct": 0.282
       },
       "trade_flow": {
-        "recent_buy_krw": 25480518.0,
-        "recent_sell_krw": 29146975.0,
-        "buy_sell_ratio": 0.87
+        "recent_buy_krw": 23846620.0,
+        "recent_sell_krw": 41019359.0,
+        "buy_sell_ratio": 0.58
       },
       "lock": {
         "locked_at": "2026-09-06T22:04:36.280805+00:00",
@@ -123,8 +126,8 @@
         "lock_similarity": 67.0,
         "invalidation_krw": 26.61032,
         "do_not_chase_above_krw": 28.17725,
-        "current_return_pct": 2.44,
-        "peak_return_pct": 2.44,
+        "current_return_pct": 3.06,
+        "peak_return_pct": 3.06,
         "hit_8pct": false,
         "hit_15pct": false,
         "hit_25pct": false
@@ -134,62 +137,62 @@
       "base": "ASTER",
       "market": "KRW-ASTER",
       "korean_name": "아스터",
-      "price_krw": 1051.0,
-      "change_24h_pct": 2.14,
+      "price_krw": 1056.0,
+      "change_24h_pct": 2.62,
       "track": "PRE_IGNITION",
       "expert_status": "PREDICT_BUY",
-      "expert_score": 245.75,
-      "pattern_similarity": 84.0,
-      "expert_confidence": 81.2,
-      "score_trend_vs_prev": 56.0,
-      "seen_streak": 2,
+      "expert_score": 215.75,
+      "pattern_similarity": 73.0,
+      "expert_confidence": 85.15,
+      "score_trend_vs_prev": 15.0,
+      "seen_streak": 4,
       "expert_reasons": [
         "controlled_5m_price_response",
         "15m_volume_persists",
-        "15m_low_rising",
         "buyers_dominate",
         "early_stage",
-        "score_strengthening"
+        "score_strengthening",
+        "multi_scan_persistence"
       ],
       "expert_penalties": [],
       "entry_plan": {
         "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 1051.0,
-        "do_not_chase_above_krw": 1077.275,
-        "invalidation_krw": 1017.368,
-        "target_1_krw": 1135.08,
-        "target_2_krw": 1208.65,
-        "target_3_krw": 1313.75
+        "reference_price_krw": 1056.0,
+        "do_not_chase_above_krw": 1082.4,
+        "invalidation_krw": 1022.208,
+        "target_1_krw": 1140.48,
+        "target_2_krw": 1214.4,
+        "target_3_krw": 1320.0
       },
       "fast_5m": {
         "available": true,
         "elapsed_min": 1.8,
-        "price_change_per_5m_pct": 0.19,
-        "change24_delta_per_5m_pct": 0.2,
-        "trade_value_delta_per_5m_krw": 45077,
-        "turnover_intensity_vs_even_5m_x": 0.05
+        "price_change_per_5m_pct": 0.76,
+        "change24_delta_per_5m_pct": 0.76,
+        "trade_value_delta_per_5m_krw": 315906,
+        "turnover_intensity_vs_even_5m_x": 0.37
       },
       "m5": {
-        "last_close": 1050.0,
-        "last_price_pct": -0.28,
-        "vol_spike_x": 9.34,
-        "vol_persistence_x": 0.94,
+        "last_close": 1051.0,
+        "last_price_pct": 0.0,
+        "vol_spike_x": 0.19,
+        "vol_persistence_x": 0.88,
         "recent_positive_count": 2,
-        "upper_wick_pct": 0.0,
+        "upper_wick_pct": 0.1,
         "low_rising": false,
         "close_above_ma": false,
         "range_pct": 0.67
       },
       "m15": {
-        "last_close": 1057.0,
-        "last_price_pct": 0.19,
-        "vol_spike_x": 10.05,
-        "vol_persistence_x": 2.41,
+        "last_close": 1050.0,
+        "last_price_pct": -0.57,
+        "vol_spike_x": 2.31,
+        "vol_persistence_x": 3.34,
         "recent_positive_count": 3,
         "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 0.57
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 0.67
       },
       "h1": {
         "last_close": 1054.0,
@@ -214,15 +217,15 @@
         "range_pct": 7.48
       },
       "orderbook": {
-        "bid_depth_top5_krw": 12570035.0,
-        "ask_depth_top5_krw": 3007414.0,
-        "bid_ask_depth_ratio": 4.18,
+        "bid_depth_top5_krw": 10620826.0,
+        "ask_depth_top5_krw": 2942857.0,
+        "bid_ask_depth_ratio": 3.61,
         "spread_pct": 0.095
       },
       "trade_flow": {
-        "recent_buy_krw": 18592561.0,
-        "recent_sell_krw": 7820559.0,
-        "buy_sell_ratio": 2.38
+        "recent_buy_krw": 18710420.0,
+        "recent_sell_krw": 7838290.0,
+        "buy_sell_ratio": 2.39
       },
       "lock": {
         "locked_at": "2026-09-06T22:18:25.524577+00:00",
@@ -232,8 +235,8 @@
         "lock_similarity": 84.0,
         "invalidation_krw": 1017.368,
         "do_not_chase_above_krw": 1077.275,
-        "current_return_pct": 0.0,
-        "peak_return_pct": 0.0,
+        "current_return_pct": 0.48,
+        "peak_return_pct": 0.48,
         "hit_8pct": false,
         "hit_15pct": false,
         "hit_25pct": false
@@ -242,150 +245,43 @@
   ],
   "expert_top10": [
     {
-      "base": "ASTER",
-      "market": "KRW-ASTER",
-      "korean_name": "아스터",
-      "price_krw": 1051.0,
-      "change_24h_pct": 2.14,
+      "base": "SOMI",
+      "market": "KRW-SOMI",
+      "korean_name": "솜니아",
+      "price_krw": 179.0,
+      "change_24h_pct": 2.29,
       "track": "PRE_IGNITION",
       "expert_status": "PREDICT_BUY",
-      "expert_score": 245.75,
-      "pattern_similarity": 84.0,
-      "expert_confidence": 81.2,
-      "score_trend_vs_prev": 56.0,
-      "seen_streak": 2,
+      "expert_score": 227.55,
+      "pattern_similarity": 86.0,
+      "expert_confidence": 92.3,
+      "score_trend_vs_prev": 15.0,
+      "seen_streak": 4,
       "expert_reasons": [
-        "controlled_5m_price_response",
         "15m_volume_persists",
         "15m_low_rising",
         "buyers_dominate",
         "early_stage",
-        "score_strengthening"
+        "score_strengthening",
+        "multi_scan_persistence"
       ],
       "expert_penalties": [],
       "entry_plan": {
         "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 1051.0,
-        "do_not_chase_above_krw": 1077.275,
-        "invalidation_krw": 1017.368,
-        "target_1_krw": 1135.08,
-        "target_2_krw": 1208.65,
-        "target_3_krw": 1313.75
-      },
-      "fast_5m": {
-        "available": true,
-        "elapsed_min": 1.8,
-        "price_change_per_5m_pct": 0.19,
-        "change24_delta_per_5m_pct": 0.2,
-        "trade_value_delta_per_5m_krw": 45077,
-        "turnover_intensity_vs_even_5m_x": 0.05
-      },
-      "m5": {
-        "last_close": 1050.0,
-        "last_price_pct": -0.28,
-        "vol_spike_x": 9.34,
-        "vol_persistence_x": 0.94,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.0,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 0.67
-      },
-      "m15": {
-        "last_close": 1057.0,
-        "last_price_pct": 0.19,
-        "vol_spike_x": 10.05,
-        "vol_persistence_x": 2.41,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 0.57
-      },
-      "h1": {
-        "last_close": 1054.0,
-        "last_price_pct": 0.48,
-        "vol_spike_x": 0.17,
-        "vol_persistence_x": 1.31,
-        "recent_positive_count": 4,
-        "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 2.73
-      },
-      "h4": {
-        "last_close": 1029.0,
-        "last_price_pct": -2.83,
-        "vol_spike_x": 1.94,
-        "vol_persistence_x": 1.42,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 1.04,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 7.48
-      },
-      "orderbook": {
-        "bid_depth_top5_krw": 12570035.0,
-        "ask_depth_top5_krw": 3007414.0,
-        "bid_ask_depth_ratio": 4.18,
-        "spread_pct": 0.095
-      },
-      "trade_flow": {
-        "recent_buy_krw": 18592561.0,
-        "recent_sell_krw": 7820559.0,
-        "buy_sell_ratio": 2.38
-      },
-      "lock": {
-        "locked_at": "2026-09-06T22:18:25.524577+00:00",
-        "lock_price_krw": 1051.0,
-        "lock_change_24h_pct": 2.14,
-        "lock_expert_score": 245.75,
-        "lock_similarity": 84.0,
-        "invalidation_krw": 1017.368,
-        "do_not_chase_above_krw": 1077.275,
-        "current_return_pct": 0.0,
-        "peak_return_pct": 0.0,
-        "hit_8pct": false,
-        "hit_15pct": false,
-        "hit_25pct": false
-      }
-    },
-    {
-      "base": "SOMI",
-      "market": "KRW-SOMI",
-      "korean_name": "솜니아",
-      "price_krw": 180.0,
-      "change_24h_pct": 2.86,
-      "track": "PRE_IGNITION",
-      "expert_status": "PREDICT_BUY",
-      "expert_score": 208.55,
-      "pattern_similarity": 71.0,
-      "expert_confidence": 74.05,
-      "score_trend_vs_prev": 0.0,
-      "seen_streak": 2,
-      "expert_reasons": [
-        "15m_volume_persists",
-        "15m_low_rising",
-        "buyers_dominate",
-        "early_stage"
-      ],
-      "expert_penalties": [],
-      "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 180.0,
-        "do_not_chase_above_krw": 184.5,
-        "invalidation_krw": 174.24,
-        "target_1_krw": 194.4,
-        "target_2_krw": 207.0,
-        "target_3_krw": 225.0
+        "reference_price_krw": 179.0,
+        "do_not_chase_above_krw": 183.475,
+        "invalidation_krw": 173.272,
+        "target_1_krw": 193.32,
+        "target_2_krw": 205.85,
+        "target_3_krw": 223.75
       },
       "fast_5m": {
         "available": true,
         "elapsed_min": 1.6,
-        "price_change_per_5m_pct": 0.0,
-        "change24_delta_per_5m_pct": 0.0,
-        "trade_value_delta_per_5m_krw": 0,
-        "turnover_intensity_vs_even_5m_x": 0.0
+        "price_change_per_5m_pct": 2.26,
+        "change24_delta_per_5m_pct": 2.3,
+        "trade_value_delta_per_5m_krw": 40000,
+        "turnover_intensity_vs_even_5m_x": 0.02
       },
       "m5": {
         "last_close": 180.0,
@@ -432,215 +328,122 @@
         "range_pct": 17.68
       },
       "orderbook": {
-        "bid_depth_top5_krw": 12168453.0,
-        "ask_depth_top5_krw": 6756752.0,
-        "bid_ask_depth_ratio": 1.8,
+        "bid_depth_top5_krw": 12215281.0,
+        "ask_depth_top5_krw": 7470757.0,
+        "bid_ask_depth_ratio": 1.64,
         "spread_pct": 1.124
       },
       "trade_flow": {
-        "recent_buy_krw": 23113426.0,
-        "recent_sell_krw": 17890169.0,
-        "buy_sell_ratio": 1.29
+        "recent_buy_krw": 23109249.0,
+        "recent_sell_krw": 10913943.0,
+        "buy_sell_ratio": 2.12
       },
       "lock": null
     },
     {
-      "base": "LA",
-      "market": "KRW-LA",
-      "korean_name": "라그랑주",
-      "price_krw": 93.49,
-      "change_24h_pct": 0.05,
+      "base": "ASTER",
+      "market": "KRW-ASTER",
+      "korean_name": "아스터",
+      "price_krw": 1056.0,
+      "change_24h_pct": 2.62,
       "track": "PRE_IGNITION",
       "expert_status": "PREDICT_BUY",
-      "expert_score": 207.7,
-      "pattern_similarity": 69.0,
-      "expert_confidence": 72.95,
-      "score_trend_vs_prev": 56.0,
-      "seen_streak": 2,
+      "expert_score": 215.75,
+      "pattern_similarity": 73.0,
+      "expert_confidence": 85.15,
+      "score_trend_vs_prev": 15.0,
+      "seen_streak": 4,
       "expert_reasons": [
         "controlled_5m_price_response",
         "15m_volume_persists",
+        "buyers_dominate",
         "early_stage",
-        "score_strengthening"
-      ],
-      "expert_penalties": [],
-      "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 93.49,
-        "do_not_chase_above_krw": 95.82725,
-        "invalidation_krw": 90.49832,
-        "target_1_krw": 100.9692,
-        "target_2_krw": 107.5135,
-        "target_3_krw": 116.8625
-      },
-      "fast_5m": {
-        "available": true,
-        "elapsed_min": 1.5,
-        "price_change_per_5m_pct": 0.15,
-        "change24_delta_per_5m_pct": 0.14,
-        "trade_value_delta_per_5m_krw": 869635,
-        "turnover_intensity_vs_even_5m_x": 0.11
-      },
-      "m5": {
-        "last_close": 93.42,
-        "last_price_pct": 0.12,
-        "vol_spike_x": 3.15,
-        "vol_persistence_x": 3.64,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 0.54
-      },
-      "m15": {
-        "last_close": 93.42,
-        "last_price_pct": 0.12,
-        "vol_spike_x": 4.82,
-        "vol_persistence_x": 2.27,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.07,
-        "low_rising": false,
-        "close_above_ma": true,
-        "range_pct": 1.07
-      },
-      "h1": {
-        "last_close": 92.45,
-        "last_price_pct": -0.45,
-        "vol_spike_x": 0.59,
-        "vol_persistence_x": 0.68,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.17,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 0.77
-      },
-      "h4": {
-        "last_close": 93.44,
-        "last_price_pct": -1.92,
-        "vol_spike_x": 0.64,
-        "vol_persistence_x": 0.43,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.48,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 10.19
-      },
-      "orderbook": {
-        "bid_depth_top5_krw": 7082645.0,
-        "ask_depth_top5_krw": 6060031.0,
-        "bid_ask_depth_ratio": 1.17,
-        "spread_pct": 0.171
-      },
-      "trade_flow": {
-        "recent_buy_krw": 32907300.0,
-        "recent_sell_krw": 34799205.0,
-        "buy_sell_ratio": 0.95
-      },
-      "lock": null
-    },
-    {
-      "base": "XAN",
-      "market": "KRW-XAN",
-      "korean_name": "아노마",
-      "price_krw": 28.16,
-      "change_24h_pct": 15.45,
-      "track": "ACCELERATOR",
-      "expert_status": "PREDICT_BUY",
-      "expert_score": 222.39,
-      "pattern_similarity": 74.0,
-      "expert_confidence": 85.7,
-      "score_trend_vs_prev": 37.03,
-      "seen_streak": 13,
-      "expert_reasons": [
-        "turnover>=4x",
-        "15m_volume_persists",
-        "15m_low_rising",
         "score_strengthening",
         "multi_scan_persistence"
       ],
       "expert_penalties": [],
       "entry_plan": {
-        "status": "ENTER_CANDIDATE",
-        "reference_price_krw": 28.16,
-        "do_not_chase_above_krw": 28.864,
-        "invalidation_krw": 27.25888,
-        "target_1_krw": 30.4128,
-        "target_2_krw": 32.384,
-        "target_3_krw": 35.2
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 1056.0,
+        "do_not_chase_above_krw": 1082.4,
+        "invalidation_krw": 1022.208,
+        "target_1_krw": 1140.48,
+        "target_2_krw": 1214.4,
+        "target_3_krw": 1320.0
       },
       "fast_5m": {
         "available": true,
-        "elapsed_min": 1.5,
-        "price_change_per_5m_pct": 2.663,
-        "change24_delta_per_5m_pct": 3.6,
-        "trade_value_delta_per_5m_krw": 85220761,
-        "turnover_intensity_vs_even_5m_x": 5.94
+        "elapsed_min": 1.8,
+        "price_change_per_5m_pct": 0.76,
+        "change24_delta_per_5m_pct": 0.76,
+        "trade_value_delta_per_5m_krw": 315906,
+        "turnover_intensity_vs_even_5m_x": 0.37
       },
       "m5": {
-        "last_close": 27.41,
-        "last_price_pct": -0.04,
-        "vol_spike_x": 1.57,
-        "vol_persistence_x": 0.8,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.51,
-        "low_rising": false,
-        "close_above_ma": true,
-        "range_pct": 3.1
-      },
-      "m15": {
-        "last_close": 27.02,
-        "last_price_pct": 0.67,
-        "vol_spike_x": 10.18,
-        "vol_persistence_x": 4.37,
-        "recent_positive_count": 4,
-        "upper_wick_pct": 0.44,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 4.83
-      },
-      "h1": {
-        "last_close": 25.9,
-        "last_price_pct": 2.66,
-        "vol_spike_x": 0.53,
-        "vol_persistence_x": 0.31,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.77,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 5.88
-      },
-      "h4": {
-        "last_close": 24.33,
-        "last_price_pct": 3.62,
-        "vol_spike_x": 1.71,
-        "vol_persistence_x": 1.38,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 1.64,
+        "last_close": 1051.0,
+        "last_price_pct": 0.0,
+        "vol_spike_x": 0.19,
+        "vol_persistence_x": 0.88,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 0.1,
         "low_rising": false,
         "close_above_ma": false,
-        "range_pct": 15.24
+        "range_pct": 0.67
+      },
+      "m15": {
+        "last_close": 1050.0,
+        "last_price_pct": -0.57,
+        "vol_spike_x": 2.31,
+        "vol_persistence_x": 3.34,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 0.0,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 0.67
+      },
+      "h1": {
+        "last_close": 1054.0,
+        "last_price_pct": 0.48,
+        "vol_spike_x": 0.17,
+        "vol_persistence_x": 1.31,
+        "recent_positive_count": 4,
+        "upper_wick_pct": 0.0,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 2.73
+      },
+      "h4": {
+        "last_close": 1029.0,
+        "last_price_pct": -2.83,
+        "vol_spike_x": 1.94,
+        "vol_persistence_x": 1.42,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 1.04,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 7.48
       },
       "orderbook": {
-        "bid_depth_top5_krw": 3820821.0,
-        "ask_depth_top5_krw": 2476305.0,
-        "bid_ask_depth_ratio": 1.54,
-        "spread_pct": 0.178
+        "bid_depth_top5_krw": 10620826.0,
+        "ask_depth_top5_krw": 2942857.0,
+        "bid_ask_depth_ratio": 3.61,
+        "spread_pct": 0.095
       },
       "trade_flow": {
-        "recent_buy_krw": 25480518.0,
-        "recent_sell_krw": 29146975.0,
-        "buy_sell_ratio": 0.87
+        "recent_buy_krw": 18710420.0,
+        "recent_sell_krw": 7838290.0,
+        "buy_sell_ratio": 2.39
       },
       "lock": {
-        "locked_at": "2026-09-06T22:04:36.280805+00:00",
-        "lock_price_krw": 27.49,
-        "lock_change_24h_pct": 13.15,
-        "lock_expert_score": 209.32,
-        "lock_similarity": 67.0,
-        "invalidation_krw": 26.61032,
-        "do_not_chase_above_krw": 28.17725,
-        "current_return_pct": 2.44,
-        "peak_return_pct": 2.44,
+        "locked_at": "2026-09-06T22:18:25.524577+00:00",
+        "lock_price_krw": 1051.0,
+        "lock_change_24h_pct": 2.14,
+        "lock_expert_score": 245.75,
+        "lock_similarity": 84.0,
+        "invalidation_krw": 1017.368,
+        "do_not_chase_above_krw": 1077.275,
+        "current_return_pct": 0.48,
+        "peak_return_pct": 0.48,
         "hit_8pct": false,
         "hit_15pct": false,
         "hit_25pct": false
@@ -650,50 +453,53 @@
       "base": "TIA",
       "market": "KRW-TIA",
       "korean_name": "셀레스티아",
-      "price_krw": 582.0,
-      "change_24h_pct": 9.19,
+      "price_krw": 586.0,
+      "change_24h_pct": 9.94,
       "track": "ACCELERATOR",
       "expert_status": "PREDICT_BUY",
-      "expert_score": 206.63,
-      "pattern_similarity": 79.0,
-      "expert_confidence": 73.45,
-      "score_trend_vs_prev": null,
-      "seen_streak": 1,
+      "expert_score": 258.67,
+      "pattern_similarity": 100.0,
+      "expert_confidence": 95.0,
+      "score_trend_vs_prev": 44.02,
+      "seen_streak": 3,
       "expert_reasons": [
-        "turnover>=4x",
+        "turnover>=8x",
         "controlled_5m_price_response",
         "15m_volume_persists",
         "15m_low_rising",
-        "buyers_dominate"
+        "buyers_dominate",
+        "score_strengthening",
+        "bid_pressure_improving",
+        "multi_scan_persistence"
       ],
       "expert_penalties": [],
       "entry_plan": {
         "status": "ENTER_CANDIDATE",
-        "reference_price_krw": 582.0,
-        "do_not_chase_above_krw": 596.55,
-        "invalidation_krw": 563.376,
-        "target_1_krw": 628.56,
-        "target_2_krw": 669.3,
-        "target_3_krw": 727.5
+        "reference_price_krw": 586.0,
+        "do_not_chase_above_krw": 600.65,
+        "invalidation_krw": 567.248,
+        "target_1_krw": 632.88,
+        "target_2_krw": 673.9,
+        "target_3_krw": 732.5
       },
       "fast_5m": {
         "available": true,
         "elapsed_min": 1.8,
-        "price_change_per_5m_pct": 1.384,
-        "change24_delta_per_5m_pct": 1.5,
-        "trade_value_delta_per_5m_krw": 2652818,
-        "turnover_intensity_vs_even_5m_x": 5.55
+        "price_change_per_5m_pct": 0.685,
+        "change24_delta_per_5m_pct": 0.74,
+        "trade_value_delta_per_5m_krw": 4100298,
+        "turnover_intensity_vs_even_5m_x": 8.39
       },
       "m5": {
-        "last_close": 575.0,
-        "last_price_pct": -1.2,
-        "vol_spike_x": 0.78,
-        "vol_persistence_x": 0.1,
+        "last_close": 578.0,
+        "last_price_pct": -0.34,
+        "vol_spike_x": 2.05,
+        "vol_persistence_x": 0.41,
         "recent_positive_count": 2,
-        "upper_wick_pct": 0.0,
-        "low_rising": false,
+        "upper_wick_pct": 0.34,
+        "low_rising": true,
         "close_above_ma": false,
-        "range_pct": 2.26
+        "range_pct": 1.57
       },
       "m15": {
         "last_close": 587.0,
@@ -729,31 +535,364 @@
         "range_pct": 7.83
       },
       "orderbook": {
-        "bid_depth_top5_krw": 14670757.0,
-        "ask_depth_top5_krw": 6032976.0,
-        "bid_ask_depth_ratio": 2.43,
-        "spread_pct": 0.173
+        "bid_depth_top5_krw": 20389156.0,
+        "ask_depth_top5_krw": 6422583.0,
+        "bid_ask_depth_ratio": 3.17,
+        "spread_pct": 0.515
       },
       "trade_flow": {
-        "recent_buy_krw": 47156874.0,
-        "recent_sell_krw": 19391968.0,
-        "buy_sell_ratio": 2.43
+        "recent_buy_krw": 48924354.0,
+        "recent_sell_krw": 19084293.0,
+        "buy_sell_ratio": 2.56
       },
       "lock": null
     },
     {
-      "base": "OP",
-      "market": "KRW-OP",
-      "korean_name": "옵티미즘",
-      "price_krw": 149.0,
-      "change_24h_pct": 2.05,
+      "base": "CAMP",
+      "market": "KRW-CAMP",
+      "korean_name": "캠프네트워크",
+      "price_krw": 0.6201,
+      "change_24h_pct": 18.14,
+      "track": "ACCELERATOR",
+      "expert_status": "PREDICT_BUY",
+      "expert_score": 158.33,
+      "pattern_similarity": 85.0,
+      "expert_confidence": 86.33,
+      "score_trend_vs_prev": 34.03,
+      "seen_streak": 4,
+      "expert_reasons": [
+        "turnover>=4x",
+        "controlled_5m_price_response",
+        "15m_volume_persists",
+        "15m_low_rising",
+        "score_strengthening",
+        "bid_pressure_improving",
+        "multi_scan_persistence"
+      ],
+      "expert_penalties": [],
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 0.6201,
+        "do_not_chase_above_krw": 0.6356025,
+        "invalidation_krw": 0.5940558,
+        "target_1_krw": 0.669708,
+        "target_2_krw": 0.713115,
+        "target_3_krw": 0.775125
+      },
+      "fast_5m": {
+        "available": true,
+        "elapsed_min": 1.7,
+        "price_change_per_5m_pct": 0.032,
+        "change24_delta_per_5m_pct": 1.12,
+        "trade_value_delta_per_5m_krw": 35377815,
+        "turnover_intensity_vs_even_5m_x": 4.97
+      },
+      "m5": {
+        "last_close": 0.6228,
+        "last_price_pct": 0.84,
+        "vol_spike_x": 0.51,
+        "vol_persistence_x": 0.67,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 1.25,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 9.53
+      },
+      "m15": {
+        "last_close": 0.6533,
+        "last_price_pct": 1.71,
+        "vol_spike_x": 10.67,
+        "vol_persistence_x": 3.39,
+        "recent_positive_count": 4,
+        "upper_wick_pct": 1.21,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 14.85
+      },
+      "h1": {
+        "last_close": 0.5727,
+        "last_price_pct": 2.21,
+        "vol_spike_x": 12.11,
+        "vol_persistence_x": 0.28,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 3.79,
+        "low_rising": false,
+        "close_above_ma": true,
+        "range_pct": 17.92
+      },
+      "h4": {
+        "last_close": 0.5249,
+        "last_price_pct": -1.83,
+        "vol_spike_x": 0.54,
+        "vol_persistence_x": 0.42,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 0.04,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 7.34
+      },
+      "orderbook": {
+        "bid_depth_top5_krw": 4180396.0,
+        "ask_depth_top5_krw": 615041.0,
+        "bid_ask_depth_ratio": 6.8,
+        "spread_pct": 0.437
+      },
+      "trade_flow": {
+        "recent_buy_krw": 22001412.0,
+        "recent_sell_krw": 20014878.0,
+        "buy_sell_ratio": 1.1
+      },
+      "lock": {
+        "locked_at": "2026-09-06T17:35:44.600678+00:00",
+        "lock_price_krw": 0.6226,
+        "lock_change_24h_pct": 18.71,
+        "lock_expert_score": 192.4,
+        "lock_similarity": 76.0,
+        "invalidation_krw": 0.5964508,
+        "do_not_chase_above_krw": 0.638165,
+        "current_return_pct": -0.4,
+        "peak_return_pct": 6.52,
+        "hit_8pct": false,
+        "hit_15pct": false,
+        "hit_25pct": false,
+        "unlocked_at": "2026-09-06T17:41:17.894225+00:00",
+        "unlock_reason": "invalidation_or_two_weak_observations"
+      }
+    },
+    {
+      "base": "DOOD",
+      "market": "KRW-DOOD",
+      "korean_name": "두들즈",
+      "price_krw": 2.499,
+      "change_24h_pct": 11.62,
+      "track": "ACCELERATOR",
+      "expert_status": "PREDICT_BUY",
+      "expert_score": 184.61,
+      "pattern_similarity": 65.0,
+      "expert_confidence": 65.75,
+      "score_trend_vs_prev": null,
+      "seen_streak": 1,
+      "expert_reasons": [
+        "turnover>=8x",
+        "controlled_5m_price_response",
+        "15m_low_rising"
+      ],
+      "expert_penalties": [],
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 2.499,
+        "do_not_chase_above_krw": 2.561475,
+        "invalidation_krw": 2.394042,
+        "target_1_krw": 2.69892,
+        "target_2_krw": 2.87385,
+        "target_3_krw": 3.12375
+      },
+      "fast_5m": {
+        "available": true,
+        "elapsed_min": 1.7,
+        "price_change_per_5m_pct": 1.127,
+        "change24_delta_per_5m_pct": 2.42,
+        "trade_value_delta_per_5m_krw": 47913395,
+        "turnover_intensity_vs_even_5m_x": 8.64
+      },
+      "m5": {
+        "last_close": 2.518,
+        "last_price_pct": -1.02,
+        "vol_spike_x": 0.48,
+        "vol_persistence_x": 1.28,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 0.08,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 1.96
+      },
+      "m15": {
+        "last_close": 2.51,
+        "last_price_pct": 0.08,
+        "vol_spike_x": 0.67,
+        "vol_persistence_x": 0.36,
+        "recent_positive_count": 4,
+        "upper_wick_pct": 0.96,
+        "low_rising": true,
+        "close_above_ma": false,
+        "range_pct": 8.3
+      },
+      "h1": {
+        "last_close": 2.4,
+        "last_price_pct": -6.54,
+        "vol_spike_x": 4.43,
+        "vol_persistence_x": 2.68,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 4.32,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 14.38
+      },
+      "h4": {
+        "last_close": 2.247,
+        "last_price_pct": -0.27,
+        "vol_spike_x": 27.49,
+        "vol_persistence_x": 12.86,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 8.48,
+        "low_rising": true,
+        "close_above_ma": false,
+        "range_pct": 24.82
+      },
+      "orderbook": {
+        "bid_depth_top5_krw": 41783914.0,
+        "ask_depth_top5_krw": 6099607.0,
+        "bid_ask_depth_ratio": 6.85,
+        "spread_pct": 0.641
+      },
+      "trade_flow": {
+        "recent_buy_krw": 26825031.0,
+        "recent_sell_krw": 29150468.0,
+        "buy_sell_ratio": 0.92
+      },
+      "lock": {
+        "locked_at": "2026-09-06T19:57:49.553698+00:00",
+        "lock_price_krw": 2.586,
+        "lock_change_24h_pct": 15.09,
+        "lock_expert_score": 246.56,
+        "lock_similarity": 74.0,
+        "invalidation_krw": 2.477388,
+        "do_not_chase_above_krw": 2.65065,
+        "current_return_pct": -3.36,
+        "peak_return_pct": 2.94,
+        "hit_8pct": false,
+        "hit_15pct": false,
+        "hit_25pct": false,
+        "unlocked_at": "2026-09-06T20:06:59.967270+00:00",
+        "unlock_reason": "invalidation_or_two_weak_observations"
+      }
+    },
+    {
+      "base": "WLD",
+      "market": "KRW-WLD",
+      "korean_name": "월드코인",
+      "price_krw": 566.0,
+      "change_24h_pct": 1.62,
       "track": "PRE_IGNITION",
       "expert_status": "PREDICT_WAIT",
-      "expert_score": 158.51,
-      "pattern_similarity": 60.0,
-      "expert_confidence": 72.63,
-      "score_trend_vs_prev": 13.99,
-      "seen_streak": 5,
+      "expert_score": 199.11,
+      "pattern_similarity": 78.0,
+      "expert_confidence": 87.9,
+      "score_trend_vs_prev": 42.01,
+      "seen_streak": 9,
+      "expert_reasons": [
+        "controlled_5m_price_response",
+        "15m_volume_persists",
+        "15m_low_rising",
+        "early_stage",
+        "score_strengthening",
+        "multi_scan_persistence"
+      ],
+      "expert_penalties": [
+        "weak_buy_flow"
+      ],
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 566.0,
+        "do_not_chase_above_krw": 580.15,
+        "invalidation_krw": 547.888,
+        "target_1_krw": 611.28,
+        "target_2_krw": 650.9,
+        "target_3_krw": 707.5
+      },
+      "fast_5m": {
+        "available": true,
+        "elapsed_min": 1.4,
+        "price_change_per_5m_pct": 0.709,
+        "change24_delta_per_5m_pct": 0.72,
+        "trade_value_delta_per_5m_krw": 57726122,
+        "turnover_intensity_vs_even_5m_x": 0.84
+      },
+      "m5": {
+        "last_close": 563.0,
+        "last_price_pct": -0.53,
+        "vol_spike_x": 2.78,
+        "vol_persistence_x": 0.57,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.18,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 2.49
+      },
+      "m15": {
+        "last_close": 577.0,
+        "last_price_pct": 1.58,
+        "vol_spike_x": 5.25,
+        "vol_persistence_x": 4.13,
+        "recent_positive_count": 4,
+        "upper_wick_pct": 0.17,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 3.03
+      },
+      "h1": {
+        "last_close": 562.0,
+        "last_price_pct": -0.18,
+        "vol_spike_x": 0.39,
+        "vol_persistence_x": 0.87,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 0.71,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 1.61
+      },
+      "h4": {
+        "last_close": 557.0,
+        "last_price_pct": -1.76,
+        "vol_spike_x": 2.54,
+        "vol_persistence_x": 2.37,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 1.94,
+        "low_rising": true,
+        "close_above_ma": false,
+        "range_pct": 7.24
+      },
+      "orderbook": {
+        "bid_depth_top5_krw": 379061070.0,
+        "ask_depth_top5_krw": 424997461.0,
+        "bid_ask_depth_ratio": 0.89,
+        "spread_pct": 0.354
+      },
+      "trade_flow": {
+        "recent_buy_krw": 100691141.0,
+        "recent_sell_krw": 161797539.0,
+        "buy_sell_ratio": 0.62
+      },
+      "lock": {
+        "locked_at": "2026-09-06T19:39:09.580447+00:00",
+        "lock_price_krw": 562.0,
+        "lock_change_24h_pct": 0.9,
+        "lock_expert_score": 215.99,
+        "lock_similarity": 91.0,
+        "invalidation_krw": 544.016,
+        "do_not_chase_above_krw": 576.05,
+        "current_return_pct": 0.71,
+        "peak_return_pct": 2.67,
+        "hit_8pct": false,
+        "hit_15pct": false,
+        "hit_25pct": false,
+        "unlocked_at": "2026-09-06T19:51:29.748432+00:00",
+        "unlock_reason": "invalidation_or_two_weak_observations"
+      }
+    },
+    {
+      "base": "NEAR",
+      "market": "KRW-NEAR",
+      "korean_name": "니어프로토콜",
+      "price_krw": 3331.0,
+      "change_24h_pct": 1.68,
+      "track": "PRE_IGNITION",
+      "expert_status": "PREDICT_WAIT",
+      "expert_score": 195.81,
+      "pattern_similarity": 70.0,
+      "expert_confidence": 83.5,
+      "score_trend_vs_prev": 18.0,
+      "seen_streak": 4,
       "expert_reasons": [
         "15m_volume_persists",
         "15m_low_rising",
@@ -763,189 +902,513 @@
         "multi_scan_persistence"
       ],
       "expert_penalties": [
-        "ask_depth_dominates"
+        "weak_buy_flow"
       ],
       "entry_plan": {
         "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 149.0,
-        "do_not_chase_above_krw": 152.725,
-        "invalidation_krw": 144.232,
-        "target_1_krw": 160.92,
-        "target_2_krw": 171.35,
-        "target_3_krw": 186.25
+        "reference_price_krw": 3331.0,
+        "do_not_chase_above_krw": 3414.275,
+        "invalidation_krw": 3224.408,
+        "target_1_krw": 3597.48,
+        "target_2_krw": 3830.65,
+        "target_3_krw": 4163.75
       },
       "fast_5m": {
         "available": true,
-        "elapsed_min": 1.5,
-        "price_change_per_5m_pct": 0.0,
-        "change24_delta_per_5m_pct": 0.0,
-        "trade_value_delta_per_5m_krw": 0,
-        "turnover_intensity_vs_even_5m_x": 0.0
+        "elapsed_min": 1.4,
+        "price_change_per_5m_pct": 1.451,
+        "change24_delta_per_5m_pct": 1.28,
+        "trade_value_delta_per_5m_krw": 8475261,
+        "turnover_intensity_vs_even_5m_x": 0.26
       },
       "m5": {
-        "last_close": 149.0,
-        "last_price_pct": 0.0,
-        "vol_spike_x": 15.04,
-        "vol_persistence_x": 1.4,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.0,
+        "last_close": 3300.0,
+        "last_price_pct": -0.3,
+        "vol_spike_x": 1.97,
+        "vol_persistence_x": 0.35,
+        "recent_positive_count": 0,
+        "upper_wick_pct": 0.12,
         "low_rising": false,
         "close_above_ma": false,
-        "range_pct": 0.67
+        "range_pct": 3.15
       },
       "m15": {
-        "last_close": 150.0,
-        "last_price_pct": -0.66,
-        "vol_spike_x": 19.73,
-        "vol_persistence_x": 8.69,
+        "last_close": 3394.0,
+        "last_price_pct": 1.92,
+        "vol_spike_x": 4.53,
+        "vol_persistence_x": 2.57,
         "recent_positive_count": 3,
-        "upper_wick_pct": 0.0,
+        "upper_wick_pct": 0.06,
         "low_rising": true,
         "close_above_ma": true,
-        "range_pct": 2.03
+        "range_pct": 3.35
       },
       "h1": {
-        "last_close": 148.0,
-        "last_price_pct": -0.67,
-        "vol_spike_x": 0.15,
-        "vol_persistence_x": 0.19,
+        "last_close": 3290.0,
+        "last_price_pct": -0.33,
+        "vol_spike_x": 0.38,
+        "vol_persistence_x": 0.58,
         "recent_positive_count": 1,
         "upper_wick_pct": 0.67,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 2.04
-      },
-      "h4": {
-        "last_close": 146.0,
-        "last_price_pct": -2.67,
-        "vol_spike_x": 0.77,
-        "vol_persistence_x": 0.61,
-        "recent_positive_count": 1,
-        "upper_wick_pct": 0.0,
         "low_rising": false,
         "close_above_ma": false,
-        "range_pct": 9.03
+        "range_pct": 3.07
+      },
+      "h4": {
+        "last_close": 3276.0,
+        "last_price_pct": 0.21,
+        "vol_spike_x": 2.62,
+        "vol_persistence_x": 3.76,
+        "recent_positive_count": 4,
+        "upper_wick_pct": 3.48,
+        "low_rising": true,
+        "close_above_ma": false,
+        "range_pct": 14.8
       },
       "orderbook": {
-        "bid_depth_top5_krw": 21329101.0,
-        "ask_depth_top5_krw": 38183349.0,
-        "bid_ask_depth_ratio": 0.56,
-        "spread_pct": 0.678
+        "bid_depth_top5_krw": 26094344.0,
+        "ask_depth_top5_krw": 10576880.0,
+        "bid_ask_depth_ratio": 2.47,
+        "spread_pct": 0.15
       },
       "trade_flow": {
-        "recent_buy_krw": 53272250.0,
-        "recent_sell_krw": 73491439.0,
-        "buy_sell_ratio": 0.72
+        "recent_buy_krw": 15868142.0,
+        "recent_sell_krw": 29686685.0,
+        "buy_sell_ratio": 0.53
       },
       "lock": {
-        "locked_at": "2026-09-06T16:39:39.823711+00:00",
-        "lock_price_krw": 150.0,
-        "lock_change_24h_pct": 2.05,
-        "lock_expert_score": 210.65,
-        "lock_similarity": 86.0,
-        "invalidation_krw": 145.2,
-        "do_not_chase_above_krw": 153.75,
-        "current_return_pct": -0.67,
-        "peak_return_pct": 0.67,
+        "locked_at": "2026-09-06T14:19:51.722245+00:00",
+        "lock_price_krw": 3318.0,
+        "lock_change_24h_pct": 10.47,
+        "lock_expert_score": 225.65,
+        "lock_similarity": 77.0,
+        "invalidation_krw": 3211.824,
+        "do_not_chase_above_krw": 3400.95,
+        "current_return_pct": 0.39,
+        "peak_return_pct": 2.38,
         "hit_8pct": false,
         "hit_15pct": false,
         "hit_25pct": false,
-        "unlocked_at": "2026-09-06T16:46:25.059079+00:00",
+        "unlocked_at": "2026-09-06T14:27:39.751200+00:00",
         "unlock_reason": "invalidation_or_two_weak_observations"
       }
     },
     {
-      "base": "COS",
-      "market": "KRW-COS",
-      "korean_name": "콘텐토스",
-      "price_krw": 0.3644,
-      "change_24h_pct": 0.39,
+      "base": "JTO",
+      "market": "KRW-JTO",
+      "korean_name": "지토",
+      "price_krw": 637.0,
+      "change_24h_pct": 5.46,
       "track": "PRE_IGNITION",
       "expert_status": "PREDICT_WAIT",
-      "expert_score": 197.91,
-      "pattern_similarity": 75.0,
-      "expert_confidence": 71.25,
+      "expert_score": 215.37,
+      "pattern_similarity": 72.0,
+      "expert_confidence": 69.6,
       "score_trend_vs_prev": null,
       "seen_streak": 1,
       "expert_reasons": [
-        "turnover>=4x",
         "controlled_5m_price_response",
         "15m_volume_persists",
+        "15m_low_rising",
         "buyers_dominate",
         "early_stage"
       ],
       "expert_penalties": [],
       "entry_plan": {
         "status": "ENTER_CANDIDATE",
-        "reference_price_krw": 0.3644,
-        "do_not_chase_above_krw": 0.37351,
-        "invalidation_krw": 0.3527392,
-        "target_1_krw": 0.393552,
-        "target_2_krw": 0.41906,
-        "target_3_krw": 0.4555
+        "reference_price_krw": 637.0,
+        "do_not_chase_above_krw": 652.925,
+        "invalidation_krw": 616.616,
+        "target_1_krw": 687.96,
+        "target_2_krw": 732.55,
+        "target_3_krw": 796.25
       },
       "fast_5m": {
         "available": true,
-        "elapsed_min": 1.7,
-        "price_change_per_5m_pct": 1.326,
-        "change24_delta_per_5m_pct": 1.28,
-        "trade_value_delta_per_5m_krw": 4701153,
-        "turnover_intensity_vs_even_5m_x": 5.16
+        "elapsed_min": 1.5,
+        "price_change_per_5m_pct": 0.314,
+        "change24_delta_per_5m_pct": 0.32,
+        "trade_value_delta_per_5m_krw": 10164643,
+        "turnover_intensity_vs_even_5m_x": 2.85
       },
       "m5": {
-        "last_close": 0.362,
-        "last_price_pct": -0.55,
-        "vol_spike_x": 15.39,
-        "vol_persistence_x": 0.38,
-        "recent_positive_count": 2,
+        "last_close": 636.0,
+        "last_price_pct": -0.16,
+        "vol_spike_x": 3.29,
+        "vol_persistence_x": 1.55,
+        "recent_positive_count": 1,
         "upper_wick_pct": 0.0,
         "low_rising": false,
         "close_above_ma": false,
-        "range_pct": 1.91
+        "range_pct": 2.83
       },
       "m15": {
-        "last_close": 0.3644,
-        "last_price_pct": -0.46,
-        "vol_spike_x": 2.47,
-        "vol_persistence_x": 12.31,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.76,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 2.01
+        "last_close": 648.0,
+        "last_price_pct": 0.93,
+        "vol_spike_x": 0.62,
+        "vol_persistence_x": 1.22,
+        "recent_positive_count": 4,
+        "upper_wick_pct": 0.0,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 3.85
       },
       "h1": {
-        "last_close": 0.3666,
-        "last_price_pct": 0.96,
-        "vol_spike_x": 0.1,
-        "vol_persistence_x": 0.04,
-        "recent_positive_count": 3,
+        "last_close": 625.0,
+        "last_price_pct": 2.29,
+        "vol_spike_x": 0.89,
+        "vol_persistence_x": 0.56,
+        "recent_positive_count": 2,
         "upper_wick_pct": 1.12,
         "low_rising": false,
         "close_above_ma": true,
-        "range_pct": 4.92
+        "range_pct": 3.78
       },
       "h4": {
-        "last_close": 0.3629,
-        "last_price_pct": -0.27,
-        "vol_spike_x": 0.4,
-        "vol_persistence_x": 0.17,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 2.01,
-        "low_rising": false,
+        "last_close": 604.0,
+        "last_price_pct": -1.15,
+        "vol_spike_x": 4.08,
+        "vol_persistence_x": 2.53,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 3.93,
+        "low_rising": true,
         "close_above_ma": false,
-        "range_pct": 8.63
+        "range_pct": 11.8
       },
       "orderbook": {
-        "bid_depth_top5_krw": 4455074.0,
-        "ask_depth_top5_krw": 189246.0,
-        "bid_ask_depth_ratio": 23.54,
-        "spread_pct": 0.741
+        "bid_depth_top5_krw": 29102336.0,
+        "ask_depth_top5_krw": 28116661.0,
+        "bid_ask_depth_ratio": 1.04,
+        "spread_pct": 0.157
       },
       "trade_flow": {
-        "recent_buy_krw": 27088159.0,
-        "recent_sell_krw": 22328703.0,
-        "buy_sell_ratio": 1.21
+        "recent_buy_krw": 86241098.0,
+        "recent_sell_krw": 40252934.0,
+        "buy_sell_ratio": 2.14
+      },
+      "lock": {
+        "locked_at": "2026-09-06T21:30:19.032092+00:00",
+        "lock_price_krw": 637.0,
+        "lock_change_24h_pct": 5.46,
+        "lock_expert_score": 268.2,
+        "lock_similarity": 90.0,
+        "invalidation_krw": 616.616,
+        "do_not_chase_above_krw": 652.925,
+        "current_return_pct": 0.0,
+        "peak_return_pct": 2.04,
+        "hit_8pct": false,
+        "hit_15pct": false,
+        "hit_25pct": false,
+        "unlocked_at": "2026-09-06T22:16:19.970468+00:00",
+        "unlock_reason": "invalidation_or_two_weak_observations"
+      }
+    },
+    {
+      "base": "VIRTUAL",
+      "market": "KRW-VIRTUAL",
+      "korean_name": "버추얼프로토콜",
+      "price_krw": 983.0,
+      "change_24h_pct": 4.13,
+      "track": "PRE_IGNITION",
+      "expert_status": "PREDICT_WAIT",
+      "expert_score": 160.66,
+      "pattern_similarity": 53.0,
+      "expert_confidence": 69.31,
+      "score_trend_vs_prev": 15.0,
+      "seen_streak": 7,
+      "expert_reasons": [
+        "controlled_5m_price_response",
+        "15m_volume_persists",
+        "early_stage",
+        "score_strengthening",
+        "multi_scan_persistence"
+      ],
+      "expert_penalties": [
+        "weak_buy_flow",
+        "ask_depth_dominates"
+      ],
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 983.0,
+        "do_not_chase_above_krw": 1007.575,
+        "invalidation_krw": 951.544,
+        "target_1_krw": 1061.64,
+        "target_2_krw": 1130.45,
+        "target_3_krw": 1228.75
+      },
+      "fast_5m": {
+        "available": true,
+        "elapsed_min": 1.4,
+        "price_change_per_5m_pct": 0.408,
+        "change24_delta_per_5m_pct": 0.0,
+        "trade_value_delta_per_5m_krw": 235103,
+        "turnover_intensity_vs_even_5m_x": 0.01
+      },
+      "m5": {
+        "last_close": 978.0,
+        "last_price_pct": -0.71,
+        "vol_spike_x": 6.01,
+        "vol_persistence_x": 2.82,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.1,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 1.02
+      },
+      "m15": {
+        "last_close": 988.0,
+        "last_price_pct": 0.3,
+        "vol_spike_x": 15.45,
+        "vol_persistence_x": 8.77,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 0.1,
+        "low_rising": false,
+        "close_above_ma": true,
+        "range_pct": 2.81
+      },
+      "h1": {
+        "last_close": 960.0,
+        "last_price_pct": 1.05,
+        "vol_spike_x": 0.27,
+        "vol_persistence_x": 0.58,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 0.1,
+        "low_rising": false,
+        "close_above_ma": true,
+        "range_pct": 1.69
+      },
+      "h4": {
+        "last_close": 944.0,
+        "last_price_pct": 0.0,
+        "vol_spike_x": 3.41,
+        "vol_persistence_x": 2.49,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 3.18,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 5.75
+      },
+      "orderbook": {
+        "bid_depth_top5_krw": 67990321.0,
+        "ask_depth_top5_krw": 122905359.0,
+        "bid_ask_depth_ratio": 0.55,
+        "spread_pct": 0.102
+      },
+      "trade_flow": {
+        "recent_buy_krw": 98502764.0,
+        "recent_sell_krw": 176430857.0,
+        "buy_sell_ratio": 0.56
+      },
+      "lock": {
+        "locked_at": "2026-09-06T22:16:19.970468+00:00",
+        "lock_price_krw": 985.0,
+        "lock_change_24h_pct": 4.34,
+        "lock_expert_score": 193.62,
+        "lock_similarity": 71.0,
+        "invalidation_krw": 953.48,
+        "do_not_chase_above_krw": 1009.625,
+        "current_return_pct": -0.2,
+        "peak_return_pct": 0.0,
+        "hit_8pct": false,
+        "hit_15pct": false,
+        "hit_25pct": false,
+        "unlocked_at": "2026-09-06T22:18:25.524577+00:00",
+        "unlock_reason": "invalidation_or_two_weak_observations"
+      }
+    },
+    {
+      "base": "PRL",
+      "market": "KRW-PRL",
+      "korean_name": "펄",
+      "price_krw": 173.0,
+      "change_24h_pct": 1.76,
+      "track": "PRE_IGNITION",
+      "expert_status": "PREDICT_WAIT",
+      "expert_score": 177.02,
+      "pattern_similarity": 63.0,
+      "expert_confidence": 68.91,
+      "score_trend_vs_prev": 36.03,
+      "seen_streak": 2,
+      "expert_reasons": [
+        "turnover>=4x",
+        "15m_volume_persists",
+        "early_stage",
+        "score_strengthening",
+        "bid_pressure_improving"
+      ],
+      "expert_penalties": [],
+      "entry_plan": {
+        "status": "ENTER_CANDIDATE",
+        "reference_price_krw": 173.0,
+        "do_not_chase_above_krw": 177.325,
+        "invalidation_krw": 167.464,
+        "target_1_krw": 186.84,
+        "target_2_krw": 198.95,
+        "target_3_krw": 216.25
+      },
+      "fast_5m": {
+        "available": true,
+        "elapsed_min": 1.6,
+        "price_change_per_5m_pct": 0.0,
+        "change24_delta_per_5m_pct": 1.16,
+        "trade_value_delta_per_5m_krw": 10553110,
+        "turnover_intensity_vs_even_5m_x": 7.21
+      },
+      "m5": {
+        "last_close": 172.0,
+        "last_price_pct": 0.0,
+        "vol_spike_x": 0.1,
+        "vol_persistence_x": 0.45,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 0.0,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 1.17
+      },
+      "m15": {
+        "last_close": 172.0,
+        "last_price_pct": 0.0,
+        "vol_spike_x": 2.81,
+        "vol_persistence_x": 4.25,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 0.0,
+        "low_rising": false,
+        "close_above_ma": true,
+        "range_pct": 1.17
+      },
+      "h1": {
+        "last_close": 171.0,
+        "last_price_pct": 0.0,
+        "vol_spike_x": 0.85,
+        "vol_persistence_x": 0.78,
+        "recent_positive_count": 4,
+        "upper_wick_pct": 0.0,
+        "low_rising": false,
+        "close_above_ma": true,
+        "range_pct": 1.18
+      },
+      "h4": {
+        "last_close": 170.0,
+        "last_price_pct": -0.58,
+        "vol_spike_x": 0.82,
+        "vol_persistence_x": 1.01,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.58,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 3.53
+      },
+      "orderbook": {
+        "bid_depth_top5_krw": 46485396.0,
+        "ask_depth_top5_krw": 20223541.0,
+        "bid_ask_depth_ratio": 2.3,
+        "spread_pct": 0.576
+      },
+      "trade_flow": {
+        "recent_buy_krw": 22882864.0,
+        "recent_sell_krw": 21537571.0,
+        "buy_sell_ratio": 1.06
+      },
+      "lock": null
+    }
+  ],
+  "expert_rejected_top5": [
+    {
+      "base": "DOT",
+      "market": "KRW-DOT",
+      "korean_name": "폴카닷",
+      "price_krw": 1324.0,
+      "change_24h_pct": 1.46,
+      "track": "PRE_IGNITION",
+      "expert_status": "REJECT",
+      "expert_score": 276.62,
+      "pattern_similarity": 100.0,
+      "expert_confidence": 100,
+      "score_trend_vs_prev": 98.09,
+      "seen_streak": 7,
+      "expert_reasons": [
+        "turnover>=8x",
+        "controlled_5m_price_response",
+        "15m_volume_persists",
+        "15m_low_rising",
+        "buyers_dominate",
+        "early_stage",
+        "score_strengthening",
+        "bid_pressure_improving",
+        "multi_scan_persistence"
+      ],
+      "expert_penalties": [],
+      "entry_plan": {
+        "status": "WATCH",
+        "reference_price_krw": 1324.0,
+        "do_not_chase_above_krw": 1357.1,
+        "invalidation_krw": 1281.632,
+        "target_1_krw": 1429.92,
+        "target_2_krw": 1522.6,
+        "target_3_krw": 1655.0
+      },
+      "fast_5m": {
+        "available": true,
+        "elapsed_min": 1.5,
+        "price_change_per_5m_pct": 0.303,
+        "change24_delta_per_5m_pct": 0.32,
+        "trade_value_delta_per_5m_krw": 70819059,
+        "turnover_intensity_vs_even_5m_x": 18.12
+      },
+      "m5": {
+        "last_close": 1315.0,
+        "last_price_pct": 0.0,
+        "vol_spike_x": 0.05,
+        "vol_persistence_x": 0.03,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.08,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 1.9
+      },
+      "m15": {
+        "last_close": 1339.0,
+        "last_price_pct": 0.0,
+        "vol_spike_x": 4.43,
+        "vol_persistence_x": 5.69,
+        "recent_positive_count": 4,
+        "upper_wick_pct": 0.0,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 1.98
+      },
+      "h1": {
+        "last_close": 1316.0,
+        "last_price_pct": 0.15,
+        "vol_spike_x": 0.09,
+        "vol_persistence_x": 0.87,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 0.38,
+        "low_rising": false,
+        "close_above_ma": true,
+        "range_pct": 2.08
+      },
+      "h4": {
+        "last_close": 1305.0,
+        "last_price_pct": -1.36,
+        "vol_spike_x": 2.83,
+        "vol_persistence_x": 2.95,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 2.04,
+        "low_rising": true,
+        "close_above_ma": false,
+        "range_pct": 8.17
+      },
+      "orderbook": {
+        "bid_depth_top5_krw": 37404146.0,
+        "ask_depth_top5_krw": 17537073.0,
+        "bid_ask_depth_ratio": 2.13,
+        "spread_pct": 0.151
+      },
+      "trade_flow": {
+        "recent_buy_krw": 44719816.0,
+        "recent_sell_krw": 29077948.0,
+        "buy_sell_ratio": 1.54
       },
       "lock": null
     },
@@ -953,47 +1416,52 @@
       "base": "AAVE",
       "market": "KRW-AAVE",
       "korean_name": "에이브",
-      "price_krw": 181200.0,
-      "change_24h_pct": 0.39,
+      "price_krw": 182000.0,
+      "change_24h_pct": 0.72,
       "track": "PRE_IGNITION",
-      "expert_status": "PREDICT_WAIT",
-      "expert_score": 141.62,
-      "pattern_similarity": 58.0,
-      "expert_confidence": 67.31,
-      "score_trend_vs_prev": 3.99,
-      "seen_streak": 8,
+      "expert_status": "REJECT",
+      "expert_score": 262.71,
+      "pattern_similarity": 80.0,
+      "expert_confidence": 89.0,
+      "score_trend_vs_prev": 71.07,
+      "seen_streak": 10,
       "expert_reasons": [
+        "turnover>=8x",
+        "controlled_5m_price_response",
         "15m_volume_persists",
         "15m_low_rising",
+        "sell_flow_warning",
         "early_stage",
-        "bid_pressure_improving",
+        "score_strengthening",
         "multi_scan_persistence"
       ],
-      "expert_penalties": [],
+      "expert_penalties": [
+        "weak_buy_flow"
+      ],
       "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 181200.0,
-        "do_not_chase_above_krw": 185730.0,
-        "invalidation_krw": 175401.6,
-        "target_1_krw": 195696.0,
-        "target_2_krw": 208380.0,
-        "target_3_krw": 226500.0
+        "status": "ENTER_CANDIDATE",
+        "reference_price_krw": 182000.0,
+        "do_not_chase_above_krw": 186550.0,
+        "invalidation_krw": 176176.0,
+        "target_1_krw": 196560.0,
+        "target_2_krw": 209300.0,
+        "target_3_krw": 227500.0
       },
       "fast_5m": {
         "available": true,
         "elapsed_min": 1.6,
-        "price_change_per_5m_pct": -0.221,
-        "change24_delta_per_5m_pct": 0.0,
-        "trade_value_delta_per_5m_krw": 0,
-        "turnover_intensity_vs_even_5m_x": 0.0
+        "price_change_per_5m_pct": 0.551,
+        "change24_delta_per_5m_pct": 0.88,
+        "trade_value_delta_per_5m_krw": 28258117,
+        "turnover_intensity_vs_even_5m_x": 14.7
       },
       "m5": {
-        "last_close": 181600.0,
-        "last_price_pct": -0.06,
-        "vol_spike_x": 0.68,
-        "vol_persistence_x": 0.04,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.28,
+        "last_close": 181100.0,
+        "last_price_pct": -0.11,
+        "vol_spike_x": 14.17,
+        "vol_persistence_x": 1.87,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.0,
         "low_rising": false,
         "close_above_ma": false,
         "range_pct": 0.61
@@ -1032,727 +1500,299 @@
         "range_pct": 9.65
       },
       "orderbook": {
-        "bid_depth_top5_krw": 13781977.0,
-        "ask_depth_top5_krw": 46494.0,
-        "bid_ask_depth_ratio": 296.42,
-        "spread_pct": 0.055
+        "bid_depth_top5_krw": 10412341.0,
+        "ask_depth_top5_krw": 2912127.0,
+        "bid_ask_depth_ratio": 3.58,
+        "spread_pct": 0.11
       },
       "trade_flow": {
-        "recent_buy_krw": 16581407.0,
-        "recent_sell_krw": 18188882.0,
-        "buy_sell_ratio": 0.91
-      },
-      "lock": {
-        "locked_at": "2026-09-06T15:07:09.930671+00:00",
-        "lock_price_krw": 181000.0,
-        "lock_change_24h_pct": 0.17,
-        "lock_expert_score": 198.96,
-        "lock_similarity": 65.0,
-        "invalidation_krw": 175208.0,
-        "do_not_chase_above_krw": 185525.0,
-        "current_return_pct": 0.11,
-        "peak_return_pct": 0.94,
-        "hit_8pct": false,
-        "hit_15pct": false,
-        "hit_25pct": false,
-        "unlocked_at": "2026-09-06T15:17:42.951073+00:00",
-        "unlock_reason": "invalidation_or_two_weak_observations"
-      }
-    },
-    {
-      "base": "ARB",
-      "market": "KRW-ARB",
-      "korean_name": "아비트럼",
-      "price_krw": 253.0,
-      "change_24h_pct": 0.0,
-      "track": "PRE_IGNITION",
-      "expert_status": "PREDICT_WAIT",
-      "expert_score": 147.79,
-      "pattern_similarity": 53.0,
-      "expert_confidence": 66.1,
-      "score_trend_vs_prev": 13.98,
-      "seen_streak": 4,
-      "expert_reasons": [
-        "15m_volume_persists",
-        "15m_low_rising",
-        "buyers_dominate",
-        "early_stage",
-        "score_strengthening",
-        "multi_scan_persistence"
-      ],
-      "expert_penalties": [
-        "ask_depth_dominates"
-      ],
-      "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 253.0,
-        "do_not_chase_above_krw": 259.325,
-        "invalidation_krw": 244.904,
-        "target_1_krw": 273.24,
-        "target_2_krw": 290.95,
-        "target_3_krw": 316.25
-      },
-      "fast_5m": {
-        "available": true,
-        "elapsed_min": 1.4,
-        "price_change_per_5m_pct": 0.0,
-        "change24_delta_per_5m_pct": 0.0,
-        "trade_value_delta_per_5m_krw": 0,
-        "turnover_intensity_vs_even_5m_x": 0.0
-      },
-      "m5": {
-        "last_close": 253.0,
-        "last_price_pct": -0.39,
-        "vol_spike_x": 0.82,
-        "vol_persistence_x": 0.26,
-        "recent_positive_count": 0,
-        "upper_wick_pct": 0.0,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 1.58
-      },
-      "m15": {
-        "last_close": 255.0,
-        "last_price_pct": -0.39,
-        "vol_spike_x": 2.57,
-        "vol_persistence_x": 2.42,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.78,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 4.03
-      },
-      "h1": {
-        "last_close": 250.0,
-        "last_price_pct": 0.81,
-        "vol_spike_x": 0.62,
-        "vol_persistence_x": 0.83,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.8,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 4.08
-      },
-      "h4": {
-        "last_close": 253.0,
-        "last_price_pct": -4.53,
-        "vol_spike_x": 0.53,
-        "vol_persistence_x": 0.73,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.38,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 17.72
-      },
-      "orderbook": {
-        "bid_depth_top5_krw": 25441482.0,
-        "ask_depth_top5_krw": 146868779.0,
-        "bid_ask_depth_ratio": 0.17,
-        "spread_pct": 0.394
-      },
-      "trade_flow": {
-        "recent_buy_krw": 100152956.0,
-        "recent_sell_krw": 35704577.0,
-        "buy_sell_ratio": 2.81
-      },
-      "lock": {
-        "locked_at": "2026-09-06T15:27:46.048204+00:00",
-        "lock_price_krw": 253.0,
-        "lock_change_24h_pct": 0.0,
-        "lock_expert_score": 195.04,
-        "lock_similarity": 66.0,
-        "invalidation_krw": 244.904,
-        "do_not_chase_above_krw": 259.325,
-        "current_return_pct": 0.0,
-        "peak_return_pct": 1.98,
-        "hit_8pct": false,
-        "hit_15pct": false,
-        "hit_25pct": false,
-        "unlocked_at": "2026-09-06T15:29:51.575759+00:00",
-        "unlock_reason": "invalidation_or_two_weak_observations"
-      }
-    },
-    {
-      "base": "SYRUP",
-      "market": "KRW-SYRUP",
-      "korean_name": "메이플파이낸스",
-      "price_krw": 298.0,
-      "change_24h_pct": 3.11,
-      "track": "PRE_IGNITION",
-      "expert_status": "PREDICT_WAIT",
-      "expert_score": 156.64,
-      "pattern_similarity": 62.0,
-      "expert_confidence": 63.26,
-      "score_trend_vs_prev": -7.0,
-      "seen_streak": 2,
-      "expert_reasons": [
-        "15m_volume_persists",
-        "15m_low_rising",
-        "buyers_dominate",
-        "early_stage"
-      ],
-      "expert_penalties": [
-        "ask_depth_dominates"
-      ],
-      "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 298.0,
-        "do_not_chase_above_krw": 305.45,
-        "invalidation_krw": 288.464,
-        "target_1_krw": 321.84,
-        "target_2_krw": 342.7,
-        "target_3_krw": 372.5
-      },
-      "fast_5m": {
-        "available": true,
-        "elapsed_min": 1.8,
-        "price_change_per_5m_pct": 0.0,
-        "change24_delta_per_5m_pct": -1.4,
-        "trade_value_delta_per_5m_krw": 0,
-        "turnover_intensity_vs_even_5m_x": 0.0
-      },
-      "m5": {
-        "last_close": 300.0,
-        "last_price_pct": 0.0,
-        "vol_spike_x": 5.98,
-        "vol_persistence_x": 6.97,
-        "recent_positive_count": 4,
-        "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 1.01
-      },
-      "m15": {
-        "last_close": 300.0,
-        "last_price_pct": 0.0,
-        "vol_spike_x": 4.25,
-        "vol_persistence_x": 6.89,
-        "recent_positive_count": 4,
-        "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 1.01
-      },
-      "h1": {
-        "last_close": 297.0,
-        "last_price_pct": 0.0,
-        "vol_spike_x": 0.16,
-        "vol_persistence_x": 0.04,
-        "recent_positive_count": 4,
-        "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 2.76
-      },
-      "h4": {
-        "last_close": 289.0,
-        "last_price_pct": -0.34,
-        "vol_spike_x": 0.57,
-        "vol_persistence_x": 0.45,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 1.38,
-        "low_rising": true,
-        "close_above_ma": false,
-        "range_pct": 3.5
-      },
-      "orderbook": {
-        "bid_depth_top5_krw": 11955133.0,
-        "ask_depth_top5_krw": 66416871.0,
-        "bid_ask_depth_ratio": 0.18,
-        "spread_pct": 0.671
-      },
-      "trade_flow": {
-        "recent_buy_krw": 32535705.0,
-        "recent_sell_krw": 27143884.0,
-        "buy_sell_ratio": 1.2
+        "recent_buy_krw": 12949695.0,
+        "recent_sell_krw": 30296546.0,
+        "buy_sell_ratio": 0.43
       },
       "lock": null
-    }
-  ],
-  "expert_rejected_top5": [
+    },
     {
-      "base": "DOT",
-      "market": "KRW-DOT",
-      "korean_name": "폴카닷",
-      "price_krw": 1316.0,
-      "change_24h_pct": 0.84,
+      "base": "ETH",
+      "market": "KRW-ETH",
+      "korean_name": "이더리움",
+      "price_krw": 3402000.0,
+      "change_24h_pct": 0.62,
       "track": "PRE_IGNITION",
       "expert_status": "REJECT",
-      "expert_score": 125.52,
+      "expert_score": 156.82,
       "pattern_similarity": 68.0,
-      "expert_confidence": 68.78,
-      "score_trend_vs_prev": 14.0,
-      "seen_streak": 5,
-      "expert_reasons": [
-        "15m_volume_persists",
-        "15m_low_rising",
-        "early_stage",
-        "score_strengthening",
-        "multi_scan_persistence"
-      ],
-      "expert_penalties": [
-        "weak_buy_flow"
-      ],
-      "entry_plan": {
-        "status": "WATCH",
-        "reference_price_krw": 1316.0,
-        "do_not_chase_above_krw": 1348.9,
-        "invalidation_krw": 1273.888,
-        "target_1_krw": 1421.28,
-        "target_2_krw": 1513.4,
-        "target_3_krw": 1645.0
-      },
-      "fast_5m": {
-        "available": true,
-        "elapsed_min": 1.5,
-        "price_change_per_5m_pct": 0.0,
-        "change24_delta_per_5m_pct": 0.0,
-        "trade_value_delta_per_5m_krw": 0,
-        "turnover_intensity_vs_even_5m_x": 0.0
-      },
-      "m5": {
-        "last_close": 1320.0,
-        "last_price_pct": -0.9,
-        "vol_spike_x": 4.03,
-        "vol_persistence_x": 0.59,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.0,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 1.59
-      },
-      "m15": {
-        "last_close": 1339.0,
-        "last_price_pct": 0.0,
-        "vol_spike_x": 4.43,
-        "vol_persistence_x": 5.69,
-        "recent_positive_count": 4,
-        "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 1.98
-      },
-      "h1": {
-        "last_close": 1316.0,
-        "last_price_pct": 0.15,
-        "vol_spike_x": 0.09,
-        "vol_persistence_x": 0.87,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.38,
-        "low_rising": false,
-        "close_above_ma": true,
-        "range_pct": 2.08
-      },
-      "h4": {
-        "last_close": 1305.0,
-        "last_price_pct": -1.36,
-        "vol_spike_x": 2.83,
-        "vol_persistence_x": 2.95,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 2.04,
-        "low_rising": true,
-        "close_above_ma": false,
-        "range_pct": 8.17
-      },
-      "orderbook": {
-        "bid_depth_top5_krw": 50170839.0,
-        "ask_depth_top5_krw": 23605141.0,
-        "bid_ask_depth_ratio": 2.13,
-        "spread_pct": 0.152
-      },
-      "trade_flow": {
-        "recent_buy_krw": 14155245.0,
-        "recent_sell_krw": 25750922.0,
-        "buy_sell_ratio": 0.55
-      },
-      "lock": null
-    },
-    {
-      "base": "SAHARA",
-      "market": "KRW-SAHARA",
-      "korean_name": "사하라에이아이",
-      "price_krw": 12.69,
-      "change_24h_pct": 0.24,
-      "track": "PRE_IGNITION",
-      "expert_status": "REJECT",
-      "expert_score": 120.16,
-      "pattern_similarity": 53.0,
-      "expert_confidence": 59.19,
-      "score_trend_vs_prev": 31.0,
-      "seen_streak": 4,
-      "expert_reasons": [
-        "15m_volume_persists",
-        "15m_low_rising",
-        "early_stage",
-        "score_strengthening",
-        "bid_pressure_improving",
-        "multi_scan_persistence"
-      ],
-      "expert_penalties": [
-        "negative_5m_momentum"
-      ],
-      "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 12.69,
-        "do_not_chase_above_krw": 13.00725,
-        "invalidation_krw": 12.28392,
-        "target_1_krw": 13.7052,
-        "target_2_krw": 14.5935,
-        "target_3_krw": 15.8625
-      },
-      "fast_5m": {
-        "available": true,
-        "elapsed_min": 1.5,
-        "price_change_per_5m_pct": -0.472,
-        "change24_delta_per_5m_pct": -0.46,
-        "trade_value_delta_per_5m_krw": 0,
-        "turnover_intensity_vs_even_5m_x": 0.0
-      },
-      "m5": {
-        "last_close": 12.72,
-        "last_price_pct": 0.16,
-        "vol_spike_x": 15.06,
-        "vol_persistence_x": 5.47,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.0,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 0.39
-      },
-      "m15": {
-        "last_close": 12.71,
-        "last_price_pct": 0.0,
-        "vol_spike_x": 2.92,
-        "vol_persistence_x": 6.62,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.16,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 0.39
-      },
-      "h1": {
-        "last_close": 12.68,
-        "last_price_pct": 0.32,
-        "vol_spike_x": 0.11,
-        "vol_persistence_x": 0.37,
-        "recent_positive_count": 1,
-        "upper_wick_pct": 0.16,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 1.19
-      },
-      "h4": {
-        "last_close": 12.66,
-        "last_price_pct": -1.09,
-        "vol_spike_x": 0.72,
-        "vol_persistence_x": 0.63,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.31,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 4.35
-      },
-      "orderbook": {
-        "bid_depth_top5_krw": 21028619.0,
-        "ask_depth_top5_krw": 22741390.0,
-        "bid_ask_depth_ratio": 0.92,
-        "spread_pct": 0.316
-      },
-      "trade_flow": {
-        "recent_buy_krw": 41054495.0,
-        "recent_sell_krw": 59155873.0,
-        "buy_sell_ratio": 0.69
-      },
-      "lock": null
-    },
-    {
-      "base": "VIRTUAL",
-      "market": "KRW-VIRTUAL",
-      "korean_name": "버추얼프로토콜",
-      "price_krw": 983.0,
-      "change_24h_pct": 4.13,
-      "track": "PRE_IGNITION",
-      "expert_status": "REJECT",
-      "expert_score": 137.64,
-      "pattern_similarity": 43.0,
-      "expert_confidence": 58.06,
-      "score_trend_vs_prev": -15.98,
-      "seen_streak": 5,
-      "expert_reasons": [
-        "15m_volume_persists",
-        "early_stage",
-        "bid_pressure_improving",
-        "multi_scan_persistence"
-      ],
-      "expert_penalties": [
-        "weak_buy_flow",
-        "negative_5m_momentum"
-      ],
-      "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 983.0,
-        "do_not_chase_above_krw": 1007.575,
-        "invalidation_krw": 951.544,
-        "target_1_krw": 1061.64,
-        "target_2_krw": 1130.45,
-        "target_3_krw": 1228.75
-      },
-      "fast_5m": {
-        "available": true,
-        "elapsed_min": 1.4,
-        "price_change_per_5m_pct": -0.406,
-        "change24_delta_per_5m_pct": -0.42,
-        "trade_value_delta_per_5m_krw": 70667785,
-        "turnover_intensity_vs_even_5m_x": 3.24
-      },
-      "m5": {
-        "last_close": 979.0,
-        "last_price_pct": -0.2,
-        "vol_spike_x": 5.84,
-        "vol_persistence_x": 0.6,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.2,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 0.92
-      },
-      "m15": {
-        "last_close": 988.0,
-        "last_price_pct": 0.3,
-        "vol_spike_x": 15.45,
-        "vol_persistence_x": 8.77,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.1,
-        "low_rising": false,
-        "close_above_ma": true,
-        "range_pct": 2.81
-      },
-      "h1": {
-        "last_close": 960.0,
-        "last_price_pct": 1.05,
-        "vol_spike_x": 0.27,
-        "vol_persistence_x": 0.58,
-        "recent_positive_count": 3,
-        "upper_wick_pct": 0.1,
-        "low_rising": false,
-        "close_above_ma": true,
-        "range_pct": 1.69
-      },
-      "h4": {
-        "last_close": 944.0,
-        "last_price_pct": 0.0,
-        "vol_spike_x": 3.41,
-        "vol_persistence_x": 2.49,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 3.18,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 5.75
-      },
-      "orderbook": {
-        "bid_depth_top5_krw": 58691319.0,
-        "ask_depth_top5_krw": 75925191.0,
-        "bid_ask_depth_ratio": 0.77,
-        "spread_pct": 0.204
-      },
-      "trade_flow": {
-        "recent_buy_krw": 99419348.0,
-        "recent_sell_krw": 173223626.0,
-        "buy_sell_ratio": 0.57
-      },
-      "lock": null
-    },
-    {
-      "base": "UNI",
-      "market": "KRW-UNI",
-      "korean_name": "유니스왑",
-      "price_krw": 9740.0,
-      "change_24h_pct": 2.8,
-      "track": "PRE_IGNITION",
-      "expert_status": "REJECT",
-      "expert_score": 125.86,
-      "pattern_similarity": 31.0,
-      "expert_confidence": 48.52,
-      "score_trend_vs_prev": 14.0,
-      "seen_streak": 4,
+      "expert_confidence": 71.61,
+      "score_trend_vs_prev": 22.99,
+      "seen_streak": 3,
       "expert_reasons": [
         "controlled_5m_price_response",
-        "15m_volume_persists",
-        "sell_flow_warning",
         "early_stage",
         "score_strengthening",
+        "bid_pressure_improving",
         "multi_scan_persistence"
       ],
-      "expert_penalties": [
-        "distribution_risk",
-        "ask_depth_dominates"
-      ],
+      "expert_penalties": [],
       "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 9740.0,
-        "do_not_chase_above_krw": 9983.5,
-        "invalidation_krw": 9428.32,
-        "target_1_krw": 10519.2,
-        "target_2_krw": 11201.0,
-        "target_3_krw": 12175.0
+        "status": "WATCH",
+        "reference_price_krw": 3402000.0,
+        "do_not_chase_above_krw": 3487050.0,
+        "invalidation_krw": 3293136.0,
+        "target_1_krw": 3674160.0,
+        "target_2_krw": 3912300.0,
+        "target_3_krw": 4252500.0
       },
       "fast_5m": {
         "available": true,
         "elapsed_min": 1.4,
-        "price_change_per_5m_pct": 0.412,
-        "change24_delta_per_5m_pct": 0.42,
+        "price_change_per_5m_pct": 0.294,
+        "change24_delta_per_5m_pct": 0.3,
         "trade_value_delta_per_5m_krw": 0,
         "turnover_intensity_vs_even_5m_x": 0.0
       },
       "m5": {
-        "last_close": 9705.0,
-        "last_price_pct": -0.26,
-        "vol_spike_x": 1.5,
-        "vol_persistence_x": 0.62,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 0.21,
+        "last_close": 3394000.0,
+        "last_price_pct": -0.18,
+        "vol_spike_x": 3.36,
+        "vol_persistence_x": 0.97,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.06,
         "low_rising": false,
         "close_above_ma": false,
-        "range_pct": 0.77
+        "range_pct": 0.65
       },
       "m15": {
-        "last_close": 9760.0,
-        "last_price_pct": 0.21,
-        "vol_spike_x": 3.1,
-        "vol_persistence_x": 1.71,
+        "last_close": 3414000.0,
+        "last_price_pct": 0.03,
+        "vol_spike_x": 2.01,
+        "vol_persistence_x": 0.36,
         "recent_positive_count": 3,
-        "upper_wick_pct": 0.2,
+        "upper_wick_pct": 0.12,
         "low_rising": false,
         "close_above_ma": true,
-        "range_pct": 1.4
+        "range_pct": 0.56
       },
       "h1": {
-        "last_close": 9650.0,
-        "last_price_pct": -0.52,
-        "vol_spike_x": 0.37,
-        "vol_persistence_x": 0.11,
-        "recent_positive_count": 0,
-        "upper_wick_pct": 0.21,
+        "last_close": 3404000.0,
+        "last_price_pct": 0.27,
+        "vol_spike_x": 0.53,
+        "vol_persistence_x": 0.47,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 0.03,
         "low_rising": false,
         "close_above_ma": true,
-        "range_pct": 2.39
+        "range_pct": 0.62
       },
       "h4": {
-        "last_close": 9475.0,
-        "last_price_pct": 0.32,
-        "vol_spike_x": 0.4,
-        "vol_persistence_x": 0.44,
-        "recent_positive_count": 2,
-        "upper_wick_pct": 1.21,
+        "last_close": 3381000.0,
+        "last_price_pct": -0.79,
+        "vol_spike_x": 0.83,
+        "vol_persistence_x": 0.76,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.09,
         "low_rising": false,
         "close_above_ma": false,
-        "range_pct": 10.11
+        "range_pct": 2.35
       },
       "orderbook": {
-        "bid_depth_top5_krw": 7917401.0,
-        "ask_depth_top5_krw": 23858153.0,
-        "bid_ask_depth_ratio": 0.33,
-        "spread_pct": 0.051
+        "bid_depth_top5_krw": 396658194.0,
+        "ask_depth_top5_krw": 270201569.0,
+        "bid_ask_depth_ratio": 1.47,
+        "spread_pct": 0.059
       },
       "trade_flow": {
-        "recent_buy_krw": 9625064.0,
-        "recent_sell_krw": 36955251.0,
-        "buy_sell_ratio": 0.26
+        "recent_buy_krw": 173595140.0,
+        "recent_sell_krw": 160743697.0,
+        "buy_sell_ratio": 1.08
       },
       "lock": null
     },
     {
-      "base": "PYTH",
-      "market": "KRW-PYTH",
-      "korean_name": "피스네트워크",
-      "price_krw": 74.49,
-      "change_24h_pct": 0.57,
+      "base": "ADA",
+      "market": "KRW-ADA",
+      "korean_name": "에이다",
+      "price_krw": 301.0,
+      "change_24h_pct": 0.67,
       "track": "PRE_IGNITION",
       "expert_status": "REJECT",
-      "expert_score": 137.87,
-      "pattern_similarity": 41.0,
-      "expert_confidence": 47.02,
-      "score_trend_vs_prev": -12.01,
-      "seen_streak": 2,
+      "expert_score": 193.54,
+      "pattern_similarity": 67.0,
+      "expert_confidence": 66.85,
+      "score_trend_vs_prev": null,
+      "seen_streak": 1,
       "expert_reasons": [
-        "15m_volume_persists",
+        "turnover>=8x",
+        "controlled_5m_price_response",
         "buyers_dominate",
         "early_stage"
       ],
-      "expert_penalties": [
-        "ask_depth_dominates"
-      ],
+      "expert_penalties": [],
       "entry_plan": {
-        "status": "WAIT_CONFIRMATION",
-        "reference_price_krw": 74.49,
-        "do_not_chase_above_krw": 76.35225,
-        "invalidation_krw": 72.10632,
-        "target_1_krw": 80.4492,
-        "target_2_krw": 85.6635,
-        "target_3_krw": 93.1125
+        "status": "WATCH",
+        "reference_price_krw": 301.0,
+        "do_not_chase_above_krw": 308.525,
+        "invalidation_krw": 291.368,
+        "target_1_krw": 325.08,
+        "target_2_krw": 346.15,
+        "target_3_krw": 376.25
       },
       "fast_5m": {
         "available": true,
-        "elapsed_min": 1.7,
+        "elapsed_min": 1.4,
+        "price_change_per_5m_pct": 1.338,
+        "change24_delta_per_5m_pct": 0.0,
+        "trade_value_delta_per_5m_krw": 115311834,
+        "turnover_intensity_vs_even_5m_x": 10.71
+      },
+      "m5": {
+        "last_close": 299.0,
+        "last_price_pct": -0.33,
+        "vol_spike_x": 0.09,
+        "vol_persistence_x": 0.49,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 0.0,
+        "low_rising": true,
+        "close_above_ma": false,
+        "range_pct": 1.0
+      },
+      "m15": {
+        "last_close": 301.0,
+        "last_price_pct": -0.33,
+        "vol_spike_x": 1.08,
+        "vol_persistence_x": 0.44,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 0.0,
+        "low_rising": false,
+        "close_above_ma": true,
+        "range_pct": 0.66
+      },
+      "h1": {
+        "last_close": 301.0,
+        "last_price_pct": 0.67,
+        "vol_spike_x": 0.49,
+        "vol_persistence_x": 0.79,
+        "recent_positive_count": 3,
+        "upper_wick_pct": 0.33,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 2.03
+      },
+      "h4": {
+        "last_close": 297.0,
+        "last_price_pct": -0.67,
+        "vol_spike_x": 1.14,
+        "vol_persistence_x": 1.0,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 1.0,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 3.74
+      },
+      "orderbook": {
+        "bid_depth_top5_krw": 540505350.0,
+        "ask_depth_top5_krw": 240604847.0,
+        "bid_ask_depth_ratio": 2.25,
+        "spread_pct": 0.333
+      },
+      "trade_flow": {
+        "recent_buy_krw": 199032529.0,
+        "recent_sell_krw": 120027786.0,
+        "buy_sell_ratio": 1.66
+      },
+      "lock": null
+    },
+    {
+      "base": "OP",
+      "market": "KRW-OP",
+      "korean_name": "옵티미즘",
+      "price_krw": 148.0,
+      "change_24h_pct": 1.37,
+      "track": "PRE_IGNITION",
+      "expert_status": "REJECT",
+      "expert_score": 129.5,
+      "pattern_similarity": 48.0,
+      "expert_confidence": 58.78,
+      "score_trend_vs_prev": 14.0,
+      "seen_streak": 7,
+      "expert_reasons": [
+        "15m_volume_persists",
+        "early_stage",
+        "score_strengthening",
+        "bid_pressure_improving",
+        "multi_scan_persistence"
+      ],
+      "expert_penalties": [],
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 148.0,
+        "do_not_chase_above_krw": 151.7,
+        "invalidation_krw": 143.264,
+        "target_1_krw": 159.84,
+        "target_2_krw": 170.2,
+        "target_3_krw": 185.0
+      },
+      "fast_5m": {
+        "available": true,
+        "elapsed_min": 1.5,
         "price_change_per_5m_pct": 0.0,
         "change24_delta_per_5m_pct": 0.0,
         "trade_value_delta_per_5m_krw": 0,
         "turnover_intensity_vs_even_5m_x": 0.0
       },
       "m5": {
-        "last_close": 74.63,
+        "last_close": 148.0,
         "last_price_pct": 0.0,
-        "vol_spike_x": 21.59,
-        "vol_persistence_x": 0.11,
-        "recent_positive_count": 4,
-        "upper_wick_pct": 0.0,
-        "low_rising": false,
-        "close_above_ma": false,
-        "range_pct": 1.06
-      },
-      "m15": {
-        "last_close": 75.42,
-        "last_price_pct": 0.77,
-        "vol_spike_x": 174.19,
-        "vol_persistence_x": 179.71,
-        "recent_positive_count": 4,
-        "upper_wick_pct": 0.0,
-        "low_rising": false,
-        "close_above_ma": true,
-        "range_pct": 1.37
-      },
-      "h1": {
-        "last_close": 74.3,
-        "last_price_pct": 0.19,
-        "vol_spike_x": 0.04,
-        "vol_persistence_x": 0.05,
+        "vol_spike_x": 0.55,
+        "vol_persistence_x": 0.59,
         "recent_positive_count": 3,
         "upper_wick_pct": 0.0,
-        "low_rising": true,
-        "close_above_ma": true,
-        "range_pct": 2.54
-      },
-      "h4": {
-        "last_close": 74.07,
-        "last_price_pct": -0.82,
-        "vol_spike_x": 0.91,
-        "vol_persistence_x": 0.84,
-        "recent_positive_count": 1,
-        "upper_wick_pct": 0.9,
         "low_rising": false,
         "close_above_ma": false,
-        "range_pct": 5.4
+        "range_pct": 1.35
+      },
+      "m15": {
+        "last_close": 149.0,
+        "last_price_pct": -0.67,
+        "vol_spike_x": 13.87,
+        "vol_persistence_x": 3.01,
+        "recent_positive_count": 2,
+        "upper_wick_pct": 0.0,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 2.03
+      },
+      "h1": {
+        "last_close": 148.0,
+        "last_price_pct": -0.67,
+        "vol_spike_x": 0.15,
+        "vol_persistence_x": 0.19,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.67,
+        "low_rising": true,
+        "close_above_ma": true,
+        "range_pct": 2.04
+      },
+      "h4": {
+        "last_close": 146.0,
+        "last_price_pct": -2.67,
+        "vol_spike_x": 0.77,
+        "vol_persistence_x": 0.61,
+        "recent_positive_count": 1,
+        "upper_wick_pct": 0.0,
+        "low_rising": false,
+        "close_above_ma": false,
+        "range_pct": 9.03
       },
       "orderbook": {
-        "bid_depth_top5_krw": 5390884.0,
-        "ask_depth_top5_krw": 10454939.0,
-        "bid_ask_depth_ratio": 0.52,
-        "spread_pct": 0.201
+        "bid_depth_top5_krw": 25000365.0,
+        "ask_depth_top5_krw": 30821951.0,
+        "bid_ask_depth_ratio": 0.81,
+        "spread_pct": 0.673
       },
       "trade_flow": {
-        "recent_buy_krw": 24820139.0,
-        "recent_sell_krw": 10482712.0,
-        "buy_sell_ratio": 2.37
+        "recent_buy_krw": 57946686.0,
+        "recent_sell_krw": 70881249.0,
+        "buy_sell_ratio": 0.82
       },
       "lock": null
     }
