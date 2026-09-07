@@ -8,6 +8,7 @@ on:
       - "scanner_v17.py"
       - "scanner_v18.py"
       - "scanner_v19.py"
+      - "scanner_v20.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -18,7 +19,7 @@ permissions:
 
 concurrency:
   group: calibrated-beam-scan
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   scan:
@@ -37,19 +38,21 @@ jobs:
         run: python -m pip install requests
 
       - name: Validate scanner syntax
-        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py
+        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py
 
-      - name: Run v19 predictive scan with intrarun persistence sample
+      - name: Run v20 one-pick scan with intrarun confirmation
         run: |
-          # First observation: refresh market state, then apply expert persistence/flow filter.
+          # First observation: refresh market state, v19 expert layer, then v20 heavy one-pick layer.
           python scanner_v18.py
           python scanner_v19.py
-          # Second observation inside the same Action lets v19 measure persistence instead of ranking one snapshot.
+          python scanner_v20.py
+          # Second observation confirms persistence so a one-pick is not designated from one noisy snapshot.
           sleep 75
           python scanner_v18.py
           python scanner_v19.py
+          python scanner_v20.py
 
-      - name: Validate fresh outputs and expert-lock contract
+      - name: Validate fresh outputs and one-pick contract
         run: |
           python - <<'PY'
           import json
@@ -65,47 +68,57 @@ jobs:
               "beam_expert_summary.json",
               "expert_lock_state.json",
               "expert_prediction_history.json",
+              "beam_one_pick_summary.json",
+              "one_pick_state.json",
+              "one_pick_history.json",
           )
           for name in required:
               p = Path(name)
               assert p.exists() and p.stat().st_size > 0, f"{name} missing"
 
-          x = json.loads(Path("beam_expert_summary.json").read_text(encoding="utf-8"))
-          assert x.get("expert_version") == "v19-expert-lock-predictive"
+          expert = json.loads(Path("beam_expert_summary.json").read_text(encoding="utf-8"))
+          assert expert.get("expert_version") == "v19-expert-lock-predictive"
+
+          x = json.loads(Path("beam_one_pick_summary.json").read_text(encoding="utf-8"))
+          assert x.get("one_pick_version") == "v20-one-pick-30-hysteresis"
           h = x.get("health") or {}
           print("health:", h)
-          preds = x.get("locked_predictions") or []
-          print("locked_predictions:", [(r.get("base"), r.get("track"), r.get("expert_status"), r.get("expert_confidence"), r.get("pattern_similarity"), r.get("seen_streak")) for r in preds])
+          print("one_pick_status:", x.get("status"))
+          print("one_pick:", (x.get("one_pick") or {}).get("base"))
+          print("challenger:", (x.get("challenger") or {}).get("base"), (x.get("challenger") or {}).get("confirmations"))
+
           assert h.get("stage1_success", 0) > 0, "No Bithumb candle data"
-          assert len(preds) >= 1, "Need at least one expert-locked prediction"
-          for r in preds:
-              assert r.get("expert_status") in {"PREDICT_BUY", "PREDICT_WAIT"}
-              assert (r.get("track") in {"PRE_IGNITION", "ACCELERATOR", "REACCELERATION_SPECIAL"})
+          assert x.get("status") in {"DESIGNATED", "PROVISIONAL", "NO_PICK"}
+          pick = x.get("one_pick")
+          if pick:
+              assert pick.get("hard_invalidation_krw") is not None
+              assert pick.get("target_30_krw") is not None
+
           ts = datetime.fromisoformat(x["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale result: {age}s"
           PY
 
-      - name: Commit refreshed v19 results and expert state
+      - name: Commit refreshed v20 results and state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json "$output_dir/"
           for attempt in 1 2 3; do
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json
             if git diff --cached --quiet; then
-              echo "No v19 output changes to commit."
+              echo "No v20 output changes to commit."
               exit 0
             fi
-            git commit -m "Update v19 expert-locked beam predictions"
+            git commit -m "Update v20 stable one-pick predictions"
             if git push origin main; then
               exit 0
             fi
             echo "Push raced with another update; retrying ($attempt/3)."
           done
-          echo "Unable to publish v19 scan outputs after 3 attempts."
+          echo "Unable to publish v20 scan outputs after 3 attempts."
           exit 1
