@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-07T22:41:18.209071+00:00",
+  "generated_at_utc": "2026-09-07T22:44:37.313453+00:00",
   "version": "v22-miss-audit-profit-feedback",
   "health": {
     "analysis_ready": true,
@@ -11,7 +11,7 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 57.3
+    "runtime_sec": 54.3
   },
   "top_mover_audit_policy": {
     "mover_change_min_pct": 10.0,
@@ -22,22 +22,32 @@
   "current_top_movers": [
     {
       "base": "OBSR",
-      "price_krw": 0.8657,
-      "change_24h_pct": 37.65,
-      "trade_24h_krw": 2325124595.4992566,
-      "capture": "MISS_NOT_CAPTURED_STAGE2",
-      "first_detected_change_24h_pct": null,
-      "first_detected_price_krw": null,
+      "price_krw": 0.8617,
+      "change_24h_pct": 37.02,
+      "trade_24h_krw": 2391442791.354319,
+      "capture": "LATE_CAPTURE",
+      "first_detected_change_24h_pct": 39.47,
+      "first_detected_price_krw": 0.8798,
       "in_current_stage2": false
     },
     {
       "base": "HPP",
-      "price_krw": 11.08,
-      "change_24h_pct": 22.33,
-      "trade_24h_krw": 4857243553.112673,
+      "price_krw": 11.07,
+      "change_24h_pct": 21.56,
+      "trade_24h_krw": 4875132350.169798,
       "capture": "LATE_CAPTURE",
-      "first_detected_change_24h_pct": 22.33,
-      "first_detected_price_krw": 11.12,
+      "first_detected_change_24h_pct": 21.01,
+      "first_detected_price_krw": 11.0,
+      "in_current_stage2": true
+    },
+    {
+      "base": "AERO",
+      "price_krw": 854,
+      "change_24h_pct": 10.62,
+      "trade_24h_krw": 577500179.1380863,
+      "capture": "EARLY_CAPTURE",
+      "first_detected_change_24h_pct": 3.1,
+      "first_detected_price_krw": 732.0,
       "in_current_stage2": true
     }
   ],
@@ -45,22 +55,22 @@
   "missed_or_late": [
     {
       "base": "OBSR",
-      "price_krw": 0.8657,
-      "change_24h_pct": 37.65,
-      "trade_24h_krw": 2325124595.4992566,
-      "capture": "MISS_NOT_CAPTURED_STAGE2",
-      "first_detected_change_24h_pct": null,
-      "first_detected_price_krw": null,
+      "price_krw": 0.8617,
+      "change_24h_pct": 37.02,
+      "trade_24h_krw": 2391442791.354319,
+      "capture": "LATE_CAPTURE",
+      "first_detected_change_24h_pct": 39.47,
+      "first_detected_price_krw": 0.8798,
       "in_current_stage2": false
     },
     {
       "base": "HPP",
-      "price_krw": 11.08,
-      "change_24h_pct": 22.33,
-      "trade_24h_krw": 4857243553.112673,
+      "price_krw": 11.07,
+      "change_24h_pct": 21.56,
+      "trade_24h_krw": 4875132350.169798,
       "capture": "LATE_CAPTURE",
-      "first_detected_change_24h_pct": 22.33,
-      "first_detected_price_krw": 11.12,
+      "first_detected_change_24h_pct": 21.01,
+      "first_detected_price_krw": 11.0,
       "in_current_stage2": true
     }
   ],
@@ -68,11 +78,11 @@
     {
       "base": "LAYER",
       "first_price_krw": 100.0,
-      "last_price_krw": 98.22,
+      "last_price_krw": 104.0,
       "peak_price_krw": 122.0,
-      "current_return_since_first_pct": -1.78,
+      "current_return_since_first_pct": 4.0,
       "peak_return_since_first_pct": 22.0,
-      "giveback_from_peak_pct_points": 23.78,
+      "giveback_from_peak_pct_points": 18.0,
       "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
     },
     {
@@ -144,13 +154,23 @@
       "peak_return_since_first_pct": 18.53,
       "giveback_from_peak_pct_points": 7.82,
       "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
+    },
+    {
+      "base": "XAN",
+      "first_price_krw": 24.49,
+      "last_price_krw": 27.26,
+      "peak_price_krw": 29.15,
+      "current_return_since_first_pct": 11.31,
+      "peak_return_since_first_pct": 19.03,
+      "giveback_from_peak_pct_points": 7.72,
+      "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
     }
   ],
   "profit_protection": {
     "base": "ACE",
-    "current_return_pct": 9.28,
-    "peak_return_pct": 9.28,
-    "giveback_pct_points": 0.0,
+    "current_return_pct": 8.44,
+    "peak_return_pct": 10.55,
+    "giveback_pct_points": 2.11,
     "action": "HOLD_THESIS",
     "rule": "+10 peak/6pt giveback => partial; +15 peak/8pt giveback => aggressive lock"
   },
