@@ -9,6 +9,8 @@ on:
       - "scanner_v18.py"
       - "scanner_v19.py"
       - "scanner_v20.py"
+      - "scanner_v21.py"
+      - "scanner_v22.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -38,21 +40,24 @@ jobs:
         run: python -m pip install requests
 
       - name: Validate scanner syntax
-        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py
+        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py
 
-      - name: Run v20 one-pick scan with intrarun confirmation
+      - name: Run recall scan and stable one-pick confirmation
         run: |
-          # First observation: refresh market state, v19 expert layer, then v20 heavy one-pick layer.
-          python scanner_v18.py
+          # v21 runs the v18 chain with dedicated stage1/stage2 recall lanes so
+          # active movers cannot be crowded out before expert/one-pick scoring.
+          python scanner_v21.py
           python scanner_v19.py
           python scanner_v20.py
+          python scanner_v22.py
           # Second observation confirms persistence so a one-pick is not designated from one noisy snapshot.
           sleep 75
-          python scanner_v18.py
+          python scanner_v21.py
           python scanner_v19.py
           python scanner_v20.py
+          python scanner_v22.py
 
-      - name: Validate fresh outputs and one-pick contract
+      - name: Validate fresh outputs and recall contract
         run: |
           python - <<'PY'
           import json
@@ -71,10 +76,17 @@ jobs:
               "beam_one_pick_summary.json",
               "one_pick_state.json",
               "one_pick_history.json",
+              "beam_miss_audit.json",
           )
           for name in required:
               p = Path(name)
               assert p.exists() and p.stat().st_size > 0, f"{name} missing"
+
+          scan = json.loads(Path("beam_scan_result.json").read_text(encoding="utf-8"))
+          patch = ((scan.get("logic") or {}).get("miss_recovery_patch") or {})
+          assert patch.get("version") == "v21-miss-recovery-source", "v21 recall patch missing"
+          assert (scan.get("health") or {}).get("stage1_requested", 0) > 0
+          assert (scan.get("health") or {}).get("stage2_success", 0) > 0
 
           expert = json.loads(Path("beam_expert_summary.json").read_text(encoding="utf-8"))
           assert expert.get("expert_version") == "v19-expert-lock-predictive"
@@ -94,17 +106,22 @@ jobs:
               assert pick.get("hard_invalidation_krw") is not None
               assert pick.get("target_30_krw") is not None
 
+          audit = json.loads(Path("beam_miss_audit.json").read_text(encoding="utf-8"))
+          assert audit.get("version") == "v22-miss-audit-profit-feedback"
+          print("missed_or_late_count:", audit.get("missed_or_late_count"))
+          print("profit_protection:", audit.get("profit_protection"))
+
           ts = datetime.fromisoformat(x["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale result: {age}s"
           PY
 
-      - name: Commit refreshed v20 results and state
+      - name: Commit refreshed recall and one-pick results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json "$output_dir/"
           for attempt in 1 2 3; do
             # Generated scan files dirty the checkout. Preserve them in /tmp, clean the disposable
             # worktree, then rebase the publish attempt on the newest origin/main.
@@ -113,16 +130,16 @@ jobs:
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json
             if git diff --cached --quiet; then
-              echo "No v20 output changes to commit."
+              echo "No recall/one-pick output changes to commit."
               exit 0
             fi
-            git commit -m "Update v20 stable one-pick predictions"
+            git commit -m "Update recall scan and stable one-pick predictions"
             if git push origin main; then
               exit 0
             fi
             echo "Push raced with another update; retrying ($attempt/3)."
           done
-          echo "Unable to publish v20 scan outputs after 3 attempts."
+          echo "Unable to publish scan outputs after 3 attempts."
           exit 1
