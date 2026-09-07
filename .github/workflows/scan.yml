@@ -106,6 +106,10 @@ jobs:
           output_dir="$(mktemp -d)"
           cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json "$output_dir/"
           for attempt in 1 2 3; do
+            # Generated scan files dirty the checkout. Preserve them in /tmp, clean the disposable
+            # worktree, then rebase the publish attempt on the newest origin/main.
+            git reset --hard HEAD
+            git clean -fd
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
