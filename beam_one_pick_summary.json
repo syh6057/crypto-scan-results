@@ -1,0 +1,55 @@
+{
+  "generated_at_utc": "2026-09-07T14:25:17.573386+00:00",
+  "source_version": "v18-hard-gated-first-detection",
+  "expert_version": "v19-expert-lock-predictive",
+  "one_pick_version": "v20-one-pick-30-hysteresis",
+  "health": {
+    "analysis_ready": true,
+    "hard_blockers": [],
+    "warnings": [],
+    "markets_total": 472,
+    "tickers_loaded": 472,
+    "stage1_requested": 157,
+    "stage1_success": 157,
+    "stage1_success_ratio": 100.0,
+    "stage2_success": 30,
+    "runtime_sec": 57.7
+  },
+  "status": "NO_PICK",
+  "policy": {
+    "goal": "ARX-like early one-pick with 30pct upside scenario, not a return guarantee",
+    "designation_requires": {
+      "expert_status": "PREDICT_BUY",
+      "track": "PRE_IGNITION",
+      "seen_streak_min": 4,
+      "confidence_min": 85.0,
+      "similarity_min": 75.0,
+      "expert_score_min": 170.0,
+      "buy_sell_min": 0.9,
+      "money_leads_price_min": 20.0,
+      "m15_low_rising": true,
+      "m15_volume_persistence_min": 1.2,
+      "h1_low_rising": true,
+      "change24_max": 7.5,
+      "week_change_max": 20.0,
+      "two_scan_confirmation": true
+    },
+    "hold_hysteresis": {
+      "instant_release": "hard price invalidation only",
+      "soft_release": "3 consecutive structural failures",
+      "single_REJECT_does_not_release": true,
+      "replacement_margin": 25.0
+    },
+    "profit_protection": {
+      "track_hit_10pct": true,
+      "track_hit_15pct": true,
+      "track_hit_30pct": true,
+      "track_hit_40pct": true,
+      "note": "10-15pct is a profit-protection checkpoint; 30pct is an upside scenario target, not guaranteed."
+    }
+  },
+  "one_pick": null,
+  "soft_failure_streak": 0,
+  "challenger": null,
+  "released_this_run": null
+}
