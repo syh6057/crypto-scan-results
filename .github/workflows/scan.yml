@@ -11,6 +11,7 @@ on:
       - "scanner_v20.py"
       - "scanner_v21.py"
       - "scanner_v22.py"
+      - "scanner_v23.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -40,7 +41,7 @@ jobs:
         run: python -m pip install requests
 
       - name: Validate scanner syntax
-        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py
+        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py
 
       - name: Run recall scan and stable one-pick confirmation
         run: |
@@ -50,12 +51,14 @@ jobs:
           python scanner_v19.py
           python scanner_v20.py
           python scanner_v22.py
-          # Second observation confirms persistence so a one-pick is not designated from one noisy snapshot.
+          python scanner_v23.py
+          # Second observation confirms persistence so a one-pick/recall signal is not designated from one noisy snapshot.
           sleep 75
           python scanner_v21.py
           python scanner_v19.py
           python scanner_v20.py
           python scanner_v22.py
+          python scanner_v23.py
 
       - name: Validate fresh outputs and recall contract
         run: |
@@ -77,6 +80,8 @@ jobs:
               "one_pick_state.json",
               "one_pick_history.json",
               "beam_miss_audit.json",
+              "beam_winner_recall.json",
+              "winner_recall_state.json",
           )
           for name in required:
               p = Path(name)
@@ -111,6 +116,12 @@ jobs:
           print("missed_or_late_count:", audit.get("missed_or_late_count"))
           print("profit_protection:", audit.get("profit_protection"))
 
+          recall = json.loads(Path("beam_winner_recall.json").read_text(encoding="utf-8"))
+          assert recall.get("version") == "v23-realized-winner-recall"
+          print("confirmed_recall_pick:", (recall.get("confirmed_recall_pick") or {}).get("base"))
+          wl = recall.get("winner_recall_watchlist") or []
+          print("winner_recall_watch_top:", (wl[0] if wl else {}).get("base"))
+
           ts = datetime.fromisoformat(x["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale result: {age}s"
@@ -121,7 +132,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json "$output_dir/"
           for attempt in 1 2 3; do
             # Generated scan files dirty the checkout. Preserve them in /tmp, clean the disposable
             # worktree, then rebase the publish attempt on the newest origin/main.
@@ -130,7 +141,7 @@ jobs:
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json
             if git diff --cached --quiet; then
               echo "No recall/one-pick output changes to commit."
               exit 0
