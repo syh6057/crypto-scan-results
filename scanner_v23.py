@@ -249,7 +249,7 @@ def main():
             "min_recall_score": MIN_RECALL_SCORE,
             "min_signal_count": MIN_SIGNAL_COUNT,
             "confirmations_required": CONFIRMATIONS_REQUIRED,
-            "not_a_guarantee": true,
+            "not_a_guarantee": True,
             "note": "30pct is an upside scenario only; +10/+15 checkpoints are used to avoid ARX-style profit giveback.",
         },
         "stable_one_pick": stable_pick,
