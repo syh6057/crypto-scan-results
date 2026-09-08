@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-08T17:01:36.165303+00:00",
+  "generated_at_utc": "2026-09-08T17:11:42.617111+00:00",
   "version": "v25-a-plus-precision-30",
   "health": {
     "analysis_ready": true,
@@ -11,12 +11,12 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 65.2
+    "runtime_sec": 54.5
   },
   "market_headwind": {
     "severe": false,
-    "btc_change_24h_pct": 0.09,
-    "eth_change_24h_pct": 0.3
+    "btc_change_24h_pct": 0.15,
+    "eth_change_24h_pct": 0.27
   },
   "goal": "maximize precision for early setups with a +30pct upside path; do not claim 80pct until prospectively calibrated",
   "gate": {
@@ -52,26 +52,12 @@
   "historical_proxy_backtest": {
     "kind": "historical_proxy_not_full_v25_backtest",
     "rule": "first v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6; +30 before -5 using later policy snapshots",
-    "signals": 128,
+    "signals": 130,
     "resolved": 0,
     "wins": 0,
     "losses": 0,
     "hit_rate": null,
     "outcomes": [
-      {
-        "base": "PUFFER",
-        "entry_price": 21.25,
-        "outcome": "UNRESOLVED",
-        "max_seen_return_pct": null,
-        "min_seen_return_pct": null
-      },
-      {
-        "base": "VET",
-        "entry_price": 9.807,
-        "outcome": "UNRESOLVED",
-        "max_seen_return_pct": null,
-        "min_seen_return_pct": null
-      },
       {
         "base": "TRAC",
         "entry_price": 467.0,
@@ -614,6 +600,20 @@
       {
         "base": "DOOD",
         "entry_price": 2.494,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "EDGEX",
+        "entry_price": 782.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "FLUX",
+        "entry_price": 70.75,
         "outcome": "UNRESOLVED",
         "max_seen_return_pct": null,
         "min_seen_return_pct": null
