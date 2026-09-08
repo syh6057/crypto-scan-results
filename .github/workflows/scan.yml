@@ -13,6 +13,7 @@ on:
       - "scanner_v22.py"
       - "scanner_v23.py"
       - "scanner_v24.py"
+      - "scanner_v25.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -42,20 +43,17 @@ jobs:
         run: python -m pip install requests
 
       - name: Validate scanner syntax
-        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py
+        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py scanner_v25.py
 
-      - name: Run recall scan and stable one-pick confirmation
+      - name: Run recall scan stable one-pick and A-plus precision gate
         run: |
-          # v21 runs the v18 chain with dedicated stage1/stage2 recall lanes so
-          # active movers cannot be crowded out before expert/one-pick scoring.
           python scanner_v21.py
-          # Record every valid raw stage2 row before downstream expert gates can reject it.
           python scanner_v24.py
           python scanner_v19.py
           python scanner_v20.py
           python scanner_v22.py
           python scanner_v23.py
-          # Second observation confirms persistence so a one-pick/recall signal is not designated from one noisy snapshot.
+          python scanner_v25.py
           sleep 75
           python scanner_v21.py
           python scanner_v24.py
@@ -63,8 +61,9 @@ jobs:
           python scanner_v20.py
           python scanner_v22.py
           python scanner_v23.py
+          python scanner_v25.py
 
-      - name: Validate fresh outputs and recall contract
+      - name: Validate fresh outputs recall and A-plus contract
         run: |
           python - <<'PY'
           import json
@@ -86,6 +85,8 @@ jobs:
               "beam_miss_audit.json",
               "beam_winner_recall.json",
               "winner_recall_state.json",
+              "beam_a_plus_precision.json",
+              "a_plus_precision_state.json",
           )
           for name in required:
               p = Path(name)
@@ -103,8 +104,6 @@ jobs:
           stage2_bases = {r.get("base") for r in (scan.get("stage2_ranked") or []) if r.get("base") and float(r.get("price_krw") or 0) > 0}
           missing_first_seen = sorted(base for base in stage2_bases if base not in first_seen)
           assert not missing_first_seen, f"raw stage2 first-seen missing: {missing_first_seen[:10]}"
-          print("stage2_first_seen_coverage:", len(stage2_bases), "/", len(stage2_bases))
-          print("new_raw_stage2_first_seen:", first_seen_patch.get("new_stage2_first_seen"))
 
           expert = json.loads(Path("beam_expert_summary.json").read_text(encoding="utf-8"))
           assert expert.get("expert_version") == "v19-expert-lock-predictive"
@@ -112,11 +111,6 @@ jobs:
           x = json.loads(Path("beam_one_pick_summary.json").read_text(encoding="utf-8"))
           assert x.get("one_pick_version") == "v20-one-pick-30-hysteresis"
           h = x.get("health") or {}
-          print("health:", h)
-          print("one_pick_status:", x.get("status"))
-          print("one_pick:", (x.get("one_pick") or {}).get("base"))
-          print("challenger:", (x.get("challenger") or {}).get("base"), (x.get("challenger") or {}).get("confirmations"))
-
           assert h.get("stage1_success", 0) > 0, "No Bithumb candle data"
           assert x.get("status") in {"DESIGNATED", "PROVISIONAL", "NO_PICK"}
           pick = x.get("one_pick")
@@ -126,41 +120,56 @@ jobs:
 
           audit = json.loads(Path("beam_miss_audit.json").read_text(encoding="utf-8"))
           assert audit.get("version") == "v22-miss-audit-profit-feedback"
-          print("missed_or_late_count:", audit.get("missed_or_late_count"))
-          print("profit_protection:", audit.get("profit_protection"))
 
           recall = json.loads(Path("beam_winner_recall.json").read_text(encoding="utf-8"))
           assert recall.get("version") == "v23-realized-winner-recall"
           assert (recall.get("policy") or {}).get("not_a_guarantee") is True
-          print("confirmed_recall_pick:", (recall.get("confirmed_recall_pick") or {}).get("base"))
-          wl = recall.get("winner_recall_watchlist") or []
-          print("winner_recall_watch_top:", (wl[0] if wl else {}).get("base"))
+
+          aplus = json.loads(Path("beam_a_plus_precision.json").read_text(encoding="utf-8"))
+          assert aplus.get("version") == "v25-a-plus-precision-30"
+          assert aplus.get("status") in {"A_PLUS_BUY", "NO_BUY"}
+          cal = aplus.get("prospective_calibration") or {}
+          assert "may_claim_80pct_probability" in cal
+          label = (aplus.get("probability_label_policy") or {}).get("current_label")
+          if label == "CALIBRATED_80_PLUS":
+              assert cal.get("resolved", 0) >= 50
+              assert (cal.get("hit_rate") or 0) >= 0.80
+          if aplus.get("a_plus_pick"):
+              ap = aplus["a_plus_pick"]
+              assert ap.get("a_plus_ready") is True
+              assert (ap.get("entry_plan") or {}).get("target_30_krw") is not None
 
           ts = datetime.fromisoformat(x["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale result: {age}s"
+
+          print("health:", h)
+          print("one_pick:", (x.get("one_pick") or {}).get("base"))
+          print("recall_pick:", (recall.get("confirmed_recall_pick") or {}).get("base"))
+          print("a_plus_status:", aplus.get("status"))
+          print("a_plus_pick:", (aplus.get("a_plus_pick") or {}).get("base"))
+          print("a_plus_calibration:", cal)
+          print("proxy_backtest:", aplus.get("historical_proxy_backtest"))
           PY
 
-      - name: Commit refreshed recall and one-pick results
+      - name: Commit refreshed recall one-pick and A-plus results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json "$output_dir/"
           for attempt in 1 2 3; do
-            # Generated scan files dirty the checkout. Preserve them in /tmp, clean the disposable
-            # worktree, then rebase the publish attempt on the newest origin/main.
             git reset --hard HEAD
             git clean -fd
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json
             if git diff --cached --quiet; then
-              echo "No recall/one-pick output changes to commit."
+              echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update recall scan and stable one-pick predictions"
+            git commit -m "Update recall one-pick and A-plus precision results"
             if git push origin main; then
               exit 0
             fi
