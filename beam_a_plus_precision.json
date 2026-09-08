@@ -1,0 +1,632 @@
+{
+  "generated_at_utc": "2026-09-08T11:46:36.621498+00:00",
+  "version": "v25-a-plus-precision-30",
+  "health": {
+    "analysis_ready": true,
+    "hard_blockers": [],
+    "warnings": [],
+    "markets_total": 474,
+    "tickers_loaded": 474,
+    "stage1_requested": 200,
+    "stage1_success": 198,
+    "stage1_success_ratio": 99.0,
+    "stage2_success": 45,
+    "runtime_sec": 65.5
+  },
+  "market_headwind": {
+    "severe": false,
+    "btc_change_24h_pct": -1.23,
+    "eth_change_24h_pct": -0.88
+  },
+  "goal": "maximize precision for early setups with a +30pct upside path; do not claim 80pct until prospectively calibrated",
+  "gate": {
+    "first_detection_change_pct_max": 3.0,
+    "current_change_pct_max": 6.0,
+    "min_trade_24h_krw": 200000000,
+    "min_turnover_intensity_x": 5.0,
+    "min_money_leads_price_score": 30.0,
+    "min_m15_volume_persistence_x": 1.5,
+    "min_buy_sell_ratio": 1.3,
+    "min_orderbook_ratio": 0.6,
+    "max_5m_price_change_pct": 2.0,
+    "max_week_change_pct": 15.0,
+    "max_stop_distance_pct": 6.0,
+    "min_reward_risk_to_30pct": 4.5,
+    "persistence": "at least 3 passes in last 5 observations and 2 consecutive",
+    "hard_stop_pct": 5.0,
+    "target_pct": 30.0
+  },
+  "status": "NO_BUY",
+  "a_plus_pick": null,
+  "watchlist": [],
+  "prospective_calibration": {
+    "resolved": 0,
+    "wins_30_before_stop": 0,
+    "losses_stop_before_30": 0,
+    "hit_rate": null,
+    "wilson_95pct_lower_bound": null,
+    "min_resolved_required_before_probability_claim": 50,
+    "target_hit_rate": 0.8,
+    "may_claim_80pct_probability": false
+  },
+  "historical_proxy_backtest": {
+    "kind": "historical_proxy_not_full_v25_backtest",
+    "rule": "first v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6; +30 before -5 using later policy snapshots",
+    "signals": 117,
+    "resolved": 0,
+    "wins": 0,
+    "losses": 0,
+    "hit_rate": null,
+    "outcomes": [
+      {
+        "base": "KAIA",
+        "entry_price": 42.74,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SOMI",
+        "entry_price": 180.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "T",
+        "entry_price": 6.112,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "JUP",
+        "entry_price": 366.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "CFG",
+        "entry_price": 149.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "LINEA",
+        "entry_price": 3.898,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SOLV",
+        "entry_price": 5.251,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ORCA",
+        "entry_price": 2010.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "PLUME",
+        "entry_price": 18.9,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ETC",
+        "entry_price": 10620.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "YB",
+        "entry_price": 131.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "PUFFER",
+        "entry_price": 21.25,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "VET",
+        "entry_price": 9.807,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "TRAC",
+        "entry_price": 467.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "MNT",
+        "entry_price": 841.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ASTER",
+        "entry_price": 1065.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "PRL",
+        "entry_price": 174.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "TAIKO",
+        "entry_price": 114.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SOPH",
+        "entry_price": 5.855,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "MOODENG",
+        "entry_price": 60.62,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ANIME",
+        "entry_price": 3.976,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "AAVE",
+        "entry_price": 183800.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SHIB",
+        "entry_price": 0.0076,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "PUMPBTC",
+        "entry_price": 17.1,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "CAP",
+        "entry_price": 60.93,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "KAITO",
+        "entry_price": 429.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "APT",
+        "entry_price": 852.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "BASED",
+        "entry_price": 93.68,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "IRYS",
+        "entry_price": 20.07,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "FIL",
+        "entry_price": 1104.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "COS",
+        "entry_price": 0.3711,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SKR",
+        "entry_price": 28.62,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ETHFI",
+        "entry_price": 804.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "IOTX",
+        "entry_price": 4.364,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ATOM",
+        "entry_price": 2259.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "DEEP",
+        "entry_price": 22.28,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "0G",
+        "entry_price": 266.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ACE",
+        "entry_price": 234.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "EUL",
+        "entry_price": 1825.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ZKP",
+        "entry_price": 66.62,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "PROS",
+        "entry_price": 611.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "DATA",
+        "entry_price": 264.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ACS",
+        "entry_price": 0.2108,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "TRUMP",
+        "entry_price": 3144.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "BMT",
+        "entry_price": 24.31,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "KAVA",
+        "entry_price": 79.21,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "LM",
+        "entry_price": 1.052,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "BLAST",
+        "entry_price": 0.4069,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ALGO",
+        "entry_price": 134.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "RAY",
+        "entry_price": 1601.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "KITE",
+        "entry_price": 167.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SNT",
+        "entry_price": 10.04,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "UNI",
+        "entry_price": 9580.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "AVNT",
+        "entry_price": 152.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "MEGA",
+        "entry_price": 55.93,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "VVV",
+        "entry_price": 25120.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "WAVES",
+        "entry_price": 322.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "MED",
+        "entry_price": 2.178,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "BTR",
+        "entry_price": 62.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "MINA",
+        "entry_price": 110.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SCR",
+        "entry_price": 29.01,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ROBO",
+        "entry_price": 15.84,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "AEON",
+        "entry_price": 72.4,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "POKT",
+        "entry_price": 10.97,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "PIEVERSE",
+        "entry_price": 1744.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "MIRA",
+        "entry_price": 66.71,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SOON",
+        "entry_price": 263.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ARB",
+        "entry_price": 237.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "HNT",
+        "entry_price": 781.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "G",
+        "entry_price": 5.524,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "VANA",
+        "entry_price": 1337.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SAFE",
+        "entry_price": 140.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "LIT",
+        "entry_price": 6380.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "LPT",
+        "entry_price": 2030.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "GWEI",
+        "entry_price": 34.17,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "ORDER",
+        "entry_price": 47.86,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "VTHO",
+        "entry_price": 0.6004,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "TRUST",
+        "entry_price": 77.81,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "HOOK",
+        "entry_price": 6.08,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "SAHARA",
+        "entry_price": 12.95,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      }
+    ],
+    "limitations": [
+      "historical prediction rows do not store all v25 A+ features, so this is not a backtest of the full gate",
+      "snapshot cadence can miss intrainterval stop/target touches",
+      "no probability claim is allowed from this proxy"
+    ]
+  },
+  "probability_label_policy": {
+    "current_label": "UNCALIBRATED",
+    "rule": "never translate heuristic confidence/similarity into probability; 80pct language requires >=50 prospective resolved A+ trials and observed hit rate >=80pct"
+  }
+}
