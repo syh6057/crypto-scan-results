@@ -14,6 +14,7 @@ on:
       - "scanner_v23.py"
       - "scanner_v24.py"
       - "scanner_v25.py"
+      - "scanner_v26.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -43,9 +44,9 @@ jobs:
         run: python -m pip install requests
 
       - name: Validate scanner syntax
-        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py scanner_v25.py
+        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py
 
-      - name: Run recall scan stable one-pick and A-plus precision gate
+      - name: Run recall scan stable one-pick A-plus gate and validation
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -54,6 +55,7 @@ jobs:
           python scanner_v22.py
           python scanner_v23.py
           python scanner_v25.py
+          python scanner_v26.py
           sleep 75
           python scanner_v21.py
           python scanner_v24.py
@@ -62,8 +64,9 @@ jobs:
           python scanner_v22.py
           python scanner_v23.py
           python scanner_v25.py
+          python scanner_v26.py
 
-      - name: Validate fresh outputs recall and A-plus contract
+      - name: Validate fresh outputs recall A-plus and coverage contract
         run: |
           python - <<'PY'
           import json
@@ -87,6 +90,7 @@ jobs:
               "winner_recall_state.json",
               "beam_a_plus_precision.json",
               "a_plus_precision_state.json",
+              "beam_a_plus_validation.json",
           )
           for name in required:
               p = Path(name)
@@ -139,6 +143,13 @@ jobs:
               assert ap.get("a_plus_ready") is True
               assert (ap.get("entry_plan") or {}).get("target_30_krw") is not None
 
+          validation = json.loads(Path("beam_a_plus_validation.json").read_text(encoding="utf-8"))
+          assert validation.get("version") == "v26-a-plus-validation-coverage"
+          hp = validation.get("historical_proxy") or {}
+          assert "coverage_ratio" in hp and "insufficient_path" in hp
+          vc = validation.get("validation_conclusion") or {}
+          assert vc.get("may_claim_80pct_now") == cal.get("may_claim_80pct_probability")
+
           ts = datetime.fromisoformat(x["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale result: {age}s"
@@ -149,27 +160,27 @@ jobs:
           print("a_plus_status:", aplus.get("status"))
           print("a_plus_pick:", (aplus.get("a_plus_pick") or {}).get("base"))
           print("a_plus_calibration:", cal)
-          print("proxy_backtest:", aplus.get("historical_proxy_backtest"))
+          print("validation_proxy:", {k: hp.get(k) for k in ("signals", "signals_with_any_future_path", "coverage_ratio", "resolved", "wins_30_before_stop", "losses_stop_before_30", "hit_rate", "insufficient_path")})
           PY
 
-      - name: Commit refreshed recall one-pick and A-plus results
+      - name: Commit refreshed recall one-pick A-plus and validation results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json "$output_dir/"
           for attempt in 1 2 3; do
             git reset --hard HEAD
             git clean -fd
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json
             if git diff --cached --quiet; then
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update recall one-pick and A-plus precision results"
+            git commit -m "Update recall one-pick A-plus and validation results"
             if git push origin main; then
               exit 0
             fi
