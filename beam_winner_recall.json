@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-08T21:20:53.805451+00:00",
+  "generated_at_utc": "2026-09-08T21:29:51.176817+00:00",
   "version": "v23-realized-winner-recall",
   "health": {
     "analysis_ready": true,
@@ -11,19 +11,25 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 73.0
+    "runtime_sec": 53.3
   },
   "purpose": "surface early movers the scanner detected but downstream expert gates failed to recommend",
   "learned_from_realized_winners": [
     {
       "base": "GHX",
-      "current_change_24h_pct": 35.63,
+      "current_change_24h_pct": 38.8,
       "first_detected_change_24h_pct": 1.96,
       "first_detected_price_krw": 11.43
     },
     {
+      "base": "COS",
+      "current_change_24h_pct": 11.01,
+      "first_detected_change_24h_pct": 1.9,
+      "first_detected_price_krw": 0.3698
+    },
+    {
       "base": "DOT",
-      "current_change_24h_pct": 11.42,
+      "current_change_24h_pct": 10.77,
       "first_detected_change_24h_pct": -0.07,
       "first_detected_price_krw": 1452.0
     }
@@ -44,7 +50,54 @@
     "reason": "no_designated_one_pick"
   },
   "confirmed_recall_pick": null,
-  "winner_recall_watchlist": [],
+  "winner_recall_watchlist": [
+    {
+      "base": "STRK",
+      "market": "KRW-STRK",
+      "korean_name": "스타크넷",
+      "price_krw": 41.23,
+      "change_24h_pct": 1.88,
+      "trade_24h_krw": 323370122.2999257,
+      "track": "PRE_IGNITION",
+      "recall_score": 101.98,
+      "signal_count": 9,
+      "signals": {
+        "fast_turnover": true,
+        "controlled_5m": true,
+        "m15_spike": true,
+        "m15_persistence": true,
+        "m15_structure": true,
+        "h1_structure": true,
+        "buy_flow": false,
+        "orderbook_not_bad": true,
+        "signature": true,
+        "money_leads": true
+      },
+      "hard_failures": [],
+      "confirmations": 1,
+      "first_detected_at_utc": "2026-09-06T13:36:01.650238+00:00",
+      "first_price_krw": 41.0,
+      "first_change_24h_pct": 5.7,
+      "return_since_first_pct": 0.56,
+      "beam_score": 146.39,
+      "money_leads_price_score": 30.0,
+      "turnover_intensity": 1.96,
+      "buy_sell_ratio": 0.71,
+      "orderbook_ratio": 2.19,
+      "scenario_target_10_krw": 45.353,
+      "scenario_target_15_krw": 47.4145,
+      "scenario_target_30_krw": 53.599,
+      "entry_plan": {
+        "status": "ENTER_CANDIDATE",
+        "reference_price_krw": 41.23,
+        "do_not_chase_above_krw": 42.26075,
+        "invalidation_krw": 39.91064,
+        "target_1_krw": 44.5284,
+        "target_2_krw": 47.4145,
+        "target_3_krw": 51.5375
+      }
+    }
+  ],
   "feedback": {
     "detection_bottleneck": "some eventual winners were first detected below 5pct but never surfaced as the recommendation",
     "fix": "parallel raw-stage2 recall scoring bypasses v19/v20 all-of expert thresholds, while requiring two observations",
