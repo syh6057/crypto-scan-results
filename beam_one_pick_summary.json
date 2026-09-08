@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-08T04:35:02.918590+00:00",
+  "generated_at_utc": "2026-09-08T04:47:39.842751+00:00",
   "source_version": "v18-hard-gated-first-detection",
   "expert_version": "v19-expert-lock-predictive",
   "one_pick_version": "v20-one-pick-30-hysteresis",
@@ -13,9 +13,9 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 63.9
+    "runtime_sec": 72.2
   },
-  "status": "NO_PICK",
+  "status": "PROVISIONAL",
   "policy": {
     "goal": "ARX-like early one-pick with 30pct upside scenario, not a return guarantee",
     "designation_requires": {
@@ -50,6 +50,111 @@
   },
   "one_pick": null,
   "soft_failure_streak": 0,
-  "challenger": null,
+  "challenger": {
+    "base": "PIEVERSE",
+    "market": "KRW-PIEVERSE",
+    "korean_name": "파이버스",
+    "price_krw": 1744.0,
+    "change_24h_pct": 1.16,
+    "track": "PRE_IGNITION",
+    "expert_status": "PREDICT_BUY",
+    "expert_score": 222.63,
+    "pattern_similarity": 91.0,
+    "expert_confidence": 95.05,
+    "seen_streak": 4,
+    "quality_score": 473.39,
+    "heavy_eligible_now": true,
+    "heavy_reasons": [
+      "predict_buy",
+      "pre_ignition",
+      "still_early",
+      "confidence>=85",
+      "similarity>=75",
+      "expert_score>=170",
+      "multi_scan>=4",
+      "buy_flow_ok",
+      "money_leads_price",
+      "15m_low_rising",
+      "15m_volume_persists",
+      "1h_low_rising",
+      "5m_not_vertical",
+      "no_market_warning",
+      "30pct_scenario_eligible"
+    ],
+    "heavy_failures": [],
+    "money_leads_price_score": 22.0,
+    "buy_sell_ratio": 1.86,
+    "orderbook_ratio": 0.86,
+    "turnover_intensity": 0.6,
+    "target_10_krw": 1918.4,
+    "target_15_krw": 2005.6,
+    "target_30_krw": 2267.2,
+    "target_40_krw": 2441.6,
+    "hard_invalidation_krw": 1688.192,
+    "do_not_chase_above_krw": 1787.6,
+    "return_since_designation_pct": 0.0,
+    "entry_plan": {
+      "status": "WAIT_CONFIRMATION",
+      "reference_price_krw": 1744.0,
+      "do_not_chase_above_krw": 1787.6,
+      "invalidation_krw": 1688.192,
+      "target_1_krw": 1883.52,
+      "target_2_krw": 2005.6,
+      "target_3_krw": 2180.0
+    },
+    "fast_5m": {
+      "available": true,
+      "elapsed_min": 1.5,
+      "price_change_per_5m_pct": 0.46,
+      "change24_delta_per_5m_pct": -0.12,
+      "trade_value_delta_per_5m_krw": 6636123,
+      "turnover_intensity_vs_even_5m_x": 0.6
+    },
+    "m15": {
+      "last_close": 1731.0,
+      "last_price_pct": 0.64,
+      "vol_spike_x": 0.24,
+      "vol_persistence_x": 1.21,
+      "recent_positive_count": 4,
+      "upper_wick_pct": 0.12,
+      "low_rising": true,
+      "close_above_ma": true,
+      "range_pct": 2.79
+    },
+    "h1": {
+      "last_close": 1703.0,
+      "last_price_pct": 0.35,
+      "vol_spike_x": 1.85,
+      "vol_persistence_x": 1.68,
+      "recent_positive_count": 3,
+      "upper_wick_pct": 3.17,
+      "low_rising": true,
+      "close_above_ma": true,
+      "range_pct": 9.47
+    },
+    "h4": {
+      "last_close": 1700.0,
+      "last_price_pct": -0.47,
+      "vol_spike_x": 0.14,
+      "vol_persistence_x": 0.44,
+      "recent_positive_count": 2,
+      "upper_wick_pct": 0.59,
+      "low_rising": true,
+      "close_above_ma": false,
+      "range_pct": 21.88
+    },
+    "orderbook": {
+      "bid_depth_top5_krw": 14600343.0,
+      "ask_depth_top5_krw": 16993168.0,
+      "bid_ask_depth_ratio": 0.86,
+      "spread_pct": 0.23
+    },
+    "trade_flow": {
+      "recent_buy_krw": 80617859.0,
+      "recent_sell_krw": 43458263.0,
+      "buy_sell_ratio": 1.86
+    },
+    "confirmations": 1
+  },
   "released_this_run": null
 }
