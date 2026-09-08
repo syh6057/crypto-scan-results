@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-08T15:14:05.399326+00:00",
+  "generated_at_utc": "2026-09-08T15:29:27.425281+00:00",
   "version": "v26-a-plus-validation-coverage",
   "purpose": "honest validation coverage for the A+ +30 gate; do not fabricate historical hit rate when price paths were not stored",
   "v25_status": "NO_BUY",
@@ -7,17 +7,17 @@
   "historical_proxy": {
     "signal_rule": "first historical v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6",
     "outcome_rule": "+30pct observed before -5pct observed in persisted chronological prices",
-    "signals": 122,
+    "signals": 123,
     "signals_with_any_future_path": 104,
-    "coverage_ratio": 0.8525,
+    "coverage_ratio": 0.8455,
     "resolved": 1,
     "wins_30_before_stop": 0,
     "losses_stop_before_30": 1,
     "hit_rate": 0.0,
-    "insufficient_path": 18,
+    "insufficient_path": 19,
     "unresolved_with_path": 103,
     "source_observation_counts": {
-      "expert_history": 968,
+      "expert_history": 972,
       "policy_snapshot_history": 1296,
       "one_pick_history": 0
     },
@@ -28,22 +28,6 @@
     },
     "probability_usable": false,
     "outcomes": [
-      {
-        "base": "XAN",
-        "signal_at_utc": "2026-09-06T17:47:42.719949+00:00",
-        "entry_price": 25.81,
-        "change_24h_pct": 3.9,
-        "expert_confidence": 92.3,
-        "pattern_similarity": 86.0,
-        "outcome": "UNRESOLVED",
-        "future_observation_count": 18,
-        "first_future_at_utc": "2026-09-06T18:00:14.863516+00:00",
-        "last_future_at_utc": "2026-09-07T23:23:36.372045+00:00",
-        "max_seen_return_pct": 9.76,
-        "min_seen_return_pct": -2.4,
-        "resolved_at_utc": null,
-        "resolution_source": null
-      },
       {
         "base": "METIS",
         "signal_at_utc": "2026-09-06T18:25:24.389123+00:00",
@@ -418,10 +402,10 @@
         "expert_confidence": 86.8,
         "pattern_similarity": 76.0,
         "outcome": "UNRESOLVED",
-        "future_observation_count": 23,
+        "future_observation_count": 24,
         "first_future_at_utc": "2026-09-07T05:35:24.454903+00:00",
-        "last_future_at_utc": "2026-09-08T14:50:25.024960+00:00",
-        "max_seen_return_pct": 6.97,
+        "last_future_at_utc": "2026-09-08T15:27:14.758178+00:00",
+        "max_seen_return_pct": 11.21,
         "min_seen_return_pct": 0.47,
         "resolved_at_utc": null,
         "resolution_source": null
@@ -1147,10 +1131,10 @@
         "expert_confidence": 93.4,
         "pattern_similarity": 88.0,
         "outcome": "UNRESOLVED",
-        "future_observation_count": 3,
+        "future_observation_count": 5,
         "first_future_at_utc": "2026-09-08T15:02:28.406317+00:00",
-        "last_future_at_utc": "2026-09-08T15:14:05.065479+00:00",
-        "max_seen_return_pct": 24.0,
+        "last_future_at_utc": "2026-09-08T15:29:27.120133+00:00",
+        "max_seen_return_pct": 26.99,
         "min_seen_return_pct": 23.69,
         "resolved_at_utc": null,
         "resolution_source": null
@@ -1610,11 +1594,26 @@
         "max_seen_return_pct": null,
         "min_seen_return_pct": null,
         "resolution_source": null
+      },
+      {
+        "base": "SEI",
+        "signal_at_utc": "2026-09-08T15:29:27.120133+00:00",
+        "entry_price": 68.74,
+        "change_24h_pct": 0.78,
+        "expert_confidence": 87.9,
+        "pattern_similarity": 78.0,
+        "outcome": "INSUFFICIENT_PATH",
+        "future_observation_count": 0,
+        "first_future_at_utc": null,
+        "last_future_at_utc": null,
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null,
+        "resolution_source": null
       }
     ]
   },
   "eventual_30_sanity_check": {
-    "count": 2,
+    "count": 3,
     "assets": [
       {
         "base": "SOPH",
@@ -1630,6 +1629,14 @@
         "first_change_24h_pct": 0.32,
         "peak_price_krw": 420.0,
         "peak_return_since_first_pct": 33.76,
+        "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
+      },
+      {
+        "base": "GHX",
+        "first_price_krw": 11.43,
+        "first_change_24h_pct": 1.96,
+        "peak_price_krw": 15.22,
+        "peak_return_since_first_pct": 33.16,
         "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
       }
     ],
