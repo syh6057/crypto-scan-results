@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-08T15:29:27.425281+00:00",
+  "generated_at_utc": "2026-09-08T15:42:15.674142+00:00",
   "version": "v26-a-plus-validation-coverage",
   "purpose": "honest validation coverage for the A+ +30 gate; do not fabricate historical hit rate when price paths were not stored",
   "v25_status": "NO_BUY",
@@ -7,17 +7,17 @@
   "historical_proxy": {
     "signal_rule": "first historical v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6",
     "outcome_rule": "+30pct observed before -5pct observed in persisted chronological prices",
-    "signals": 123,
-    "signals_with_any_future_path": 104,
-    "coverage_ratio": 0.8455,
+    "signals": 124,
+    "signals_with_any_future_path": 105,
+    "coverage_ratio": 0.8468,
     "resolved": 1,
     "wins_30_before_stop": 0,
     "losses_stop_before_30": 1,
     "hit_rate": 0.0,
     "insufficient_path": 19,
-    "unresolved_with_path": 103,
+    "unresolved_with_path": 104,
     "source_observation_counts": {
-      "expert_history": 972,
+      "expert_history": 976,
       "policy_snapshot_history": 1296,
       "one_pick_history": 0
     },
@@ -28,22 +28,6 @@
     },
     "probability_usable": false,
     "outcomes": [
-      {
-        "base": "METIS",
-        "signal_at_utc": "2026-09-06T18:25:24.389123+00:00",
-        "entry_price": 4466.0,
-        "change_24h_pct": 4.66,
-        "expert_confidence": 91.75,
-        "pattern_similarity": 85.0,
-        "outcome": "UNRESOLVED",
-        "future_observation_count": 5,
-        "first_future_at_utc": "2026-09-06T19:04:34.965957+00:00",
-        "last_future_at_utc": "2026-09-06T19:26:44.107023+00:00",
-        "max_seen_return_pct": 2.58,
-        "min_seen_return_pct": 1.99,
-        "resolved_at_utc": null,
-        "resolution_source": null
-      },
       {
         "base": "STX",
         "signal_at_utc": "2026-09-06T18:35:30.785496+00:00",
@@ -1131,9 +1115,9 @@
         "expert_confidence": 93.4,
         "pattern_similarity": 88.0,
         "outcome": "UNRESOLVED",
-        "future_observation_count": 5,
+        "future_observation_count": 6,
         "first_future_at_utc": "2026-09-08T15:02:28.406317+00:00",
-        "last_future_at_utc": "2026-09-08T15:29:27.120133+00:00",
+        "last_future_at_utc": "2026-09-08T15:39:59.884128+00:00",
         "max_seen_return_pct": 26.99,
         "min_seen_return_pct": 23.69,
         "resolved_at_utc": null,
@@ -1602,6 +1586,22 @@
         "change_24h_pct": 0.78,
         "expert_confidence": 87.9,
         "pattern_similarity": 78.0,
+        "outcome": "UNRESOLVED",
+        "future_observation_count": 1,
+        "first_future_at_utc": "2026-09-08T15:39:59.884128+00:00",
+        "last_future_at_utc": "2026-09-08T15:39:59.884128+00:00",
+        "max_seen_return_pct": 0.64,
+        "min_seen_return_pct": 0.64,
+        "resolved_at_utc": null,
+        "resolution_source": null
+      },
+      {
+        "base": "USELESS",
+        "signal_at_utc": "2026-09-08T15:42:15.262702+00:00",
+        "entry_price": 415.0,
+        "change_24h_pct": 4.8,
+        "expert_confidence": 92.3,
+        "pattern_similarity": 86.0,
         "outcome": "INSUFFICIENT_PATH",
         "future_observation_count": 0,
         "first_future_at_utc": null,
@@ -1624,19 +1624,19 @@
         "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
       },
       {
+        "base": "GHX",
+        "first_price_krw": 11.43,
+        "first_change_24h_pct": 1.96,
+        "peak_price_krw": 15.74,
+        "peak_return_since_first_pct": 37.71,
+        "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
+      },
+      {
         "base": "WAVES",
         "first_price_krw": 314.0,
         "first_change_24h_pct": 0.32,
         "peak_price_krw": 420.0,
         "peak_return_since_first_pct": 33.76,
-        "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
-      },
-      {
-        "base": "GHX",
-        "first_price_krw": 11.43,
-        "first_change_24h_pct": 1.96,
-        "peak_price_krw": 15.22,
-        "peak_return_since_first_pct": 33.16,
         "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
       }
     ],
