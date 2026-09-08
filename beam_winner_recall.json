@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-08T19:45:24.476666+00:00",
+  "generated_at_utc": "2026-09-08T19:52:42.893770+00:00",
   "version": "v23-realized-winner-recall",
   "health": {
     "analysis_ready": true,
@@ -11,15 +11,21 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 64.9
+    "runtime_sec": 68.0
   },
   "purpose": "surface early movers the scanner detected but downstream expert gates failed to recommend",
   "learned_from_realized_winners": [
     {
       "base": "GHX",
-      "current_change_24h_pct": 54.5,
+      "current_change_24h_pct": 56.17,
       "first_detected_change_24h_pct": 1.96,
       "first_detected_price_krw": 11.43
+    },
+    {
+      "base": "DOT",
+      "current_change_24h_pct": 10.31,
+      "first_detected_change_24h_pct": -0.07,
+      "first_detected_price_krw": 1452.0
     }
   ],
   "policy": {
@@ -37,8 +43,100 @@
     "action": "NONE",
     "reason": "no_designated_one_pick"
   },
-  "confirmed_recall_pick": null,
-  "winner_recall_watchlist": [],
+  "confirmed_recall_pick": {
+    "base": "ZORA",
+    "market": "KRW-ZORA",
+    "korean_name": "조라",
+    "price_krw": 12.02,
+    "change_24h_pct": 1.26,
+    "trade_24h_krw": 718914970.7976848,
+    "track": "PRE_IGNITION",
+    "recall_score": 116.23,
+    "signal_count": 9,
+    "signals": {
+      "fast_turnover": false,
+      "controlled_5m": true,
+      "m15_spike": true,
+      "m15_persistence": true,
+      "m15_structure": true,
+      "h1_structure": true,
+      "buy_flow": true,
+      "orderbook_not_bad": true,
+      "signature": true,
+      "money_leads": true
+    },
+    "hard_failures": [],
+    "confirmations": 2,
+    "first_detected_at_utc": "2026-09-06T18:46:18.003924+00:00",
+    "first_price_krw": 11.28,
+    "first_change_24h_pct": 0.0,
+    "return_since_first_pct": 6.56,
+    "beam_score": 157.39,
+    "money_leads_price_score": 22.0,
+    "turnover_intensity": 0.0,
+    "buy_sell_ratio": 0.92,
+    "orderbook_ratio": 1.46,
+    "scenario_target_10_krw": 13.222,
+    "scenario_target_15_krw": 13.823,
+    "scenario_target_30_krw": 15.626,
+    "entry_plan": {
+      "status": "WAIT_CONFIRMATION",
+      "reference_price_krw": 12.02,
+      "do_not_chase_above_krw": 12.3205,
+      "invalidation_krw": 11.63536,
+      "target_1_krw": 12.9816,
+      "target_2_krw": 13.823,
+      "target_3_krw": 15.025
+    }
+  },
+  "winner_recall_watchlist": [
+    {
+      "base": "ZORA",
+      "market": "KRW-ZORA",
+      "korean_name": "조라",
+      "price_krw": 12.02,
+      "change_24h_pct": 1.26,
+      "trade_24h_krw": 718914970.7976848,
+      "track": "PRE_IGNITION",
+      "recall_score": 116.23,
+      "signal_count": 9,
+      "signals": {
+        "fast_turnover": false,
+        "controlled_5m": true,
+        "m15_spike": true,
+        "m15_persistence": true,
+        "m15_structure": true,
+        "h1_structure": true,
+        "buy_flow": true,
+        "orderbook_not_bad": true,
+        "signature": true,
+        "money_leads": true
+      },
+      "hard_failures": [],
+      "confirmations": 2,
+      "first_detected_at_utc": "2026-09-06T18:46:18.003924+00:00",
+      "first_price_krw": 11.28,
+      "first_change_24h_pct": 0.0,
+      "return_since_first_pct": 6.56,
+      "beam_score": 157.39,
+      "money_leads_price_score": 22.0,
+      "turnover_intensity": 0.0,
+      "buy_sell_ratio": 0.92,
+      "orderbook_ratio": 1.46,
+      "scenario_target_10_krw": 13.222,
+      "scenario_target_15_krw": 13.823,
+      "scenario_target_30_krw": 15.626,
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 12.02,
+        "do_not_chase_above_krw": 12.3205,
+        "invalidation_krw": 11.63536,
+        "target_1_krw": 12.9816,
+        "target_2_krw": 13.823,
+        "target_3_krw": 15.025
+      }
+    }
+  ],
   "feedback": {
     "detection_bottleneck": "some eventual winners were first detected below 5pct but never surfaced as the recommendation",
     "fix": "parallel raw-stage2 recall scoring bypasses v19/v20 all-of expert thresholds, while requiring two observations",
