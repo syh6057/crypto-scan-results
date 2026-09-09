@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-09T08:25:47.687376+00:00",
+  "generated_at_utc": "2026-09-09T08:37:35.196459+00:00",
   "version": "v25-a-plus-precision-30",
   "health": {
     "analysis_ready": true,
@@ -11,12 +11,12 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 60.9
+    "runtime_sec": 70.9
   },
   "market_headwind": {
     "severe": false,
-    "btc_change_24h_pct": 0.81,
-    "eth_change_24h_pct": 0.77
+    "btc_change_24h_pct": 0.96,
+    "eth_change_24h_pct": 0.95
   },
   "goal": "maximize precision for early setups with a +30pct upside path; do not claim 80pct until prospectively calibrated",
   "gate": {
@@ -38,69 +38,7 @@
   },
   "status": "NO_BUY",
   "a_plus_pick": null,
-  "watchlist": [
-    {
-      "base": "POL",
-      "market": "KRW-POL",
-      "korean_name": "폴리곤에코시스템토큰",
-      "price_krw": 134.0,
-      "change_24h_pct": 2.29,
-      "first_change_24h_pct": 2.31,
-      "first_price_krw": 133.0,
-      "trade_24h_krw": 570483536.606338,
-      "quality_score": 71.88,
-      "all_checks_pass": false,
-      "failed_checks": [
-        "turnover_ge_5x",
-        "money_leads_ge_30"
-      ],
-      "checks": {
-        "not_low_beta_major": true,
-        "pre_ignition": true,
-        "first_detected_0_to_3pct": true,
-        "current_0_to_6pct": true,
-        "trade_24h_ge_200m": true,
-        "turnover_ge_5x": false,
-        "money_leads_ge_30": false,
-        "m15_low_rising": true,
-        "m15_volume_persistence_ge_1_5": true,
-        "h1_low_rising": true,
-        "buy_sell_ge_1_3": true,
-        "orderbook_not_bad": true,
-        "five_min_not_vertical": true,
-        "week_not_extended": true,
-        "no_market_warning": true,
-        "no_severe_market_headwind": true,
-        "stop_within_6pct": true,
-        "reward_risk_ge_4_5": true
-      },
-      "metrics": {
-        "turnover_intensity_x": 2.47,
-        "money_leads_price_score": 16.0,
-        "m15_volume_persistence_x": 6.41,
-        "buy_sell_ratio": 2.23,
-        "orderbook_ratio": 1.85,
-        "five_min_price_pct": 1.504,
-        "week_change_pct": 2.29,
-        "stop_distance_pct": 3.2,
-        "reward_risk_to_30pct": 9.37
-      },
-      "entry_plan": {
-        "reference_price_krw": 134.0,
-        "hard_stop_krw": 127.3,
-        "target_10_krw": 147.4,
-        "target_15_krw": 154.1,
-        "target_30_krw": 174.2,
-        "do_not_chase_above_krw": 137.35
-      },
-      "persistence": {
-        "window_size": 5,
-        "hits": 1,
-        "consecutive": 0
-      },
-      "a_plus_ready": false
-    }
-  ],
+  "watchlist": [],
   "prospective_calibration": {
     "resolved": 0,
     "wins_30_before_stop": 0,
@@ -114,26 +52,12 @@
   "historical_proxy_backtest": {
     "kind": "historical_proxy_not_full_v25_backtest",
     "rule": "first v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6; +30 before -5 using later policy snapshots",
-    "signals": 130,
+    "signals": 131,
     "resolved": 0,
     "wins": 0,
     "losses": 0,
     "hit_rate": null,
     "outcomes": [
-      {
-        "base": "SNT",
-        "entry_price": 10.04,
-        "outcome": "UNRESOLVED",
-        "max_seen_return_pct": null,
-        "min_seen_return_pct": null
-      },
-      {
-        "base": "FET",
-        "entry_price": 255.0,
-        "outcome": "UNRESOLVED",
-        "max_seen_return_pct": null,
-        "min_seen_return_pct": null
-      },
       {
         "base": "UNI",
         "entry_price": 9580.0,
@@ -676,6 +600,20 @@
       {
         "base": "NEAR",
         "entry_price": 3300.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "MNT",
+        "entry_price": 867.0,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "POL",
+        "entry_price": 134.0,
         "outcome": "UNRESOLVED",
         "max_seen_return_pct": null,
         "min_seen_return_pct": null
