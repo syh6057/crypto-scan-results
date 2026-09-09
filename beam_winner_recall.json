@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-09T12:52:53.232498+00:00",
+  "generated_at_utc": "2026-09-09T12:54:02.799001+00:00",
   "version": "v23-realized-winner-recall",
   "health": {
     "analysis_ready": true,
@@ -11,25 +11,25 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 60.2
+    "runtime_sec": 55.3
   },
   "purpose": "surface early movers the scanner detected but downstream expert gates failed to recommend",
   "learned_from_realized_winners": [
     {
-      "base": "RAY",
-      "current_change_24h_pct": 20.92,
-      "first_detected_change_24h_pct": 0.83,
-      "first_detected_price_krw": 1816.0
-    },
-    {
       "base": "KAT",
-      "current_change_24h_pct": 20.63,
+      "current_change_24h_pct": 20.51,
       "first_detected_change_24h_pct": 1.16,
       "first_detected_price_krw": 6.433
     },
     {
+      "base": "RAY",
+      "current_change_24h_pct": 20.31,
+      "first_detected_change_24h_pct": 0.83,
+      "first_detected_price_krw": 1816.0
+    },
+    {
       "base": "VVV",
-      "current_change_24h_pct": 19.08,
+      "current_change_24h_pct": 18.95,
       "first_detected_change_24h_pct": 3.44,
       "first_detected_price_krw": 24800.0
     },
@@ -46,22 +46,34 @@
       "first_detected_price_krw": 104.0
     },
     {
-      "base": "COS",
-      "current_change_24h_pct": 12.62,
-      "first_detected_change_24h_pct": 1.9,
-      "first_detected_price_krw": 0.3698
-    },
-    {
       "base": "SC",
-      "current_change_24h_pct": 12.55,
+      "current_change_24h_pct": 13.43,
       "first_detected_change_24h_pct": 2.15,
       "first_detected_price_krw": 0.9979
+    },
+    {
+      "base": "COS",
+      "current_change_24h_pct": 12.67,
+      "first_detected_change_24h_pct": 1.9,
+      "first_detected_price_krw": 0.3698
     },
     {
       "base": "WAVES",
       "current_change_24h_pct": 10.68,
       "first_detected_change_24h_pct": 0.32,
       "first_detected_price_krw": 314.0
+    },
+    {
+      "base": "PIEVERSE",
+      "current_change_24h_pct": 10.07,
+      "first_detected_change_24h_pct": 1.44,
+      "first_detected_price_krw": 1411.0
+    },
+    {
+      "base": "GHX",
+      "current_change_24h_pct": 10.05,
+      "first_detected_change_24h_pct": 1.96,
+      "first_detected_price_krw": 11.43
     }
   ],
   "policy": {
@@ -80,54 +92,7 @@
     "reason": "no_designated_one_pick"
   },
   "confirmed_recall_pick": null,
-  "winner_recall_watchlist": [
-    {
-      "base": "MNT",
-      "market": "KRW-MNT",
-      "korean_name": "맨틀",
-      "price_krw": 857.0,
-      "change_24h_pct": 1.66,
-      "trade_24h_krw": 167349043.12114272,
-      "track": "PRE_IGNITION",
-      "recall_score": 108.38,
-      "signal_count": 9,
-      "signals": {
-        "fast_turnover": true,
-        "controlled_5m": true,
-        "m15_spike": true,
-        "m15_persistence": true,
-        "m15_structure": false,
-        "h1_structure": true,
-        "buy_flow": true,
-        "orderbook_not_bad": true,
-        "signature": true,
-        "money_leads": true
-      },
-      "hard_failures": [],
-      "confirmations": 1,
-      "first_detected_at_utc": "2026-09-06T14:44:06.866947+00:00",
-      "first_price_krw": 812.0,
-      "first_change_24h_pct": 2.78,
-      "return_since_first_pct": 5.54,
-      "beam_score": 136.99,
-      "money_leads_price_score": 30.0,
-      "turnover_intensity": 2.43,
-      "buy_sell_ratio": 0.96,
-      "orderbook_ratio": 2.38,
-      "scenario_target_10_krw": 942.7,
-      "scenario_target_15_krw": 985.55,
-      "scenario_target_30_krw": 1114.1,
-      "entry_plan": {
-        "status": "ENTER_CANDIDATE",
-        "reference_price_krw": 857.0,
-        "do_not_chase_above_krw": 878.425,
-        "invalidation_krw": 829.576,
-        "target_1_krw": 925.56,
-        "target_2_krw": 985.55,
-        "target_3_krw": 1071.25
-      }
-    }
-  ],
+  "winner_recall_watchlist": [],
   "feedback": {
     "detection_bottleneck": "some eventual winners were first detected below 5pct but never surfaced as the recommendation",
     "fix": "parallel raw-stage2 recall scoring bypasses v19/v20 all-of expert thresholds, while requiring two observations",
