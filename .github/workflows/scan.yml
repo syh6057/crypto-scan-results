@@ -17,6 +17,7 @@ on:
       - "scanner_v26.py"
       - "scanner_v27.py"
       - "scanner_v28.py"
+      - "scanner_v29.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -46,9 +47,9 @@ jobs:
         run: python -m pip install requests
 
       - name: Validate scanner syntax
-        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py scanner_v27.py scanner_v28.py
+        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py scanner_v27.py scanner_v28.py scanner_v29.py
 
-      - name: Run one full scan then build six-point 30-minute expert batch
+      - name: Run one full scan then build anchored six-point 30-minute expert batch
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -59,9 +60,9 @@ jobs:
           python scanner_v25.py
           python scanner_v26.py
           python scanner_v27.py
-          python scanner_v28.py
+          python scanner_v29.py
 
-      - name: Validate fresh outputs and 30-minute batch contract
+      - name: Validate fresh outputs and anchored 30-minute batch contract
         run: |
           python - <<'PY'
           import json
@@ -103,7 +104,7 @@ jobs:
           assert final_gate.get("status") in {"FINAL_BUY", "NO_BUY"}
 
           batch = json.loads(Path("beam_30m_expert.json").read_text(encoding="utf-8"))
-          assert batch.get("version") == "v28-30m-six-point-expert-gate"
+          assert batch.get("version") == "v29-latest-closed-anchor-coverage-gate"
           design = batch.get("schedule_design") or {}
           assert design.get("github_workflow_cadence_minutes") == 30
           assert design.get("single_run_points_minutes") == [5, 10, 15, 20, 25, 30]
@@ -113,11 +114,23 @@ jobs:
           assert contract.get("no_forced_candidate") is True
           assert contract.get("if_no_a_or_bplus_return_cash") is True
           assert contract.get("bplus_is_watch_only_not_automatic_buy") is True
+          assert contract.get("anchored_5m_coverage_required") is True
+          assert contract.get("coverage_below_threshold_blocks_trade_recommendation") is True
+          assert contract.get("latest_closed_candle_anchor_not_wall_clock") is True
 
           h = batch.get("health") or {}
           assert h.get("stage2_candidates", 0) > 0
           assert h.get("six_slots_emitted", 0) == h.get("stage2_candidates", 0), "six exact slot records were not emitted for every finalist"
-          assert 0 <= h.get("exact_six_candle_coverage_pct", 0) <= 100
+          liquid = int(h.get("liquid_candidates_200m_plus", 0) or 0)
+          coverage = float(h.get("anchored_exact_six_liquid_coverage_pct", 0) or 0)
+          gate = float(h.get("coverage_gate_min_pct", 70) or 70)
+          blockers = list(h.get("hard_blockers") or [])
+          coverage_blocked = any(str(x).startswith("v29_anchored_5m_coverage_low") for x in blockers)
+          if liquid >= 5 and coverage < gate:
+              assert coverage_blocked, "low anchored 5m coverage must hard-block v29"
+              assert batch.get("status") == "BLOCKED", "coverage blocker must force BLOCKED status"
+          else:
+              assert not coverage_blocked, "coverage blocker present despite sufficient coverage"
 
           ts = datetime.fromisoformat(batch["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
@@ -125,9 +138,10 @@ jobs:
 
           print("scan_health:", scan.get("health"))
           print("v27_status:", final_gate.get("status"))
-          print("v28_status:", batch.get("status"))
-          print("v28_best:", (batch.get("best_a_or_bplus_candidate") or {}).get("base"))
-          print("exact_six_candle_coverage_pct:", h.get("exact_six_candle_coverage_pct"))
+          print("v29_status:", batch.get("status"))
+          print("v29_best:", (batch.get("best_a_or_bplus_candidate") or {}).get("base"))
+          print("anchored_liquid_coverage_pct:", coverage)
+          print("v29_blockers:", blockers)
           PY
 
       - name: Commit refreshed 30-minute batch results
@@ -147,7 +161,7 @@ jobs:
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update 30-minute six-point expert batch results"
+            git commit -m "Update 30-minute anchored six-point expert batch results"
             if git push origin main; then
               exit 0
             fi
