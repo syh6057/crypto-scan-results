@@ -1,0 +1,56 @@
+{
+  "generated_at_utc": "2026-09-09T09:03:00.870526+00:00",
+  "version": "v27-final-precision-risk-gate",
+  "status": "NO_BUY",
+  "final_pick": null,
+  "source_a_plus_status": "NO_BUY",
+  "source_a_plus_pick": null,
+  "health": {
+    "analysis_ready": true,
+    "hard_blockers": [],
+    "warnings": []
+  },
+  "checks": {
+    "upstream_health_clean": true,
+    "v25_a_plus_buy": false
+  },
+  "failed_checks": [
+    "v25_a_plus_buy"
+  ],
+  "metrics": {},
+  "reasons": [
+    "v25 A+ gate did not authorize a buy",
+    "failed final precision checks: v25_a_plus_buy"
+  ],
+  "assistant_contract": {
+    "new_buy_permitted_only_when_status_FINAL_BUY": true,
+    "winner_recall_is_watch_only_never_a_buy_signal": true,
+    "expert_score_or_confidence_alone_never_authorizes_buy": true,
+    "scanner_score_is_not_probability": true,
+    "do_not_claim_80pct_until_prospectively_calibrated": true,
+    "if_NO_BUY_return_NO_BUY_without_forcing_a_pick": true
+  },
+  "risk_policy": {
+    "max_initial_portfolio_pct": 20,
+    "max_total_position_pct": 25,
+    "averaging_down": "PROHIBITED",
+    "hard_stop": "use A+ hard stop; never widen after entry",
+    "profit_protection": {
+      "at_plus_10pct": "take about 25pct off and stop allowing a full round-trip",
+      "at_plus_15pct": "take another 25pct off; protect remaining profit",
+      "at_plus_30pct": "target zone for residual position, not guaranteed",
+      "giveback_rule": "after +10 to +15, a 6 to 8 percentage-point giveback requires additional de-risking"
+    },
+    "replacement_rule": "do not rotate from a loser into a new coin unless the new coin is FINAL_BUY"
+  },
+  "change_log": [
+    "recall is separated from execution: recall can only create a watch candidate",
+    "added relative-strength veto so a coin lagging BTC/ETH cannot be promoted just because turnover spikes",
+    "tightened live buy-flow and 15m persistence requirements",
+    "requires 15m and 1h closes above their moving averages at execution time",
+    "rejects candidates that already gave back more than 3 percentage points from their first-seen peak",
+    "adds 24h re-entry cooldown after a prospective -5pct stop",
+    "caps suggested position concentration and prohibits averaging down",
+    "adds mandatory profit-protection checkpoints to avoid ARX-style giveback"
+  ]
+}
