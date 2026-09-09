@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-09T17:06:13.838310+00:00",
+  "generated_at_utc": "2026-09-09T17:38:40.111775+00:00",
   "version": "v26-a-plus-validation-coverage",
   "purpose": "honest validation coverage for the A+ +30 gate; do not fabricate historical hit rate when price paths were not stored",
   "v25_status": "NO_BUY",
@@ -8,14 +8,14 @@
     "signal_rule": "first historical v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6",
     "outcome_rule": "+30pct observed before -5pct observed in persisted chronological prices",
     "signals": 135,
-    "signals_with_any_future_path": 111,
-    "coverage_ratio": 0.8222,
+    "signals_with_any_future_path": 110,
+    "coverage_ratio": 0.8148,
     "resolved": 3,
     "wins_30_before_stop": 1,
     "losses_stop_before_30": 2,
     "hit_rate": 0.3333,
-    "insufficient_path": 24,
-    "unresolved_with_path": 108,
+    "insufficient_path": 25,
+    "unresolved_with_path": 107,
     "source_observation_counts": {
       "expert_history": 1000,
       "policy_snapshot_history": 1296,
@@ -28,21 +28,6 @@
     },
     "probability_usable": false,
     "outcomes": [
-      {
-        "base": "ONDO",
-        "signal_at_utc": "2026-09-08T01:34:28.666678+00:00",
-        "entry_price": 529.0,
-        "change_24h_pct": 0.19,
-        "expert_confidence": 94.5,
-        "pattern_similarity": 90.0,
-        "outcome": "INSUFFICIENT_PATH",
-        "future_observation_count": 0,
-        "first_future_at_utc": null,
-        "last_future_at_utc": null,
-        "max_seen_return_pct": null,
-        "min_seen_return_pct": null,
-        "resolution_source": null
-      },
       {
         "base": "SNT",
         "signal_at_utc": "2026-09-08T01:36:36.399916+00:00",
@@ -829,9 +814,9 @@
         "expert_confidence": 98.9,
         "pattern_similarity": 98.0,
         "outcome": "UNRESOLVED",
-        "future_observation_count": 10,
+        "future_observation_count": 11,
         "first_future_at_utc": "2026-09-08T16:54:13.905175+00:00",
-        "last_future_at_utc": "2026-09-09T17:06:13.428044+00:00",
+        "last_future_at_utc": "2026-09-09T17:38:39.679275+00:00",
         "max_seen_return_pct": 3.57,
         "min_seen_return_pct": 0.0,
         "resolved_at_utc": null,
@@ -1607,6 +1592,21 @@
         "max_seen_return_pct": 0.4,
         "min_seen_return_pct": 0.4,
         "resolved_at_utc": null,
+        "resolution_source": null
+      },
+      {
+        "base": "EGLD",
+        "signal_at_utc": "2026-09-09T17:38:39.679275+00:00",
+        "entry_price": 7015.0,
+        "change_24h_pct": 5.33,
+        "expert_confidence": 89.26,
+        "pattern_similarity": 83.0,
+        "outcome": "INSUFFICIENT_PATH",
+        "future_observation_count": 0,
+        "first_future_at_utc": null,
+        "last_future_at_utc": null,
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null,
         "resolution_source": null
       }
     ]
