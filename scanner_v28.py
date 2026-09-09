@@ -1,7 +1,7 @@
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 import scanner_v16 as v16
@@ -14,6 +14,7 @@ HISTORY_FILE = "beam_30m_expert_history.json"
 MAX_CANDIDATES = 45
 POINTS_REQUIRED = 6
 HISTORY_RUNS = 96
+MIN_BPLUS_TRADE_24H_KRW = 200_000_000
 
 
 def load_json(path, default):
@@ -49,32 +50,82 @@ def r(v, n=3):
     return None if v is None else round(float(v), n)
 
 
-def pull_six_closed_5m(market):
-    rows = v16.candles(market, 5, 9)[-POINTS_REQUIRED:]
-    if len(rows) < POINTS_REQUIRED:
-        return []
+def parse_utc(v):
+    try:
+        dt = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc).replace(second=0, microsecond=0)
+    except Exception:
+        return None
+
+
+def exact_target_starts(now):
+    boundary = now.astimezone(timezone.utc).replace(
+        minute=(now.minute // 5) * 5, second=0, microsecond=0
+    )
+    return [(m, boundary - timedelta(minutes=m)) for m in (30, 25, 20, 15, 10, 5)]
+
+
+def pull_exact_six_5m(market, now):
+    # Pull enough active candles to cover sparse markets, then map only the exact
+    # six target 5-minute buckets. Missing buckets are recorded explicitly rather
+    # than silently substituting older candles.
+    rows = v16.candles(market, 5, 60)
+    by_start = {}
+    for row in rows:
+        ts = parse_utc(row.get("candle_date_time_utc"))
+        if ts:
+            by_start[ts] = row
+
     out = []
-    for i, row in enumerate(rows):
-        out.append({
-            "minutes_ago": (POINTS_REQUIRED - i) * 5,
-            "candle_time_utc": row.get("candle_date_time_utc"),
-            "open": fnum(row.get("opening_price")),
-            "high": fnum(row.get("high_price")),
-            "low": fnum(row.get("low_price")),
-            "close": fnum(row.get("trade_price")),
-            "trade_krw": fnum(row.get("candle_acc_trade_price")),
-        })
+    for minutes_ago, target in exact_target_starts(now):
+        row = by_start.get(target)
+        if row is None:
+            out.append({
+                "minutes_ago": minutes_ago,
+                "expected_candle_time_utc": target.isoformat(),
+                "candle_time_utc": None,
+                "missing": True,
+                "open": None,
+                "high": None,
+                "low": None,
+                "close": None,
+                "trade_krw": 0.0,
+            })
+        else:
+            out.append({
+                "minutes_ago": minutes_ago,
+                "expected_candle_time_utc": target.isoformat(),
+                "candle_time_utc": row.get("candle_date_time_utc"),
+                "missing": False,
+                "open": fnum(row.get("opening_price")),
+                "high": fnum(row.get("high_price")),
+                "low": fnum(row.get("low_price")),
+                "close": fnum(row.get("trade_price")),
+                "trade_krw": fnum(row.get("candle_acc_trade_price")),
+            })
     return out
 
 
 def summarize(points):
-    if len(points) != POINTS_REQUIRED:
-        return {"complete": False, "data_points": len(points)}
-    opens = [x["open"] for x in points]
-    highs = [x["high"] for x in points]
-    lows = [x["low"] for x in points]
-    closes = [x["close"] for x in points]
-    values = [x["trade_krw"] for x in points]
+    missing = [x["minutes_ago"] for x in points if x.get("missing")]
+    valid = [x for x in points if not x.get("missing")]
+    out = {
+        "slots_emitted": len(points),
+        "exact_slots_complete": len(points) == POINTS_REQUIRED and not missing,
+        "valid_candle_count": len(valid),
+        "missing_slots_minutes_ago": missing,
+        "trade_value_30m_krw": round(sum(fnum(x.get("trade_krw")) for x in points), 0),
+    }
+    if len(valid) != POINTS_REQUIRED:
+        return out
+
+    opens = [x["open"] for x in valid]
+    highs = [x["high"] for x in valid]
+    lows = [x["low"] for x in valid]
+    closes = [x["close"] for x in valid]
+    values = [x["trade_krw"] for x in valid]
     start = opens[0] if opens[0] > 0 else closes[0]
     higher_lows = sum(lows[i] >= lows[i - 1] for i in range(1, 6))
     higher_highs = sum(highs[i] >= highs[i - 1] for i in range(1, 6))
@@ -87,17 +138,15 @@ def summarize(points):
     for c in closes:
         peak = max(peak, c)
         worst = min(worst, (c / peak - 1.0) * 100.0 if peak else 0.0)
-    return {
-        "complete": True,
-        "data_points": 6,
+    out.update({
         "return_30m_pct": r(pct(closes[-1], start)),
         "higher_low_steps_of_5": higher_lows,
         "higher_high_steps_of_5": higher_highs,
         "positive_candles_of_6": positive,
-        "trade_value_30m_krw": round(sum(values), 0),
         "volume_acceleration_last2_vs_first2_x": r(volume_accel, 2),
         "max_close_drawdown_pct": r(abs(worst)),
-    }
+    })
+    return out
 
 
 def prior_for(history, base):
@@ -131,7 +180,8 @@ def technical_grade(row, path, btc, eth):
         else:
             failures.append(label + "_close_above_ma_false")
 
-    if path.get("complete"):
+    exact_complete = bool(path.get("exact_slots_complete"))
+    if exact_complete:
         ret30 = fnum(path.get("return_30m_pct"), -99)
         vacc = fnum(path.get("volume_acceleration_last2_vs_first2_x"))
         if -0.25 <= ret30 <= 4.5:
@@ -156,12 +206,13 @@ def technical_grade(row, path, btc, eth):
         else:
             failures.append("30m_giveback_too_large")
     else:
-        score -= 15
-        failures.append("six_point_5m_path_incomplete")
+        score -= 20
+        failures.append("exact_5m_slots_incomplete_or_no_trade")
 
     bsr = fnum(flow.get("buy_sell_ratio"))
     obr = fnum(ob.get("bid_ask_depth_ratio"))
     ch24 = fnum(row.get("change_24h_pct"))
+    trade24 = fnum(row.get("trade_24h_krw"))
     rel = ch24 - max(btc, eth)
     if bsr >= 1.35:
         score += 8
@@ -183,6 +234,11 @@ def technical_grade(row, path, btc, eth):
     elif ch24 > 10:
         score -= 8
         failures.append("24h_extended")
+    if trade24 >= MIN_BPLUS_TRADE_24H_KRW:
+        score += 5
+    else:
+        score -= 10
+        failures.append("trade24_below_200m")
     if fnum(d1.get("week_change_pct")) <= 15:
         score += 4
     if -0.25 <= fnum(fast.get("price_change_per_5m_pct")) <= 1.5:
@@ -193,6 +249,14 @@ def technical_grade(row, path, btc, eth):
 
     score = max(0.0, min(100.0, round(score, 2)))
     grade = "A" if score >= 85 else "B+" if score >= 78 else "B" if score >= 70 else "C_OR_LOWER"
+
+    # Hard caps stop low-liquidity or incomplete-time-path names from appearing as
+    # actionable A/B+ candidates just because other indicators score highly.
+    if not exact_complete or trade24 < MIN_BPLUS_TRADE_24H_KRW:
+        grade = "B" if score >= 70 else "C_OR_LOWER"
+    if row.get("warning_flag"):
+        grade = "C_OR_LOWER"
+
     return {
         "score": score,
         "grade": grade,
@@ -200,6 +264,7 @@ def technical_grade(row, path, btc, eth):
         "relative_strength_vs_stronger_major_pct": round(rel, 2),
         "buy_sell_ratio": round(bsr, 2),
         "orderbook_ratio": round(obr, 2),
+        "trade_24h_krw": trade24,
     }
 
 
@@ -216,7 +281,7 @@ def main():
 
     series = {}
     with ThreadPoolExecutor(max_workers=8) as ex:
-        fs = {ex.submit(pull_six_closed_5m, row["market"]): row["base"] for row in rows}
+        fs = {ex.submit(pull_exact_six_5m, row["market"], now): row["base"] for row in rows}
         for fut in as_completed(fs):
             base = fs[fut]
             try:
@@ -226,13 +291,16 @@ def main():
 
     candidates = []
     compact = {}
-    complete_count = 0
+    exact_complete_count = 0
+    six_slots_count = 0
     for row in rows:
         base = row["base"]
         points = series.get(base) or []
         path = summarize(points)
-        if path.get("complete"):
-            complete_count += 1
+        if len(points) == POINTS_REQUIRED:
+            six_slots_count += 1
+        if path.get("exact_slots_complete"):
+            exact_complete_count += 1
         grade = technical_grade(row, path, btc, eth)
         prior = prior_for(history, base) or {}
         bsr = fnum((row.get("trade_flow") or {}).get("buy_sell_ratio"))
@@ -241,6 +309,7 @@ def main():
         item = {
             "base": base,
             "market": row.get("market"),
+            "sector": row.get("sector"),
             "price_krw": row.get("price_krw"),
             "change_24h_pct": row.get("change_24h_pct"),
             "trade_24h_krw": row.get("trade_24h_krw"),
@@ -260,7 +329,13 @@ def main():
             "professional_technical_grade": grade,
         }
         candidates.append(item)
-        compact[base] = {"price_krw": row.get("price_krw"), "buy_sell_ratio": bsr, "orderbook_ratio": obr, "grade": grade["grade"], "score": grade["score"]}
+        compact[base] = {
+            "price_krw": row.get("price_krw"),
+            "buy_sell_ratio": bsr,
+            "orderbook_ratio": obr,
+            "grade": grade["grade"],
+            "score": grade["score"],
+        }
 
     rank = {"A": 3, "B+": 2, "B": 1, "C_OR_LOWER": 0}
     candidates.sort(key=lambda x: (rank.get(x["professional_technical_grade"]["grade"], 0), x["professional_technical_grade"]["score"]), reverse=True)
@@ -277,7 +352,7 @@ def main():
         "schedule_design": {
             "github_workflow_cadence_minutes": 30,
             "single_run_points_minutes": [5, 10, 15, 20, 25, 30],
-            "method": "Each 30-minute workflow run backfills the six most recent closed Bithumb 5-minute candles for every stage2 finalist, so one extraction contains the full 30-minute time path.",
+            "method": "Each 30-minute workflow run maps the exact six most recent closed Bithumb 5-minute buckets for every stage2 finalist. If a market had no candle/trade in a bucket, that slot is explicitly marked missing instead of substituting an older candle.",
             "orderbook_tradeflow_method": "Use current live orderbook/trade flow and compare them with the persisted prior 30-minute run; public historical 5-minute orderbooks are not available for retroactive backfill."
         },
         "health": {
@@ -285,8 +360,9 @@ def main():
             "hard_blockers": blockers,
             "warnings": list(health.get("warnings") or []),
             "stage2_candidates": len(rows),
-            "six_point_paths_complete": complete_count,
-            "six_point_coverage_pct": round(complete_count / max(1, len(rows)) * 100.0, 1)
+            "six_slots_emitted": six_slots_count,
+            "exact_six_candles_complete": exact_complete_count,
+            "exact_six_candle_coverage_pct": round(exact_complete_count / max(1, len(rows)) * 100.0, 1)
         },
         "upstream_v27_status": final_gate.get("status"),
         "upstream_v27_pick": v27_pick,
@@ -301,7 +377,7 @@ def main():
             "real_money_requires_all": [
                 "v27_FINAL_BUY",
                 "v28_grade_A",
-                "six_5m_time_flow_confirmation",
+                "exact_5_10_15_20_25_30_minute_time_flow_confirmation",
                 "15m_1h_4h_structure",
                 "live_volume_trade_value_and_execution_flow",
                 "BTC_ETH_relative_strength",
@@ -311,13 +387,28 @@ def main():
                 "news_official_announcements_unlock_listing_delisting_tokenomics_large_supply_risk_market_risk_clear",
                 "fresh_bithumb_execution_price"
             ],
-            "recommendation_output_fields": ["entry_price", "split_entry", "hard_stop", "target_1", "target_2", "target_30_scenario", "expected_holding_time", "grade", "invalidation_price_and_conditions"],
+            "recommendation_output_fields": [
+                "entry_price",
+                "split_entry",
+                "hard_stop",
+                "target_1",
+                "target_2",
+                "target_30_scenario",
+                "expected_holding_time",
+                "grade",
+                "invalidation_price_and_conditions"
+            ],
             "probability_rule": "Scores and grades are not calibrated probabilities; numeric probability claims require prospective calibration."
         }
     }
     if not isinstance(history, list):
         history = []
-    history.append({"generated_at_utc": out["generated_at_utc"], "status": status, "best_base": (best or {}).get("base"), "candidates": compact})
+    history.append({
+        "generated_at_utc": out["generated_at_utc"],
+        "status": status,
+        "best_base": (best or {}).get("base"),
+        "candidates": compact,
+    })
     save_json(HISTORY_FILE, history[-HISTORY_RUNS:])
     save_json(OUT_FILE, out)
     print(json.dumps(out, ensure_ascii=False, indent=2))
