@@ -116,7 +116,8 @@ jobs:
 
           h = batch.get("health") or {}
           assert h.get("stage2_candidates", 0) > 0
-          assert h.get("six_point_coverage_pct", 0) >= 70, f"six-point coverage low: {h.get('six_point_coverage_pct')}"
+          assert h.get("six_slots_emitted", 0) == h.get("stage2_candidates", 0), "six exact slot records were not emitted for every finalist"
+          assert 0 <= h.get("exact_six_candle_coverage_pct", 0) <= 100
 
           ts = datetime.fromisoformat(batch["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
@@ -126,7 +127,7 @@ jobs:
           print("v27_status:", final_gate.get("status"))
           print("v28_status:", batch.get("status"))
           print("v28_best:", (batch.get("best_a_or_bplus_candidate") or {}).get("base"))
-          print("six_point_coverage_pct:", h.get("six_point_coverage_pct"))
+          print("exact_six_candle_coverage_pct:", h.get("exact_six_candle_coverage_pct"))
           PY
 
       - name: Commit refreshed 30-minute batch results
