@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-09T23:06:27.618070+00:00",
+  "generated_at_utc": "2026-09-09T23:36:23.433319+00:00",
   "version": "v23-realized-winner-recall",
   "health": {
     "analysis_ready": true,
@@ -11,39 +11,39 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 72.6
+    "runtime_sec": 54.9
   },
   "purpose": "surface early movers the scanner detected but downstream expert gates failed to recommend",
   "learned_from_realized_winners": [
     {
       "base": "STORJ",
-      "current_change_24h_pct": 47.12,
+      "current_change_24h_pct": 44.78,
       "first_detected_change_24h_pct": -1.0,
       "first_detected_price_krw": 72.49
     },
     {
       "base": "BTR",
-      "current_change_24h_pct": 15.41,
+      "current_change_24h_pct": 15.62,
       "first_detected_change_24h_pct": 3.6,
       "first_detected_price_krw": 66.2
     },
     {
-      "base": "TT",
-      "current_change_24h_pct": 14.04,
-      "first_detected_change_24h_pct": 0.47,
-      "first_detected_price_krw": 0.7275
-    },
-    {
       "base": "KAT",
-      "current_change_24h_pct": 10.6,
+      "current_change_24h_pct": 13.24,
       "first_detected_change_24h_pct": 1.16,
       "first_detected_price_krw": 6.433
     },
     {
-      "base": "SAHARA",
-      "current_change_24h_pct": 10.13,
-      "first_detected_change_24h_pct": 2.25,
-      "first_detected_price_krw": 12.71
+      "base": "TT",
+      "current_change_24h_pct": 11.38,
+      "first_detected_change_24h_pct": 0.47,
+      "first_detected_price_krw": 0.7275
+    },
+    {
+      "base": "SC",
+      "current_change_24h_pct": 10.0,
+      "first_detected_change_24h_pct": 2.15,
+      "first_detected_price_krw": 0.9979
     }
   ],
   "policy": {
@@ -62,7 +62,54 @@
     "reason": "no_designated_one_pick"
   },
   "confirmed_recall_pick": null,
-  "winner_recall_watchlist": [],
+  "winner_recall_watchlist": [
+    {
+      "base": "KAVA",
+      "market": "KRW-KAVA",
+      "korean_name": "카바",
+      "price_krw": 83.51,
+      "change_24h_pct": 2.34,
+      "trade_24h_krw": 157189542.44129014,
+      "track": "PRE_IGNITION",
+      "recall_score": 138.71,
+      "signal_count": 9,
+      "signals": {
+        "fast_turnover": true,
+        "controlled_5m": true,
+        "m15_spike": true,
+        "m15_persistence": true,
+        "m15_structure": true,
+        "h1_structure": true,
+        "buy_flow": true,
+        "orderbook_not_bad": false,
+        "signature": true,
+        "money_leads": true
+      },
+      "hard_failures": [],
+      "confirmations": 1,
+      "first_detected_at_utc": "2026-09-07T22:35:43.387820+00:00",
+      "first_price_krw": 78.61,
+      "first_change_24h_pct": 2.18,
+      "return_since_first_pct": 6.23,
+      "beam_score": 156.87,
+      "money_leads_price_score": 28.0,
+      "turnover_intensity": 7.03,
+      "buy_sell_ratio": 2.83,
+      "orderbook_ratio": 0.12,
+      "scenario_target_10_krw": 91.861,
+      "scenario_target_15_krw": 96.0365,
+      "scenario_target_30_krw": 108.563,
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 83.51,
+        "do_not_chase_above_krw": 85.59775,
+        "invalidation_krw": 80.83768,
+        "target_1_krw": 90.1908,
+        "target_2_krw": 96.0365,
+        "target_3_krw": 104.3875
+      }
+    }
+  ],
   "feedback": {
     "detection_bottleneck": "some eventual winners were first detected below 5pct but never surfaced as the recommendation",
     "fix": "parallel raw-stage2 recall scoring bypasses v19/v20 all-of expert thresholds, while requiring two observations",
