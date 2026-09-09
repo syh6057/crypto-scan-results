@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-09T09:34:18.116173+00:00",
+  "generated_at_utc": "2026-09-09T09:47:11.502314+00:00",
   "version": "v26-a-plus-validation-coverage",
   "purpose": "honest validation coverage for the A+ +30 gate; do not fabricate historical hit rate when price paths were not stored",
   "v25_status": "NO_BUY",
@@ -7,14 +7,14 @@
   "historical_proxy": {
     "signal_rule": "first historical v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6",
     "outcome_rule": "+30pct observed before -5pct observed in persisted chronological prices",
-    "signals": 132,
+    "signals": 133,
     "signals_with_any_future_path": 105,
-    "coverage_ratio": 0.7955,
+    "coverage_ratio": 0.7895,
     "resolved": 3,
     "wins_30_before_stop": 1,
     "losses_stop_before_30": 2,
     "hit_rate": 0.3333,
-    "insufficient_path": 27,
+    "insufficient_path": 28,
     "unresolved_with_path": 102,
     "source_observation_counts": {
       "expert_history": 1000,
@@ -28,22 +28,6 @@
     },
     "probability_usable": false,
     "outcomes": [
-      {
-        "base": "ZKP",
-        "signal_at_utc": "2026-09-07T14:56:20.527034+00:00",
-        "entry_price": 66.62,
-        "change_24h_pct": 3.24,
-        "expert_confidence": 92.8,
-        "pattern_similarity": 96.0,
-        "outcome": "UNRESOLVED",
-        "future_observation_count": 2,
-        "first_future_at_utc": "2026-09-07T14:58:26.430087+00:00",
-        "last_future_at_utc": "2026-09-07T15:00:40.688354+00:00",
-        "max_seen_return_pct": 0.12,
-        "min_seen_return_pct": 0.0,
-        "resolved_at_utc": null,
-        "resolution_source": null
-      },
       {
         "base": "PROS",
         "signal_at_utc": "2026-09-07T22:37:52.257136+00:00",
@@ -577,11 +561,11 @@
         "expert_confidence": 89.0,
         "pattern_similarity": 80.0,
         "outcome": "UNRESOLVED",
-        "future_observation_count": 1,
+        "future_observation_count": 2,
         "first_future_at_utc": "2026-09-08T09:59:25.921405+00:00",
-        "last_future_at_utc": "2026-09-08T09:59:25.921405+00:00",
+        "last_future_at_utc": "2026-09-09T09:44:45.102260+00:00",
         "max_seen_return_pct": -0.76,
-        "min_seen_return_pct": -0.76,
+        "min_seen_return_pct": -2.28,
         "resolved_at_utc": null,
         "resolution_source": null
       },
@@ -1605,6 +1589,21 @@
         "max_seen_return_pct": 0.0,
         "min_seen_return_pct": 0.0,
         "resolved_at_utc": null,
+        "resolution_source": null
+      },
+      {
+        "base": "HOLO",
+        "signal_at_utc": "2026-09-09T09:47:11.076579+00:00",
+        "entry_price": 89.9,
+        "change_24h_pct": 2.39,
+        "expert_confidence": 85.08,
+        "pattern_similarity": 75.0,
+        "outcome": "INSUFFICIENT_PATH",
+        "future_observation_count": 0,
+        "first_future_at_utc": null,
+        "last_future_at_utc": null,
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null,
         "resolution_source": null
       }
     ]
