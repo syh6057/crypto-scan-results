@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-09T02:48:05.326586+00:00",
+  "generated_at_utc": "2026-09-09T02:57:06.718168+00:00",
   "version": "v25-a-plus-precision-30",
   "health": {
     "analysis_ready": true,
@@ -11,12 +11,12 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 65.4
+    "runtime_sec": 74.1
   },
   "market_headwind": {
     "severe": false,
-    "btc_change_24h_pct": 0.33,
-    "eth_change_24h_pct": 0.44
+    "btc_change_24h_pct": 0.32,
+    "eth_change_24h_pct": 0.42
   },
   "goal": "maximize precision for early setups with a +30pct upside path; do not claim 80pct until prospectively calibrated",
   "gate": {
@@ -52,19 +52,12 @@
   "historical_proxy_backtest": {
     "kind": "historical_proxy_not_full_v25_backtest",
     "rule": "first v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6; +30 before -5 using later policy snapshots",
-    "signals": 130,
+    "signals": 131,
     "resolved": 0,
     "wins": 0,
     "losses": 0,
     "hit_rate": null,
     "outcomes": [
-      {
-        "base": "ZKP",
-        "entry_price": 66.62,
-        "outcome": "UNRESOLVED",
-        "max_seen_return_pct": null,
-        "min_seen_return_pct": null
-      },
       {
         "base": "PROS",
         "entry_price": 611.0,
@@ -614,6 +607,13 @@
       {
         "base": "AZTEC",
         "entry_price": 20.65,
+        "outcome": "UNRESOLVED",
+        "max_seen_return_pct": null,
+        "min_seen_return_pct": null
+      },
+      {
+        "base": "MEV",
+        "entry_price": 2.858,
         "outcome": "UNRESOLVED",
         "max_seen_return_pct": null,
         "min_seen_return_pct": null
