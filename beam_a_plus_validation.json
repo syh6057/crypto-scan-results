@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-10T00:08:44.261888+00:00",
+  "generated_at_utc": "2026-09-10T00:42:37.252209+00:00",
   "version": "v26-a-plus-validation-coverage",
   "purpose": "honest validation coverage for the A+ +30 gate; do not fabricate historical hit rate when price paths were not stored",
   "v25_status": "NO_BUY",
@@ -7,15 +7,15 @@
   "historical_proxy": {
     "signal_rule": "first historical v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6",
     "outcome_rule": "+30pct observed before -5pct observed in persisted chronological prices",
-    "signals": 137,
-    "signals_with_any_future_path": 114,
-    "coverage_ratio": 0.8321,
+    "signals": 136,
+    "signals_with_any_future_path": 113,
+    "coverage_ratio": 0.8309,
     "resolved": 4,
     "wins_30_before_stop": 2,
     "losses_stop_before_30": 2,
     "hit_rate": 0.5,
     "insufficient_path": 23,
-    "unresolved_with_path": 110,
+    "unresolved_with_path": 109,
     "source_observation_counts": {
       "expert_history": 1000,
       "policy_snapshot_history": 1296,
@@ -131,9 +131,9 @@
         "expert_confidence": 97.25,
         "pattern_similarity": 95.0,
         "outcome": "WIN_30",
-        "future_observation_count": 5,
+        "future_observation_count": 6,
         "first_future_at_utc": "2026-09-08T03:47:11.208852+00:00",
-        "last_future_at_utc": "2026-09-09T20:38:50.998013+00:00",
+        "last_future_at_utc": "2026-09-10T00:42:36.931687+00:00",
         "max_seen_return_pct": 36.34,
         "min_seen_return_pct": 1.24,
         "resolved_at_utc": "2026-09-09T18:41:15.243359+00:00",
@@ -1613,7 +1613,7 @@
     ]
   },
   "eventual_30_sanity_check": {
-    "count": 8,
+    "count": 9,
     "assets": [
       {
         "base": "SOPH",
@@ -1659,8 +1659,16 @@
         "base": "KAT",
         "first_price_krw": 6.433,
         "first_change_24h_pct": 1.16,
-        "peak_price_krw": 8.509,
-        "peak_return_since_first_pct": 32.27,
+        "peak_price_krw": 8.534,
+        "peak_return_since_first_pct": 32.66,
+        "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
+      },
+      {
+        "base": "VTHO",
+        "first_price_krw": 0.5829,
+        "first_change_24h_pct": 2.53,
+        "peak_price_krw": 0.7677,
+        "peak_return_since_first_pct": 31.7,
         "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
       },
       {
