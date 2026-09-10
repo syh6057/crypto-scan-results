@@ -18,6 +18,7 @@ on:
       - "scanner_v27.py"
       - "scanner_v28.py"
       - "scanner_v29.py"
+      - "scanner_v30.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -47,9 +48,9 @@ jobs:
         run: python -m pip install requests
 
       - name: Validate scanner syntax
-        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py scanner_v27.py scanner_v28.py scanner_v29.py
+        run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py scanner_v27.py scanner_v28.py scanner_v29.py scanner_v30.py
 
-      - name: Run one full scan then build anchored six-point 30-minute expert batch
+      - name: Run one full scan then build anchored six-point and EARLY_STRONG lanes
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -61,6 +62,7 @@ jobs:
           python scanner_v26.py
           python scanner_v27.py
           python scanner_v29.py
+          python scanner_v30.py
 
       - name: Validate fresh outputs and anchored 30-minute batch contract
         run: |
@@ -90,6 +92,9 @@ jobs:
               "beam_final_trade_gate.json",
               "beam_30m_expert.json",
               "beam_30m_expert_history.json",
+              "beam_early_strong.json",
+              "early_strong_state.json",
+              "early_strong_history.json",
           )
           for name in required:
               p = Path(name)
@@ -132,9 +137,26 @@ jobs:
           else:
               assert not coverage_blocked, "coverage blocker present despite sufficient coverage"
 
+          early = json.loads(Path("beam_early_strong.json").read_text(encoding="utf-8"))
+          assert early.get("version") == "v30-early-strong-promotion-audit"
+          assert early.get("status") in {
+              "BLOCKED", "EARLY_STRONG_TEST_CANDIDATE", "ACTIVE_EARLY_STRONG",
+              "PROFIT_PROTECT", "NO_LONGER_EARLY_PROFIT_PROTECT",
+              "ACTIVE_PRICE_UNAVAILABLE", "WATCH_ONLY", "NO_EARLY_STRONG"
+          }
+          policy = early.get("policy") or {}
+          assert policy.get("not_full_buy_signal") is True
+          assert policy.get("test_entry_requires_external_check_in_chat") is True
+          assert float(policy.get("max_test_portfolio_pct", 999)) <= 5.0
+          assert policy.get("no_averaging_down") is True
+          assert early.get("prospective_calibration", {}).get("probability_claim_allowed") is False
+
           ts = datetime.fromisoformat(batch["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale batch result: {age}s"
+          ets = datetime.fromisoformat(early["generated_at_utc"])
+          eage = (datetime.now(timezone.utc) - ets).total_seconds()
+          assert eage < 900, f"stale EARLY_STRONG result: {eage}s"
 
           print("scan_health:", scan.get("health"))
           print("v27_status:", final_gate.get("status"))
@@ -142,6 +164,9 @@ jobs:
           print("v29_best:", (batch.get("best_a_or_bplus_candidate") or {}).get("base"))
           print("anchored_liquid_coverage_pct:", coverage)
           print("v29_blockers:", blockers)
+          print("v30_status:", early.get("status"))
+          print("v30_active:", (early.get("active_early_strong") or {}).get("base"))
+          print("v30_best_test:", (early.get("best_test_candidate") or {}).get("base"))
           PY
 
       - name: Commit refreshed 30-minute batch results
@@ -149,19 +174,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json beam_early_strong.json early_strong_state.json early_strong_history.json "$output_dir/"
           for attempt in 1 2 3; do
             git reset --hard HEAD
             git clean -fd
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json beam_early_strong.json early_strong_state.json early_strong_history.json
             if git diff --cached --quiet; then
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update 30-minute anchored six-point expert batch results"
+            git commit -m "Update 30-minute anchored and EARLY_STRONG results"
             if git push origin main; then
               exit 0
             fi
