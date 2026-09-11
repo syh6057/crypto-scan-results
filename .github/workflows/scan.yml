@@ -51,7 +51,7 @@ jobs:
       - name: Validate scanner syntax
         run: python -m py_compile scanner_v16.py scanner_v17.py scanner_v18.py scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py scanner_v27.py scanner_v28.py scanner_v29.py scanner_v30.py scanner_v31.py
 
-      - name: Run one full scan then build anchored six-point, EARLY_STRONG, and winner bridge lanes
+      - name: Run one full scan then build anchored six-point, EARLY_STRONG, and episode-aware winner bridge lanes
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -99,6 +99,7 @@ jobs:
               "early_strong_history.json",
               "beam_breakout_bridge.json",
               "breakout_bridge_state.json",
+              "breakout_bridge_history.json",
           )
           for name in required:
               p = Path(name)
@@ -107,6 +108,9 @@ jobs:
           scan = json.loads(Path("beam_scan_result.json").read_text(encoding="utf-8"))
           assert (scan.get("health") or {}).get("stage1_requested", 0) > 0
           assert (scan.get("health") or {}).get("stage2_success", 0) > 0
+          first_seen_patch = ((scan.get("logic") or {}).get("first_seen_recall_patch") or {})
+          assert first_seen_patch.get("version") == "v24.1-episode-aware-first-seen"
+          assert first_seen_patch.get("episode_gap_minutes") == 60
 
           final_gate = json.loads(Path("beam_final_trade_gate.json").read_text(encoding="utf-8"))
           assert final_gate.get("version") == "v27-final-precision-risk-gate"
@@ -154,21 +158,28 @@ jobs:
           assert policy.get("no_averaging_down") is True
 
           bridge = json.loads(Path("beam_breakout_bridge.json").read_text(encoding="utf-8"))
-          assert bridge.get("version") == "v31-early-winner-promotion-bridge"
+          assert bridge.get("version") == "v31.1-episode-aware-early-winner-bridge"
           assert bridge.get("status") in {"BLOCKED", "EARLY_WINNER_CANDIDATE", "WATCH_ONLY", "NO_SIGNAL"}
           bp = bridge.get("policy") or {}
+          assert bp.get("episode_aware_anchor") is True
+          assert bp.get("lifetime_first_seen_is_audit_only") is True
           assert bp.get("no_single_pick_lock") is True
           assert bp.get("four_hour_structure_is_soft_context_not_veto") is True
           assert bp.get("fifteen_minute_higher_low_is_not_single_veto") is True
           assert bp.get("thirty_minute_three_higher_lows_not_required") is True
           assert bp.get("external_news_unlock_listing_delisting_tokenomics_check_required_before_money") is True
           assert bp.get("not_a_full_size_buy_signal") is True
+          assert int(bp.get("prospective_feature_history_runs", 0)) >= 672
+
+          history = json.loads(Path("breakout_bridge_history.json").read_text(encoding="utf-8"))
+          assert isinstance(history, list) and len(history) > 0
 
           ts = datetime.fromisoformat(bridge["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
           assert age < 900, f"stale bridge result: {age}s"
 
           print("scan_health:", scan.get("health"))
+          print("episode_resets:", first_seen_patch.get("episode_reset_count"))
           print("v27_status:", final_gate.get("status"))
           print("v29_status:", batch.get("status"))
           print("v30_status:", early.get("status"))
@@ -183,19 +194,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json beam_early_strong.json early_strong_state.json early_strong_history.json beam_breakout_bridge.json breakout_bridge_state.json "$output_dir/"
+          cp beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json beam_early_strong.json early_strong_state.json early_strong_history.json beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json "$output_dir/"
           for attempt in 1 2 3; do
             git reset --hard HEAD
             git clean -fd
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json beam_early_strong.json early_strong_state.json early_strong_history.json beam_breakout_bridge.json breakout_bridge_state.json
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json beam_early_strong.json early_strong_state.json early_strong_history.json beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json
             if git diff --cached --quiet; then
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update 15-minute anchored, EARLY_STRONG, and winner bridge results"
+            git commit -m "Update 15-minute episode-aware breakout results"
             if git push origin main; then
               exit 0
             fi
