@@ -54,9 +54,7 @@ def r(v, n=3):
 
 def pct(a, b):
     a, b = fnum(a), fnum(b)
-    if a <= 0 or b <= 0:
-        return None
-    return (a / b - 1.0) * 100.0
+    return (a / b - 1.0) * 100.0 if a > 0 and b > 0 else None
 
 
 def first_seen_row(first_seen, base):
@@ -73,7 +71,6 @@ def evaluate(row, first_seen, failed_assets):
     first_price = fnum(fs.get("first_price_krw"))
     price = fnum(row.get("price_krw"))
     since_first = pct(price, first_price)
-    warning = bool(row.get("warning_flag"))
     track = row.get("hard_track") or row.get("track")
 
     fast = row.get("fast_5m") or {}
@@ -97,7 +94,7 @@ def evaluate(row, first_seen, failed_assets):
     hard_failures = []
     if base in LOW_BETA:
         hard_failures.append("low_beta_major")
-    if warning:
+    if bool(row.get("warning_flag")):
         hard_failures.append("market_warning")
     if trade < MIN_TRADE_KRW:
         hard_failures.append("turnover_below_150m")
@@ -127,87 +124,33 @@ def evaluate(row, first_seen, failed_assets):
         "beam_score": beam >= 90.0,
     }
     signal_count = sum(bool(v) for v in signals.values())
-    flow_confirmations = sum(bool(signals[k]) for k in (
-        "m15_volume_spike", "m15_volume_persistence", "buy_flow", "money_leads_price", "fast_turnover"
-    ))
+    flow_keys = ("m15_volume_spike", "m15_volume_persistence", "buy_flow", "money_leads_price", "fast_turnover")
+    flow_confirmations = sum(bool(signals[k]) for k in flow_keys)
 
-    score = 0.0
-    if first_ch <= 2:
-        score += 18
-    elif first_ch <= 4.5:
-        score += 14
-    else:
-        score += 8
-
-    if -1.0 <= ch <= 4.0:
-        score += 16
-    elif 4.0 < ch <= 8.0:
-        score += 11
-    else:
-        score += 5
-
+    score = 18 if first_ch <= 2 else (14 if first_ch <= 4.5 else 8)
+    score += 16 if -1 <= ch <= 4 else (11 if ch <= 8 else 5)
     score += 12 if trade >= 1_000_000_000 else (8 if trade >= STRONG_TRADE_KRW else 5)
-    score += 12 if vsp >= 2.0 else (8 if vsp >= 1.4 else 0)
+    score += 12 if vsp >= 2 else (8 if vsp >= 1.4 else 0)
     score += 10 if vper >= 1.5 else (6 if vper >= 1.1 else 0)
     score += 7 if signals["m15_structure"] else -3
     score += 5 if signals["h1_structure"] else 0
-
-    if bsr >= 1.35:
-        score += 12
-    elif bsr >= 1.05:
-        score += 8
-    elif bsr >= 0.85:
-        score += 2
-    elif bsr > 0:
-        score -= 10
-
-    if obr >= 1.0:
-        score += 6
-    elif obr >= 0.7:
-        score += 3
-    elif 0 < obr < 0.5:
-        score -= 5
-
+    score += 12 if bsr >= 1.35 else (8 if bsr >= 1.05 else (2 if bsr >= 0.85 else (-10 if bsr > 0 else 0)))
+    score += 6 if obr >= 1 else (3 if obr >= 0.7 else (-5 if 0 < obr < 0.5 else 0))
     score += min(12.0, max(0.0, money * 0.35))
     score += min(8.0, max(0.0, (turnover - 1.0) * 4.0))
     score += min(10.0, signatures * 2.0)
     score += min(8.0, max(0.0, (beam - 85.0) * 0.16))
-
-    if -0.3 <= pace <= 1.5:
-        score += 5
-    elif 1.5 < pace <= 2.5:
-        score += 2
-    elif pace < -0.5:
-        score -= 6
-
-    if wick <= 0.8:
-        score += 4
-    elif wick >= 1.5:
-        score -= 5
-
-    if h4.get("low_rising") or h4.get("close_above_ma"):
-        score += 3
-    # 4h structure is intentionally not a veto. Many realized winners ignited before 4h confirmation.
-
-    if base in failed_assets:
-        score -= 5
-
+    score += 5 if -0.3 <= pace <= 1.5 else (2 if pace <= 2.5 else (-6 if pace < -0.5 else 0))
+    score += 4 if wick <= 0.8 else (-5 if wick >= 1.5 else 0)
+    score += 3 if h4.get("low_rising") or h4.get("close_above_ma") else 0
+    score -= 5 if base in failed_assets else 0
     score = max(0.0, min(100.0, round(score, 2)))
-    immediate = (
-        not hard_failures
-        and score >= IMMEDIATE_SCORE
-        and signal_count >= MIN_SIGNAL_COUNT
-        and flow_confirmations >= MIN_FLOW_CONFIRMATIONS
-    )
-    confirmed_quality = (
-        not hard_failures
-        and score >= CONFIRMED_SCORE
-        and signal_count >= MIN_SIGNAL_COUNT
-        and flow_confirmations >= MIN_FLOW_CONFIRMATIONS
-    )
-    watch_quality = not hard_failures and score >= WATCH_SCORE and flow_confirmations >= 1
 
+    immediate = not hard_failures and score >= IMMEDIATE_SCORE and signal_count >= MIN_SIGNAL_COUNT and flow_confirmations >= MIN_FLOW_CONFIRMATIONS
+    confirmed_quality = not hard_failures and score >= CONFIRMED_SCORE and signal_count >= MIN_SIGNAL_COUNT and flow_confirmations >= MIN_FLOW_CONFIRMATIONS
+    watch_quality = not hard_failures and score >= WATCH_SCORE and flow_confirmations >= 1
     lane = "QUIET_FLOW" if ch <= 4 else ("EARLY_ACCELERATOR" if ch <= 8 else "CONTROLLED_ACCELERATOR")
+
     return {
         "base": base,
         "market": row.get("market"),
@@ -260,7 +203,8 @@ def evaluate(row, first_seen, failed_assets):
 def reactivation_watch(first_seen, market_state, current_stage2):
     tickers = market_state.get("tickers") or {}
     out = []
-    for base, fs in first_seen.items() if isinstance(first_seen, dict) else []:
+    iterable = first_seen.items() if isinstance(first_seen, dict) else []
+    for base, fs in iterable:
         if base in current_stage2 or base in LOW_BETA:
             continue
         t = tickers.get(base) or {}
@@ -270,16 +214,8 @@ def reactivation_watch(first_seen, market_state, current_stage2):
         first_price = fnum((fs or {}).get("first_price_krw"))
         price = fnum(t.get("price"))
         since_first = pct(price, first_price)
-        if first_ch <= 4.5 and 3.0 <= ch <= 12.5 and trade >= STRONG_TRADE_KRW and since_first is not None and 2.0 <= since_first <= 15.0:
-            out.append({
-                "base": base,
-                "price_krw": price,
-                "change_24h_pct": ch,
-                "trade_24h_krw": trade,
-                "first_change_24h_pct": first_ch,
-                "return_since_first_pct": r(since_first, 2),
-                "status": "REACTIVATE_FOR_FULL_CANDLE_REFRESH",
-            })
+        if first_ch <= 4.5 and 3 <= ch <= 12.5 and trade >= STRONG_TRADE_KRW and since_first is not None and 2 <= since_first <= 15:
+            out.append({"base": base, "price_krw": price, "change_24h_pct": ch, "trade_24h_krw": trade, "first_change_24h_pct": first_ch, "return_since_first_pct": r(since_first, 2), "status": "REACTIVATE_FOR_FULL_CANDLE_REFRESH"})
     out.sort(key=lambda x: (x["change_24h_pct"], x["trade_24h_krw"]), reverse=True)
     return out[:10]
 
@@ -291,23 +227,18 @@ def main():
     market_state = load_json(MARKET_STATE_FILE, {})
     audit = load_json(MISS_AUDIT_FILE, {})
     state = load_json(STATE_FILE, {"confirmations": {}, "history": []})
-
     health = scan.get("health") or {}
     blockers = list(health.get("hard_blockers") or [])
-    rows = [r for r in (scan.get("stage2_ranked") or []) if r.get("base")]
+    rows = [x for x in (scan.get("stage2_ranked") or []) if x.get("base")]
     failed_assets = {x.get("base") for x in (audit.get("failed_acceleration_examples") or []) if x.get("base")}
 
     evaluated = [evaluate(row, first_seen, failed_assets) for row in rows]
     evaluated.sort(key=lambda x: (x["score"], x["trade_24h_krw"]), reverse=True)
-
-    previous_counts = state.get("confirmations") or {}
-    new_counts = {}
-    for item in evaluated:
-        if item["confirmed_quality"]:
-            new_counts[item["base"]] = int(previous_counts.get(item["base"]) or 0) + 1
+    prev = state.get("confirmations") or {}
+    counts = {x["base"]: int(prev.get(x["base"]) or 0) + 1 for x in evaluated if x["confirmed_quality"]}
 
     for item in evaluated:
-        item["confirmations"] = int(new_counts.get(item["base"]) or 0)
+        item["confirmations"] = int(counts.get(item["base"]) or 0)
         if item["immediate_quality"]:
             item["promotion_grade"] = "A_EARLY_IMMEDIATE"
         elif item["confirmed_quality"] and item["confirmations"] >= CONFIRMATIONS_REQUIRED:
@@ -319,43 +250,23 @@ def main():
 
     promoted = [x for x in evaluated if x["promotion_grade"] in {"A_EARLY_IMMEDIATE", "BPLUS_EARLY_CONFIRMED"}]
     watches = [x for x in evaluated if x["promotion_grade"] == "WATCH"]
-    current_stage2 = {x.get("base") for x in rows}
-    reactivation = reactivation_watch(first_seen, market_state, current_stage2)
+    reactivation = reactivation_watch(first_seen, market_state, {x.get("base") for x in rows})
 
     state["version"] = VERSION
     state["updated_at_utc"] = now.isoformat()
-    state["confirmations"] = new_counts
-    state.setdefault("history", []).append({
-        "generated_at_utc": now.isoformat(),
-        "promoted": [x["base"] for x in promoted[:3]],
-        "watch": [x["base"] for x in watches[:3]],
-        "reactivation": [x["base"] for x in reactivation[:3]],
-    })
+    state["confirmations"] = counts
+    state.setdefault("history", []).append({"generated_at_utc": now.isoformat(), "promoted": [x["base"] for x in promoted[:3]], "watch": [x["base"] for x in watches[:3]], "reactivation": [x["base"] for x in reactivation[:3]]})
     state["history"] = state["history"][-MEMORY_RUNS:]
 
-    if blockers:
-        status = "BLOCKED"
-    elif promoted:
-        status = "EARLY_WINNER_CANDIDATE"
-    elif watches or reactivation:
-        status = "WATCH_ONLY"
-    else:
-        status = "NO_SIGNAL"
-
-    top_candidates = (promoted + watches)[:5]
+    status = "BLOCKED" if blockers else ("EARLY_WINNER_CANDIDATE" if promoted else ("WATCH_ONLY" if watches or reactivation else "NO_SIGNAL"))
     out = {
         "generated_at_utc": now.isoformat(),
         "version": VERSION,
         "status": status,
-        "health": {
-            "analysis_ready": bool(health.get("analysis_ready")) and not blockers,
-            "hard_blockers": blockers,
-            "stage2_candidates": len(rows),
-            "evaluated": len(evaluated),
-        },
+        "health": {"analysis_ready": bool(health.get("analysis_ready")) and not blockers, "hard_blockers": blockers, "stage2_candidates": len(rows), "evaluated": len(evaluated)},
         "promoted_top3": promoted[:3],
         "watch_top5": watches[:5],
-        "top_candidates": top_candidates,
+        "top_candidates": (promoted + watches)[:5],
         "reactivation_watch": reactivation,
         "policy": {
             "purpose": "bridge raw early detection to user-visible promotion before the move is obvious",
@@ -377,11 +288,7 @@ def main():
             "no_averaging_down": True,
         },
         "miss_feedback": {
-            "realized_early_captures": [
-                {"base": x.get("base"), "first_detected_change_24h_pct": x.get("first_detected_change_24h_pct"), "current_change_24h_pct": x.get("change_24h_pct")}
-                for x in (audit.get("current_top_movers") or [])
-                if x.get("capture") == "EARLY_CAPTURE"
-            ][:15],
+            "realized_early_captures": [{"base": x.get("base"), "first_detected_change_24h_pct": x.get("first_detected_change_24h_pct"), "current_change_24h_pct": x.get("change_24h_pct")} for x in (audit.get("current_top_movers") or []) if x.get("capture") == "EARLY_CAPTURE"][:15],
             "design_change": "replace all-of structure vetoes with weighted flow/volume confirmation, add controlled accelerator lane, emit top3 instead of hiding behind one locked pick",
         },
     }
