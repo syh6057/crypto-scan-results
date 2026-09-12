@@ -1,4 +1,4 @@
-name: 15-minute calibrated beam batch scan
+name: 30-minute calibrated beam batch scan
 
 on:
   push:
@@ -23,7 +23,7 @@ on:
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
-    - cron: "7,22,37,52 * * * *"
+    - cron: "7,37 * * * *"
 
 permissions:
   contents: write
@@ -189,7 +189,7 @@ jobs:
           print("v31_reactivation:", [x.get("base") for x in bridge.get("reactivation_watch") or []][:5])
           PY
 
-      - name: Commit refreshed 15-minute batch results
+      - name: Commit refreshed 30-minute batch results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -206,7 +206,7 @@ jobs:
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update 15-minute episode-aware breakout results"
+            git commit -m "Update 30-minute episode-aware breakout results"
             if git push origin main; then
               exit 0
             fi
