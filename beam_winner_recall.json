@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-12T14:05:14.236145+00:00",
+  "generated_at_utc": "2026-09-12T14:35:43.040980+00:00",
   "version": "v23-realized-winner-recall",
   "health": {
     "analysis_ready": true,
@@ -11,33 +11,33 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 67.5
+    "runtime_sec": 68.7
   },
   "purpose": "surface early movers the scanner detected but downstream expert gates failed to recommend",
   "learned_from_realized_winners": [
     {
       "base": "LSK",
-      "current_change_24h_pct": 92.22,
+      "current_change_24h_pct": 99.4,
       "first_detected_change_24h_pct": 7.3,
       "first_detected_price_krw": 147.0
     },
     {
       "base": "EGG",
-      "current_change_24h_pct": 20.87,
+      "current_change_24h_pct": 22.78,
       "first_detected_change_24h_pct": 3.73,
       "first_detected_price_krw": 0.445
     },
     {
       "base": "VTHO",
-      "current_change_24h_pct": 19.16,
+      "current_change_24h_pct": 18.85,
       "first_detected_change_24h_pct": 2.53,
       "first_detected_price_krw": 0.5829
     },
     {
-      "base": "FLOCK",
-      "current_change_24h_pct": 18.63,
-      "first_detected_change_24h_pct": 0.54,
-      "first_detected_price_krw": 99.35
+      "base": "AZIT",
+      "current_change_24h_pct": 17.23,
+      "first_detected_change_24h_pct": -8.36,
+      "first_detected_price_krw": 2.477
     },
     {
       "base": "BSB",
@@ -46,40 +46,34 @@
       "first_detected_price_krw": 128.0
     },
     {
-      "base": "AZIT",
-      "current_change_24h_pct": 16.27,
-      "first_detected_change_24h_pct": -8.36,
-      "first_detected_price_krw": 2.477
+      "base": "FLOCK",
+      "current_change_24h_pct": 15.79,
+      "first_detected_change_24h_pct": 0.54,
+      "first_detected_price_krw": 99.35
     },
     {
       "base": "ETHFI",
-      "current_change_24h_pct": 13.65,
+      "current_change_24h_pct": 14.87,
       "first_detected_change_24h_pct": 3.28,
       "first_detected_price_krw": 787.0
     },
     {
-      "base": "FANC",
-      "current_change_24h_pct": 12.81,
-      "first_detected_change_24h_pct": 0.8,
-      "first_detected_price_krw": 0.9909
-    },
-    {
       "base": "TREE",
-      "current_change_24h_pct": 11.67,
+      "current_change_24h_pct": 13.12,
       "first_detected_change_24h_pct": 2.28,
       "first_detected_price_krw": 59.12
     },
     {
-      "base": "PROM",
-      "current_change_24h_pct": 10.82,
-      "first_detected_change_24h_pct": 5.76,
-      "first_detected_price_krw": 7525.0
-    },
-    {
       "base": "CUDIS",
-      "current_change_24h_pct": 10.76,
+      "current_change_24h_pct": 10.97,
       "first_detected_change_24h_pct": 0.16,
       "first_detected_price_krw": 4.417
+    },
+    {
+      "base": "FANC",
+      "current_change_24h_pct": 10.09,
+      "first_detected_change_24h_pct": 0.8,
+      "first_detected_price_krw": 0.9909
     }
   ],
   "policy": {
@@ -98,7 +92,54 @@
     "reason": "no_designated_one_pick"
   },
   "confirmed_recall_pick": null,
-  "winner_recall_watchlist": [],
+  "winner_recall_watchlist": [
+    {
+      "base": "CYS",
+      "market": "KRW-CYS",
+      "korean_name": "싸이식",
+      "price_krw": 186.0,
+      "change_24h_pct": 2.2,
+      "trade_24h_krw": 17732075980.20481,
+      "track": "PRE_IGNITION",
+      "recall_score": 105.42,
+      "signal_count": 7,
+      "signals": {
+        "fast_turnover": false,
+        "controlled_5m": true,
+        "m15_spike": true,
+        "m15_persistence": true,
+        "m15_structure": false,
+        "h1_structure": false,
+        "buy_flow": true,
+        "orderbook_not_bad": true,
+        "signature": true,
+        "money_leads": true
+      },
+      "hard_failures": [],
+      "confirmations": 1,
+      "first_detected_at_utc": "2026-09-08T02:29:33.439564+00:00",
+      "first_price_krw": 289.0,
+      "first_change_24h_pct": -0.69,
+      "return_since_first_pct": -35.64,
+      "beam_score": 135.76,
+      "money_leads_price_score": 22.0,
+      "turnover_intensity": 0.0,
+      "buy_sell_ratio": 66.61,
+      "orderbook_ratio": 1.89,
+      "scenario_target_10_krw": 204.6,
+      "scenario_target_15_krw": 213.9,
+      "scenario_target_30_krw": 241.8,
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 186.0,
+        "do_not_chase_above_krw": 190.65,
+        "invalidation_krw": 180.048,
+        "target_1_krw": 200.88,
+        "target_2_krw": 213.9,
+        "target_3_krw": 232.5
+      }
+    }
+  ],
   "feedback": {
     "detection_bottleneck": "some eventual winners were first detected below 5pct but never surfaced as the recommendation",
     "fix": "parallel raw-stage2 recall scoring bypasses v19/v20 all-of expert thresholds, while requiring two observations",
