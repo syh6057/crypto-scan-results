@@ -201,6 +201,13 @@ jobs:
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
+            git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json beam_early_strong.json early_strong_state.json early_strong_history.json beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json "$output_dir/"
+          for attempt in 1 2 3; do
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin main
+            git checkout -B main origin/main
+            cp "$output_dir"/*.json .
             git add beam_scan_result.json beam_latest_summary.json beam_top10_compact.json beam_state.json beam_first_seen.json beam_expert_summary.json expert_lock_state.json expert_prediction_history.json beam_one_pick_summary.json one_pick_state.json one_pick_history.json beam_miss_audit.json beam_winner_recall.json winner_recall_state.json beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json beam_early_strong.json early_strong_state.json early_strong_history.json beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json
             if git diff --cached --quiet; then
               echo "No output changes to commit."
@@ -214,3 +221,5 @@ jobs:
           done
           echo "Unable to publish scan outputs after 3 attempts."
           exit 1
+
+# manual refresh requested 2026-09-12T15:16Z
