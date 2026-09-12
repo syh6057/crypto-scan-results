@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-12T20:25:49.467868+00:00",
+  "generated_at_utc": "2026-09-12T22:29:58.922995+00:00",
   "version": "v22-miss-audit-profit-feedback",
   "health": {
     "analysis_ready": true,
@@ -11,7 +11,7 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 56.1
+    "runtime_sec": 53.6
   },
   "top_mover_audit_policy": {
     "mover_change_min_pct": 10.0,
@@ -22,9 +22,9 @@
   "current_top_movers": [
     {
       "base": "AZIT",
-      "price_krw": 5.127,
-      "change_24h_pct": 63.49,
-      "trade_24h_krw": 7422803227.441174,
+      "price_krw": 4.318,
+      "change_24h_pct": 37.69,
+      "trade_24h_krw": 8847868473.549122,
       "capture": "EARLY_CAPTURE",
       "first_detected_change_24h_pct": -8.36,
       "first_detected_price_krw": 2.477,
@@ -32,9 +32,9 @@
     },
     {
       "base": "TEMCO",
-      "price_krw": 0.5077,
-      "change_24h_pct": 19.26,
-      "trade_24h_krw": 2910278003.104161,
+      "price_krw": 0.5092,
+      "change_24h_pct": 19.61,
+      "trade_24h_krw": 3121560037.0768914,
       "capture": "EARLY_CAPTURE",
       "first_detected_change_24h_pct": 0.25,
       "first_detected_price_krw": 0.3944,
@@ -42,17 +42,58 @@
     },
     {
       "base": "BB",
-      "price_krw": 14.52,
-      "change_24h_pct": 17.67,
-      "trade_24h_krw": 4376853234.739643,
+      "price_krw": 14.21,
+      "change_24h_pct": 15.15,
+      "trade_24h_krw": 4775885741.735845,
       "capture": "EARLY_CAPTURE",
       "first_detected_change_24h_pct": -3.04,
       "first_detected_price_krw": 16.6,
-      "in_current_stage2": false
+      "in_current_stage2": true
+    },
+    {
+      "base": "REZ",
+      "price_krw": 5.558,
+      "change_24h_pct": 14.65,
+      "trade_24h_krw": 2566039271.98121,
+      "capture": "EARLY_CAPTURE",
+      "first_detected_change_24h_pct": 3.44,
+      "first_detected_price_krw": 4.303,
+      "in_current_stage2": true
+    },
+    {
+      "base": "PUFFER",
+      "price_krw": 28.82,
+      "change_24h_pct": 12.71,
+      "trade_24h_krw": 2111005924.034484,
+      "capture": "EARLY_CAPTURE",
+      "first_detected_change_24h_pct": 0.1,
+      "first_detected_price_krw": 21.02,
+      "in_current_stage2": true
+    },
+    {
+      "base": "ILV",
+      "price_krw": 4873,
+      "change_24h_pct": 11.61,
+      "trade_24h_krw": 640773063.1578034,
+      "capture": "LATE_CAPTURE",
+      "first_detected_change_24h_pct": 18.3,
+      "first_detected_price_krw": 5165.0,
+      "in_current_stage2": true
     }
   ],
-  "missed_or_late_count": 0,
-  "missed_or_late": [],
+  "missed_or_late_count": 1,
+  "missed_or_late": [
+    {
+      "base": "ILV",
+      "price_krw": 4873,
+      "change_24h_pct": 11.61,
+      "trade_24h_krw": 640773063.1578034,
+      "capture": "LATE_CAPTURE",
+      "first_detected_change_24h_pct": 18.3,
+      "first_detected_price_krw": 5165.0,
+      "in_current_stage2": true
+    }
+  ],
   "failed_acceleration_examples": [
     {
       "base": "XAN",
@@ -125,6 +166,16 @@
       "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
     },
     {
+      "base": "BB",
+      "first_price_krw": 16.6,
+      "last_price_krw": 14.21,
+      "peak_price_krw": 18.43,
+      "current_return_since_first_pct": -14.4,
+      "peak_return_since_first_pct": 11.02,
+      "giveback_from_peak_pct_points": 25.42,
+      "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
+    },
+    {
       "base": "GPS",
       "first_price_krw": 14.84,
       "last_price_krw": 13.08,
@@ -132,6 +183,16 @@
       "current_return_since_first_pct": -11.86,
       "peak_return_since_first_pct": 13.27,
       "giveback_from_peak_pct_points": 25.13,
+      "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
+    },
+    {
+      "base": "PUMP",
+      "first_price_krw": 5.361,
+      "last_price_krw": 5.103,
+      "peak_price_krw": 6.445,
+      "current_return_since_first_pct": -4.81,
+      "peak_return_since_first_pct": 20.22,
+      "giveback_from_peak_pct_points": 25.03,
       "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
     },
     {
@@ -145,16 +206,6 @@
       "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
     },
     {
-      "base": "COTI",
-      "first_price_krw": 24.25,
-      "last_price_krw": 23.06,
-      "peak_price_krw": 28.97,
-      "current_return_since_first_pct": -4.91,
-      "peak_return_since_first_pct": 19.46,
-      "giveback_from_peak_pct_points": 24.37,
-      "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
-    },
-    {
       "base": "METIS",
       "first_price_krw": 4521.0,
       "last_price_krw": 3924.0,
@@ -162,6 +213,16 @@
       "current_return_since_first_pct": -13.21,
       "peak_return_since_first_pct": 10.6,
       "giveback_from_peak_pct_points": 23.81,
+      "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
+    },
+    {
+      "base": "COTI",
+      "first_price_krw": 24.25,
+      "last_price_krw": 23.3,
+      "peak_price_krw": 28.97,
+      "current_return_since_first_pct": -3.92,
+      "peak_return_since_first_pct": 19.46,
+      "giveback_from_peak_pct_points": 23.38,
       "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
     },
     {
@@ -182,16 +243,6 @@
       "current_return_since_first_pct": -8.15,
       "peak_return_since_first_pct": 14.72,
       "giveback_from_peak_pct_points": 22.87,
-      "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
-    },
-    {
-      "base": "PUMP",
-      "first_price_krw": 5.361,
-      "last_price_krw": 5.245,
-      "peak_price_krw": 6.445,
-      "current_return_since_first_pct": -2.16,
-      "peak_return_since_first_pct": 20.22,
-      "giveback_from_peak_pct_points": 22.38,
       "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
     },
     {
@@ -242,16 +293,6 @@
       "current_return_since_first_pct": -4.02,
       "peak_return_since_first_pct": 16.37,
       "giveback_from_peak_pct_points": 20.39,
-      "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
-    },
-    {
-      "base": "BB",
-      "first_price_krw": 16.6,
-      "last_price_krw": 15.09,
-      "peak_price_krw": 18.43,
-      "current_return_since_first_pct": -9.1,
-      "peak_return_since_first_pct": 11.02,
-      "giveback_from_peak_pct_points": 20.12,
       "feedback": "FAILED_ACCELERATION_OR_PROFIT_GIVEBACK"
     }
   ],
