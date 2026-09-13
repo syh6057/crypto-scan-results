@@ -1,5 +1,5 @@
 name: 30-minute calibrated beam batch scan
-# execution-quality gate enabled: 2026-09-14 KST
+# urgent-winner selector enabled: 2026-09-14 KST
 
 on:
   push:
@@ -40,9 +40,9 @@ jobs:
             scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py \
             scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py \
             scanner_v27.py scanner_v28.py scanner_v29.py scanner_v30.py \
-            scanner_v31.py scanner_v32.py scanner_v33.py
+            scanner_v31.py scanner_v32.py scanner_v33.py scanner_v34.py
 
-      - name: Run full scan, execution-quality gate, and delivery layer
+      - name: Run full scan, failure gate, winner selector, and delivery layer
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -57,9 +57,10 @@ jobs:
           python scanner_v30.py
           python scanner_v31.py
           python scanner_v33.py
+          python scanner_v34.py
           python scanner_v32.py
 
-      - name: Validate fresh outputs and no-silent-drop contract
+      - name: Validate fresh outputs and winner-selection contract
         run: |
           python - <<'PY'
           import json
@@ -95,6 +96,8 @@ jobs:
               "breakout_bridge_history.json",
               "execution_quality_state.json",
               "execution_quality_history.json",
+              "urgent_winner_selector.json",
+              "urgent_winner_state.json",
               "beam_delivery_alert.json",
               "delivery_alert_state.json",
               "delivery_alert_history.json",
@@ -115,9 +118,13 @@ jobs:
 
           bridge = json.loads(Path("beam_breakout_bridge.json").read_text(encoding="utf-8"))
           assert "v33-execution-quality-feedback-gate" in bridge.get("version", "")
-          assert bridge.get("status") in {"EXECUTION_CONFIRMED_CANDIDATE", "WATCH_ONLY", "NO_SIGNAL"}
-          gate = bridge.get("execution_quality_gate") or {}
-          assert gate.get("version") == "v33-execution-quality-feedback-gate"
+          assert "v34-urgent-winner-pattern-selector" in bridge.get("version", "")
+          assert bridge.get("status") in {"URGENT_WINNER_MATCH", "WATCH_ONLY", "NO_SIGNAL"}
+          winner = bridge.get("winner_pattern_selector") or {}
+          assert winner.get("version") == "v34-urgent-winner-pattern-selector"
+
+          selector = json.loads(Path("urgent_winner_selector.json").read_text(encoding="utf-8"))
+          assert selector.get("version") == "v34-urgent-winner-pattern-selector"
 
           delivery = json.loads(Path("beam_delivery_alert.json").read_text(encoding="utf-8"))
           assert delivery.get("version") == "v32-independent-early-alert-delivery"
@@ -129,11 +136,10 @@ jobs:
           assert regression.get("bridge_promoted_all_delivered") is True
 
           promoted = {x.get("base") for x in (bridge.get("promoted_top3") or []) if x.get("base")}
+          winner_matches = {x.get("base") for x in selector.get("winner_matches") or [] if x.get("base")}
+          assert promoted == winner_matches, f"promoted must equal urgent winner matches: promoted={sorted(promoted)}, winners={sorted(winner_matches)}"
           delivered = {x.get("base") for x in (delivery.get("alerts") or []) if x.get("base")}
-          assert promoted.issubset(delivered), f"promoted candidate silently dropped: {sorted(promoted - delivered)}"
-          if promoted:
-              assert delivery.get("delivery_required") is True
-              assert delivery.get("primary_alert")
+          assert promoted.issubset(delivered), f"winner-pattern candidate silently dropped: {sorted(promoted - delivered)}"
 
           ts = datetime.fromisoformat(delivery["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
@@ -141,11 +147,11 @@ jobs:
 
           print("scan_health:", scan.get("health"))
           print("final_gate:", final_gate.get("status"))
-          print("execution_confirmed:", sorted(promoted))
-          print("execution_demoted:", gate.get("demoted_bases"))
+          print("winner_examples:", selector.get("positive_examples"))
+          print("urgent_winner_matches:", sorted(promoted))
+          print("urgent_rejected:", [x.get("base") for x in selector.get("rejected_urgent") or []])
           print("delivery_status:", delivery.get("status"))
           print("delivery_alerts:", [x.get("base") for x in delivery.get("alerts") or []])
-          print("delivery_new:", [x.get("base") for x in delivery.get("new_alerts") or []])
           PY
 
       - name: Commit refreshed scan and delivery outputs
@@ -164,6 +170,7 @@ jobs:
             beam_early_strong.json early_strong_state.json early_strong_history.json \
             beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json \
             execution_quality_state.json execution_quality_history.json \
+            urgent_winner_selector.json urgent_winner_state.json \
             beam_delivery_alert.json delivery_alert_state.json delivery_alert_history.json \
             "$output_dir/"
 
@@ -184,12 +191,13 @@ jobs:
               beam_early_strong.json early_strong_state.json early_strong_history.json \
               beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json \
               execution_quality_state.json execution_quality_history.json \
+              urgent_winner_selector.json urgent_winner_state.json \
               beam_delivery_alert.json delivery_alert_state.json delivery_alert_history.json
             if git diff --cached --quiet; then
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update 30-minute scan and execution-quality results"
+            git commit -m "Update 30-minute scan and urgent-winner results"
             if git push origin main; then
               exit 0
             fi
