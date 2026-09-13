@@ -1,0 +1,49 @@
+name: 30-minute scan watchdog
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15,45 * * * *"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check delivery freshness and recover missed schedule
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          p = Path("beam_delivery_alert.json")
+          stale = True
+          age_min = None
+          if p.exists():
+              try:
+                  data = json.loads(p.read_text(encoding="utf-8"))
+                  ts = datetime.fromisoformat(data["generated_at_utc"])
+                  age_min = (datetime.now(timezone.utc) - ts).total_seconds() / 60
+                  stale = age_min > 40
+              except Exception:
+                  stale = True
+
+          Path("/tmp/scan_stale").write_text("1" if stale else "0")
+          print(f"delivery_age_minutes={age_min} stale={stale}")
+          PY
+
+          if [ "$(cat /tmp/scan_stale)" = "1" ]; then
+            echo "Main scan is stale; dispatching recovery run."
+            gh workflow run scan.yml --repo "$GITHUB_REPOSITORY"
+          else
+            echo "Main scan is fresh."
+          fi
