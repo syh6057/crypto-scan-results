@@ -127,19 +127,23 @@ jobs:
           assert selector.get("version") == "v34-urgent-winner-pattern-selector"
 
           delivery = json.loads(Path("beam_delivery_alert.json").read_text(encoding="utf-8"))
-          assert delivery.get("version") == "v32-independent-early-alert-delivery"
+          assert delivery.get("version") == "v32.1-winner-selector-enforced-delivery"
           contract = delivery.get("delivery_contract") or {}
-          assert contract.get("independent_of_final_buy_gate") is True
-          assert contract.get("must_surface_bridge_promoted_top3") is True
-          assert contract.get("no_silent_drop_when_final_gate_no_buy") is True
+          assert contract.get("actionable_urgent_requires_v34_winner_match") is True
+          assert contract.get("raw_early_is_watch_only") is True
+          assert contract.get("external_risk_check_required_before_money") is True
+          assert contract.get("never_promise_2x") is True
           regression = delivery.get("regression_checks") or {}
           assert regression.get("bridge_promoted_all_delivered") is True
+          assert not regression.get("illegal_urgent_bypass"), regression.get("illegal_urgent_bypass")
 
           promoted = {x.get("base") for x in (bridge.get("promoted_top3") or []) if x.get("base")}
           winner_matches = {x.get("base") for x in selector.get("winner_matches") or [] if x.get("base")}
           assert promoted == winner_matches, f"promoted must equal urgent winner matches: promoted={sorted(promoted)}, winners={sorted(winner_matches)}"
           delivered = {x.get("base") for x in (delivery.get("alerts") or []) if x.get("base")}
           assert promoted.issubset(delivered), f"winner-pattern candidate silently dropped: {sorted(promoted - delivered)}"
+          urgent = {x.get("base") for x in (delivery.get("alerts") or []) if x.get("tier") == "URGENT_EARLY" and x.get("base")}
+          assert urgent == promoted, f"only v34 promoted winners may be URGENT: urgent={sorted(urgent)}, promoted={sorted(promoted)}"
 
           ts = datetime.fromisoformat(delivery["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
