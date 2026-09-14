@@ -1,5 +1,5 @@
 name: 30-minute calibrated beam batch scan
-# urgent-winner selector enabled: 2026-09-14 KST; refresh trigger 17:08 KST
+# urgent-winner selector enabled: 2026-09-14 KST; v34.1 conflict-clean selector
 
 on:
   push:
@@ -118,13 +118,16 @@ jobs:
 
           bridge = json.loads(Path("beam_breakout_bridge.json").read_text(encoding="utf-8"))
           assert "v33-execution-quality-feedback-gate" in bridge.get("version", "")
-          assert "v34-urgent-winner-pattern-selector" in bridge.get("version", "")
+          assert "v34.1-urgent-winner-pattern-selector" in bridge.get("version", "")
           assert bridge.get("status") in {"URGENT_WINNER_MATCH", "WATCH_ONLY", "NO_SIGNAL"}
           winner = bridge.get("winner_pattern_selector") or {}
-          assert winner.get("version") == "v34-urgent-winner-pattern-selector"
+          assert winner.get("version") == "v34.1-urgent-winner-pattern-selector"
 
           selector = json.loads(Path("urgent_winner_selector.json").read_text(encoding="utf-8"))
-          assert selector.get("version") == "v34-urgent-winner-pattern-selector"
+          assert selector.get("version") == "v34.1-urgent-winner-pattern-selector"
+          positives = set(selector.get("positive_examples") or [])
+          negatives = set(selector.get("negative_examples") or [])
+          assert not positives.intersection(negatives), f"winner/failure label conflict: {sorted(positives.intersection(negatives))}"
 
           delivery = json.loads(Path("beam_delivery_alert.json").read_text(encoding="utf-8"))
           assert delivery.get("version") == "v32.1-winner-selector-enforced-delivery"
@@ -152,6 +155,7 @@ jobs:
           print("scan_health:", scan.get("health"))
           print("final_gate:", final_gate.get("status"))
           print("winner_examples:", selector.get("positive_examples"))
+          print("label_conflicts_removed:", selector.get("label_conflicts_removed"))
           print("urgent_winner_matches:", sorted(promoted))
           print("urgent_rejected:", [x.get("base") for x in selector.get("rejected_urgent") or []])
           print("delivery_status:", delivery.get("status"))
