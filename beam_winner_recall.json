@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-14T08:11:52.389663+00:00",
+  "generated_at_utc": "2026-09-14T08:33:09.281582+00:00",
   "version": "v23-realized-winner-recall",
   "health": {
     "analysis_ready": true,
@@ -11,22 +11,10 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 75.7
+    "runtime_sec": 72.5
   },
   "purpose": "surface early movers the scanner detected but downstream expert gates failed to recommend",
   "learned_from_realized_winners": [
-    {
-      "base": "ARK",
-      "current_change_24h_pct": 26.21,
-      "first_detected_change_24h_pct": 5.06,
-      "first_detected_price_krw": 166.0
-    },
-    {
-      "base": "B3",
-      "current_change_24h_pct": 26.19,
-      "first_detected_change_24h_pct": 0.89,
-      "first_detected_price_krw": 0.6236
-    },
     {
       "base": "MTL",
       "current_change_24h_pct": 25.63,
@@ -34,28 +22,52 @@
       "first_detected_price_krw": 344.0
     },
     {
-      "base": "REZ",
-      "current_change_24h_pct": 19.38,
-      "first_detected_change_24h_pct": 3.44,
-      "first_detected_price_krw": 4.303
+      "base": "B3",
+      "current_change_24h_pct": 21.79,
+      "first_detected_change_24h_pct": 0.89,
+      "first_detected_price_krw": 0.6236
+    },
+    {
+      "base": "ARK",
+      "current_change_24h_pct": 20.87,
+      "first_detected_change_24h_pct": 5.06,
+      "first_detected_price_krw": 166.0
     },
     {
       "base": "CPOOL",
-      "current_change_24h_pct": 18.58,
+      "current_change_24h_pct": 20.14,
       "first_detected_change_24h_pct": 4.07,
       "first_detected_price_krw": 28.66
     },
     {
       "base": "LSK",
-      "current_change_24h_pct": 17.47,
+      "current_change_24h_pct": 19.16,
       "first_detected_change_24h_pct": 7.3,
       "first_detected_price_krw": 147.0
     },
     {
+      "base": "REZ",
+      "current_change_24h_pct": 17.92,
+      "first_detected_change_24h_pct": 3.44,
+      "first_detected_price_krw": 4.303
+    },
+    {
       "base": "LIT",
-      "current_change_24h_pct": 10.83,
+      "current_change_24h_pct": 11.19,
       "first_detected_change_24h_pct": 0.89,
       "first_detected_price_krw": 6215.0
+    },
+    {
+      "base": "FIL",
+      "current_change_24h_pct": 10.5,
+      "first_detected_change_24h_pct": 1.51,
+      "first_detected_price_krw": 1078.0
+    },
+    {
+      "base": "POLYX",
+      "current_change_24h_pct": 10.04,
+      "first_detected_change_24h_pct": 1.13,
+      "first_detected_price_krw": 50.11
     }
   ],
   "policy": {
@@ -74,7 +86,54 @@
     "reason": "no_designated_one_pick"
   },
   "confirmed_recall_pick": null,
-  "winner_recall_watchlist": [],
+  "winner_recall_watchlist": [
+    {
+      "base": "RED",
+      "market": "KRW-RED",
+      "korean_name": "레드스톤",
+      "price_krw": 184.0,
+      "change_24h_pct": 1.66,
+      "trade_24h_krw": 206823652.2986931,
+      "track": "PRE_IGNITION",
+      "recall_score": 105.57,
+      "signal_count": 7,
+      "signals": {
+        "fast_turnover": true,
+        "controlled_5m": true,
+        "m15_spike": false,
+        "m15_persistence": false,
+        "m15_structure": true,
+        "h1_structure": true,
+        "buy_flow": false,
+        "orderbook_not_bad": true,
+        "signature": true,
+        "money_leads": true
+      },
+      "hard_failures": [],
+      "confirmations": 1,
+      "first_detected_at_utc": "2026-09-07T23:23:36.372045+00:00",
+      "first_price_krw": 179.0,
+      "first_change_24h_pct": 0.0,
+      "return_since_first_pct": 2.79,
+      "beam_score": 164.41,
+      "money_leads_price_score": 36.0,
+      "turnover_intensity": 3.4,
+      "buy_sell_ratio": 0.77,
+      "orderbook_ratio": 1.79,
+      "scenario_target_10_krw": 202.4,
+      "scenario_target_15_krw": 211.6,
+      "scenario_target_30_krw": 239.2,
+      "entry_plan": {
+        "status": "ENTER_CANDIDATE",
+        "reference_price_krw": 184.0,
+        "do_not_chase_above_krw": 188.6,
+        "invalidation_krw": 178.112,
+        "target_1_krw": 198.72,
+        "target_2_krw": 211.6,
+        "target_3_krw": 230.0
+      }
+    }
+  ],
   "feedback": {
     "detection_bottleneck": "some eventual winners were first detected below 5pct but never surfaced as the recommendation",
     "fix": "parallel raw-stage2 recall scoring bypasses v19/v20 all-of expert thresholds, while requiring two observations",
