@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "v32.1-winner-selector-enforced-delivery"
+VERSION = "v32.2-continuity-aware-delivery"
 BRIDGE_FILE = "beam_breakout_bridge.json"
 EARLY_FILE = "beam_early_strong.json"
 MISS_FILE = "beam_miss_audit.json"
@@ -36,46 +36,40 @@ def candidate_from_bridge(row, rank, source):
         return None
     grade = str(row.get("promotion_grade") or "")
     execution_allowed = row.get("execution_allowed") is True
+    tracking = row.get("tracking") or {}
     winner_match = grade == "A_URGENT_WINNER_MATCH" and execution_allowed
-    # Only v34 winner-matched promoted rows may be actionable URGENT.
-    tier = "URGENT_EARLY" if source == "bridge_promoted" and winner_match else "WATCH_EARLY"
+    continuation_hold = grade == "A_URGENT_CONTINUATION" and execution_allowed and tracking.get("status") == "HOLD"
+    actionable = winner_match or continuation_hold
+    tier = "URGENT_EARLY" if source == "bridge_promoted" and actionable else "WATCH_EARLY"
     ep = row.get("episode") or {}
     key = f"{row.get('base')}|{tier}|{ep.get('started_at_utc') or row.get('lifetime_first_detected_at_utc') or 'na'}"
+    note = "Fresh winner-matched early breakout; external risk check required before money." if winner_match else ("Stateful continuation HOLD; same primary preserved until explicit invalidation or confirmed replacement. External risk check required before money." if continuation_hold else "Watch only; neither fresh winner-match nor continuity HOLD authorized execution.")
     return {
-        "alert_key": key, "base": row.get("base"), "market": row.get("market"),
-        "korean_name": row.get("korean_name"), "tier": tier, "source": source,
-        "rank": rank, "must_surface_in_chat": True if tier == "URGENT_EARLY" else rank <= 2,
-        "price_krw": row.get("price_krw"), "change_24h_pct": row.get("change_24h_pct"),
-        "trade_24h_krw": row.get("trade_24h_krw"), "promotion_grade": grade,
-        "score": row.get("score"), "priority_score": row.get("priority_score"),
+        "alert_key": key, "base": row.get("base"), "market": row.get("market"), "korean_name": row.get("korean_name"),
+        "tier": tier, "source": source, "rank": rank, "must_surface_in_chat": True if tier == "URGENT_EARLY" else rank <= 2,
+        "price_krw": row.get("price_krw"), "change_24h_pct": row.get("change_24h_pct"), "trade_24h_krw": row.get("trade_24h_krw"),
+        "promotion_grade": grade, "score": row.get("score"), "priority_score": row.get("priority_score"),
         "signal_count": row.get("signal_count"), "flow_confirmation_count": row.get("flow_confirmation_count"),
-        "episode": ep, "metrics": row.get("metrics") or {}, "entry_plan": row.get("entry_plan") or {},
-        "execution_allowed": execution_allowed,
-        "execution_permission": "EXTERNAL_RISK_CHECK_REQUIRED" if winner_match else "WATCH_ONLY",
-        "note": "Winner-matched early breakout; external risk check required before money." if winner_match else "Watch only; v34 winner-pattern selector did not authorize execution."
+        "episode": ep, "metrics": row.get("metrics") or {}, "entry_plan": row.get("entry_plan") or {}, "tracking": tracking,
+        "execution_allowed": execution_allowed, "execution_permission": "EXTERNAL_RISK_CHECK_REQUIRED" if actionable else "WATCH_ONLY", "note": note,
     }
 
 
 def candidate_from_early(row, rank, source, promoted_bases):
     if not isinstance(row, dict) or not row.get("base"):
         return None
-    # Critical guard: raw early output can NEVER create actionable URGENT on its own.
-    # If v34 promoted this base, bridge candidate already owns the actionable alert.
     grade = str(row.get("grade") or "")
     base = row.get("base")
     key = f"{base}|WATCH_EARLY|{row.get('first_detected_at_utc') or 'na'}"
     return {
-        "alert_key": key, "base": base, "market": row.get("market"), "tier": "WATCH_EARLY",
-        "source": source, "rank": rank, "must_surface_in_chat": False,
-        "price_krw": row.get("price_krw"), "change_24h_pct": row.get("change_24h_pct"),
-        "trade_24h_krw": row.get("trade_24h_krw"), "promotion_grade": grade,
-        "score": row.get("score"), "first_detected_price_krw": row.get("first_detected_price_krw"),
-        "first_detected_change_24h_pct": row.get("first_detected_change_24h_pct"),
+        "alert_key": key, "base": base, "market": row.get("market"), "tier": "WATCH_EARLY", "source": source,
+        "rank": rank, "must_surface_in_chat": False, "price_krw": row.get("price_krw"), "change_24h_pct": row.get("change_24h_pct"),
+        "trade_24h_krw": row.get("trade_24h_krw"), "promotion_grade": grade, "score": row.get("score"),
+        "first_detected_price_krw": row.get("first_detected_price_krw"), "first_detected_change_24h_pct": row.get("first_detected_change_24h_pct"),
         "relative_strength_vs_stronger_major_pct": row.get("relative_strength_vs_stronger_major_pct"),
-        "trade_flow": row.get("trade_flow") or {}, "orderbook": row.get("orderbook") or {},
-        "entry_plan": row.get("entry_plan") or {}, "execution_allowed": False,
-        "execution_permission": "WATCH_ONLY",
-        "note": "Raw early detector is watch-only. Actionable URGENT requires v34 A_URGENT_WINNER_MATCH in bridge_promoted."
+        "trade_flow": row.get("trade_flow") or {}, "orderbook": row.get("orderbook") or {}, "entry_plan": row.get("entry_plan") or {},
+        "execution_allowed": False, "execution_permission": "WATCH_ONLY",
+        "note": "Raw early detector is watch-only. Actionable URGENT requires fresh winner match or v36 continuation HOLD in bridge_promoted."
     }
 
 
@@ -116,8 +110,8 @@ def main():
     watch.sort(key=lambda x:(fnum(x.get("priority_score"),fnum(x.get("score"))),fnum(x.get("trade_24h_krw"))), reverse=True)
     alerts = (urgent + watch)[:8]
 
-    # Hard regression guard: no actionable URGENT may exist outside v34 promoted winner matches.
-    illegal = [x.get("base") for x in urgent if x.get("base") not in promoted_bases or x.get("promotion_grade") != "A_URGENT_WINNER_MATCH" or x.get("execution_allowed") is not True]
+    allowed_grades = {"A_URGENT_WINNER_MATCH", "A_URGENT_CONTINUATION"}
+    illegal = [x.get("base") for x in urgent if x.get("base") not in promoted_bases or x.get("promotion_grade") not in allowed_grades or x.get("execution_allowed") is not True]
     if illegal: raise RuntimeError(f"ILLEGAL_URGENT_BYPASS:{illegal}")
 
     prev_keys = set(previous.get("active_alert_keys") or [])
@@ -127,13 +121,14 @@ def main():
     missing_promoted = [b for b in promoted_bases if b not in delivered_bases]
     if missing_promoted: raise RuntimeError(f"DELIVERY_REGRESSION_MISSING_PROMOTED:{missing_promoted}")
 
-    result = {"generated_at_utc":now,"version":VERSION,"status":"URGENT_WINNER_ALERT" if urgent else ("WATCH_ONLY" if alerts else "NO_EARLY_ALERT"),
+    result = {
+      "generated_at_utc":now,"version":VERSION,"status":"URGENT_PRIMARY_ALERT" if urgent else ("WATCH_ONLY" if alerts else "NO_EARLY_ALERT"),
       "delivery_required":bool(urgent),"primary_alert":urgent[0] if urgent else None,"alerts":alerts,"new_alerts":new_alerts,
       "strict_final_trade_gate_status":final.get("status"),
-      "delivery_contract":{"actionable_urgent_requires_v34_winner_match":True,"raw_early_is_watch_only":True,"external_risk_check_required_before_money":True,"never_promise_2x":True},
+      "delivery_contract":{"actionable_urgent_requires_fresh_winner_or_v36_continuation":True,"raw_early_is_watch_only":True,"external_risk_check_required_before_money":True,"never_promise_2x":True},
       "regression_checks":{"bridge_promoted_count":len(promoted_bases),"bridge_promoted_all_delivered":not missing_promoted,"illegal_urgent_bypass":illegal,"historical_early_capture_examples":audit_movers(miss)},
-      "root_cause_guard":{"old_failure_mode":"raw early/watch candidates could surface as URGENT after v34 rejected them","fix":"only bridge promoted A_URGENT_WINNER_MATCH with execution_allowed=true can be URGENT"}}
-    state={"updated_at_utc":now,"active_alert_keys":active_keys,"active_bases":delivered_bases,"last_status":result["status"]}
+      "root_cause_guard":{"old_failure_mode":"primary changed every scan because selection was stateless","fix":"v36 locks a primary across scans; v32 only delivers fresh winners or explicit v36 HOLD continuations"}}
+    state={"updated_at_utc":now,"active_alert_keys":active_keys,"active_bases":delivered_bases,"last_status":result["status"],"primary_base":(result.get("primary_alert") or {}).get("base")}
     history.append({"generated_at_utc":now,"status":result["status"],"primary_base":(result.get("primary_alert") or {}).get("base"),"alert_bases":delivered_bases,"new_alert_bases":[x.get("base") for x in new_alerts],"final_gate_status":final.get("status")})
     save_json(OUT_FILE,result); save_json(STATE_FILE,state); save_json(HISTORY_FILE,history[-HISTORY_LIMIT:])
     print(json.dumps({"version":VERSION,"status":result["status"],"primary":(result.get("primary_alert") or {}).get("base"),"alerts":delivered_bases,"urgent":[x.get("base") for x in urgent]},ensure_ascii=False))
