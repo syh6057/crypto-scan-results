@@ -1,5 +1,5 @@
 name: 30-minute calibrated beam batch scan
-# urgent-winner selector enabled: 2026-09-14 KST; v34.1 conflict-clean selector
+# durable urgent outcome bank enabled: 2026-09-14 KST
 
 on:
   push:
@@ -40,9 +40,9 @@ jobs:
             scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py \
             scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py \
             scanner_v27.py scanner_v28.py scanner_v29.py scanner_v30.py \
-            scanner_v31.py scanner_v32.py scanner_v33.py scanner_v34.py
+            scanner_v31.py scanner_v32.py scanner_v33.py scanner_v34.py scanner_v35.py
 
-      - name: Run full scan, failure gate, winner selector, and delivery layer
+      - name: Run full scan, outcome tracker, winner selector, and delivery layer
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -57,6 +57,7 @@ jobs:
           python scanner_v30.py
           python scanner_v31.py
           python scanner_v33.py
+          python scanner_v35.py
           python scanner_v34.py
           python scanner_v32.py
 
@@ -68,39 +69,19 @@ jobs:
           from pathlib import Path
 
           required = (
-              "beam_scan_result.json",
-              "beam_latest_summary.json",
-              "beam_top10_compact.json",
-              "beam_state.json",
-              "beam_first_seen.json",
-              "beam_expert_summary.json",
-              "expert_lock_state.json",
-              "expert_prediction_history.json",
-              "beam_one_pick_summary.json",
-              "one_pick_state.json",
-              "one_pick_history.json",
-              "beam_miss_audit.json",
-              "beam_winner_recall.json",
-              "winner_recall_state.json",
-              "beam_a_plus_precision.json",
-              "a_plus_precision_state.json",
-              "beam_a_plus_validation.json",
-              "beam_final_trade_gate.json",
-              "beam_30m_expert.json",
-              "beam_30m_expert_history.json",
-              "beam_early_strong.json",
-              "early_strong_state.json",
-              "early_strong_history.json",
-              "beam_breakout_bridge.json",
-              "breakout_bridge_state.json",
-              "breakout_bridge_history.json",
-              "execution_quality_state.json",
-              "execution_quality_history.json",
-              "urgent_winner_selector.json",
-              "urgent_winner_state.json",
-              "beam_delivery_alert.json",
-              "delivery_alert_state.json",
-              "delivery_alert_history.json",
+              "beam_scan_result.json", "beam_latest_summary.json", "beam_top10_compact.json",
+              "beam_state.json", "beam_first_seen.json", "beam_expert_summary.json",
+              "expert_lock_state.json", "expert_prediction_history.json",
+              "beam_one_pick_summary.json", "one_pick_state.json", "one_pick_history.json",
+              "beam_miss_audit.json", "beam_winner_recall.json", "winner_recall_state.json",
+              "beam_a_plus_precision.json", "a_plus_precision_state.json", "beam_a_plus_validation.json",
+              "beam_final_trade_gate.json", "beam_30m_expert.json", "beam_30m_expert_history.json",
+              "beam_early_strong.json", "early_strong_state.json", "early_strong_history.json",
+              "beam_breakout_bridge.json", "breakout_bridge_state.json", "breakout_bridge_history.json",
+              "execution_quality_state.json", "execution_quality_history.json",
+              "urgent_outcome_history.json", "urgent_winner_bank.json", "urgent_outcome_summary.json",
+              "urgent_winner_selector.json", "urgent_winner_state.json",
+              "beam_delivery_alert.json", "delivery_alert_state.json", "delivery_alert_history.json",
           )
           for name in required:
               p = Path(name)
@@ -116,15 +97,22 @@ jobs:
           final_gate = json.loads(Path("beam_final_trade_gate.json").read_text(encoding="utf-8"))
           assert final_gate.get("status") in {"FINAL_BUY", "NO_BUY"}
 
+          outcome = json.loads(Path("urgent_outcome_summary.json").read_text(encoding="utf-8"))
+          assert outcome.get("version") == "v35-durable-urgent-outcome-bank"
+          bank = json.loads(Path("urgent_winner_bank.json").read_text(encoding="utf-8"))
+          pos_bank = set((bank.get("positive") or {}).keys())
+          neg_bank = set((bank.get("negative") or {}).keys())
+          assert not pos_bank.intersection(neg_bank), f"durable bank conflict: {sorted(pos_bank.intersection(neg_bank))}"
+
           bridge = json.loads(Path("beam_breakout_bridge.json").read_text(encoding="utf-8"))
           assert "v33-execution-quality-feedback-gate" in bridge.get("version", "")
-          assert "v34.1-urgent-winner-pattern-selector" in bridge.get("version", "")
+          assert "v34.2-durable-bank-winner-selector" in bridge.get("version", "")
           assert bridge.get("status") in {"URGENT_WINNER_MATCH", "WATCH_ONLY", "NO_SIGNAL"}
           winner = bridge.get("winner_pattern_selector") or {}
-          assert winner.get("version") == "v34.1-urgent-winner-pattern-selector"
+          assert winner.get("version") == "v34.2-durable-bank-winner-selector"
 
           selector = json.loads(Path("urgent_winner_selector.json").read_text(encoding="utf-8"))
-          assert selector.get("version") == "v34.1-urgent-winner-pattern-selector"
+          assert selector.get("version") == "v34.2-durable-bank-winner-selector"
           positives = set(selector.get("positive_examples") or [])
           negatives = set(selector.get("negative_examples") or [])
           assert not positives.intersection(negatives), f"winner/failure label conflict: {sorted(positives.intersection(negatives))}"
@@ -153,9 +141,10 @@ jobs:
           assert age < 900, f"stale delivery result: {age}s"
 
           print("scan_health:", scan.get("health"))
-          print("final_gate:", final_gate.get("status"))
+          print("outcome_labels:", outcome.get("labels"))
+          print("durable_positive_bank:", outcome.get("positive_bases"))
+          print("durable_negative_bank:", outcome.get("negative_bases"))
           print("winner_examples:", selector.get("positive_examples"))
-          print("label_conflicts_removed:", selector.get("label_conflicts_removed"))
           print("urgent_winner_matches:", sorted(promoted))
           print("urgent_rejected:", [x.get("base") for x in selector.get("rejected_urgent") or []])
           print("delivery_status:", delivery.get("status"))
@@ -178,6 +167,7 @@ jobs:
             beam_early_strong.json early_strong_state.json early_strong_history.json \
             beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json \
             execution_quality_state.json execution_quality_history.json \
+            urgent_outcome_history.json urgent_winner_bank.json urgent_outcome_summary.json \
             urgent_winner_selector.json urgent_winner_state.json \
             beam_delivery_alert.json delivery_alert_state.json delivery_alert_history.json \
             "$output_dir/"
@@ -199,13 +189,14 @@ jobs:
               beam_early_strong.json early_strong_state.json early_strong_history.json \
               beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json \
               execution_quality_state.json execution_quality_history.json \
+              urgent_outcome_history.json urgent_winner_bank.json urgent_outcome_summary.json \
               urgent_winner_selector.json urgent_winner_state.json \
               beam_delivery_alert.json delivery_alert_state.json delivery_alert_history.json
             if git diff --cached --quiet; then
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update 30-minute scan and urgent-winner results"
+            git commit -m "Update 30-minute scan, urgent outcomes, and winner results"
             if git push origin main; then
               exit 0
             fi
