@@ -1,35 +1,37 @@
 {
-  "generated_at_utc": "2026-09-14T08:33:24.618398+00:00",
-  "version": "v34.1-urgent-winner-pattern-selector",
-  "status": "WATCH_ONLY",
-  "winner_matches": [],
-  "rejected_urgent": [
-    {
-      "base": "AEON",
-      "failed_live_checks": [
-        "short_pace_not_rolling_over"
-      ],
-      "positive_similarity": 0.7504,
-      "negative_similarity": 0.6105,
-      "winner_edge": 0.1399
-    },
+  "generated_at_utc": "2026-09-14T08:34:44.192603+00:00",
+  "version": "v34.2-durable-bank-winner-selector",
+  "status": "URGENT_WINNER_MATCH",
+  "training_source": "durable_v35_bank",
+  "winner_matches": [
     {
       "base": "MERL",
+      "price_krw": 31.75,
+      "change_24h_pct": 2.68,
+      "positive_similarity": 0.667,
+      "negative_similarity": 0.507,
+      "winner_edge": 0.16
+    }
+  ],
+  "rejected_urgent": [
+    {
+      "base": "T",
       "failed_live_checks": [
+        "still_early_not_already_pumped",
         "buy_flow_not_sell_dominant"
       ],
-      "positive_similarity": 0.6157,
-      "negative_similarity": 0.5377,
-      "winner_edge": 0.0779
+      "positive_similarity": 0.5088,
+      "negative_similarity": 0.4884,
+      "winner_edge": 0.0204
     },
     {
       "base": "CTC",
       "failed_live_checks": [
         "persistent_15m_volume"
       ],
-      "positive_similarity": 0.6746,
-      "negative_similarity": 0.6708,
-      "winner_edge": 0.0038
+      "positive_similarity": 0.7038,
+      "negative_similarity": 0.691,
+      "winner_edge": 0.0129
     }
   ],
   "positive_examples": [
@@ -37,8 +39,8 @@
     "LSK",
     "REZ",
     "LIT",
-    "FIL",
-    "POLYX"
+    "POLYX",
+    "FIL"
   ],
   "negative_examples": [
     "USELESS",
@@ -50,7 +52,5 @@
     "MIRA",
     "SKR"
   ],
-  "label_conflicts_removed": [
-    "LIT"
-  ]
+  "label_conflicts_removed": []
 }
