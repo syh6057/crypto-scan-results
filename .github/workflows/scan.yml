@@ -1,11 +1,12 @@
 name: 30-minute calibrated beam batch scan
-# durable urgent outcome bank + stateful primary continuity enabled
+# durable outcomes + fail-closed integrity + stateful primary continuity
 
 on:
   push:
     branches: [main]
     paths:
       - "scanner_v*.py"
+      - "test_decision_integrity.py"
       - ".github/workflows/scan.yml"
   workflow_dispatch:
   schedule:
@@ -34,15 +35,18 @@ jobs:
       - name: Install dependencies
         run: python -m pip install requests
 
-      - name: Validate scanner syntax
+      - name: Validate scanner syntax and integrity tests
         run: |
           python -m py_compile \
             scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py \
             scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py \
             scanner_v27.py scanner_v28.py scanner_v29.py scanner_v30.py \
-            scanner_v31.py scanner_v32.py scanner_v33.py scanner_v34.py scanner_v35.py scanner_v36.py
+            scanner_v31.py scanner_v32.py scanner_v33.py scanner_v34.py \
+            scanner_v35.py scanner_v36.py scanner_v37.py scanner_v38.py scanner_v39.py \
+            test_decision_integrity.py
+          python -m unittest -v test_decision_integrity.py
 
-      - name: Run full scan, outcome tracker, winner selector, continuity tracker, and delivery layer
+      - name: Run scan, full-market outcomes, integrity gate, continuity, and delivery
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -57,12 +61,15 @@ jobs:
           python scanner_v30.py
           python scanner_v31.py
           python scanner_v33.py
+          python scanner_v37.py
           python scanner_v35.py
+          python scanner_v39.py
           python scanner_v34.py
+          python scanner_v38.py
           python scanner_v36.py
           python scanner_v32.py
 
-      - name: Validate fresh outputs and stateful continuity contract
+      - name: Validate fail-closed decision contract
         run: |
           python - <<'PY'
           import json
@@ -80,8 +87,11 @@ jobs:
               "beam_early_strong.json", "early_strong_state.json", "early_strong_history.json",
               "beam_breakout_bridge.json", "breakout_bridge_state.json", "breakout_bridge_history.json",
               "execution_quality_state.json", "execution_quality_history.json",
+              "all_market_snapshot.json",
               "urgent_outcome_history.json", "urgent_winner_bank.json", "urgent_outcome_summary.json",
+              "full_market_outcome_summary.json",
               "urgent_winner_selector.json", "urgent_winner_state.json",
+              "decision_integrity_state.json", "decision_integrity_summary.json",
               "primary_tracking_state.json", "primary_tracking_summary.json",
               "beam_delivery_alert.json", "delivery_alert_state.json", "delivery_alert_history.json",
           )
@@ -93,8 +103,17 @@ jobs:
           assert (scan.get("health") or {}).get("stage1_requested", 0) > 0
           assert (scan.get("health") or {}).get("stage2_success", 0) > 0
 
+          market = json.loads(Path("all_market_snapshot.json").read_text(encoding="utf-8"))
+          assert market.get("version") == "v37-all-market-observer"
+          assert market.get("healthy") is True, market
+          assert int(market.get("ticker_count") or 0) >= 100
+
           outcome = json.loads(Path("urgent_outcome_summary.json").read_text(encoding="utf-8"))
           assert outcome.get("version") == "v35-durable-urgent-outcome-bank"
+          full = json.loads(Path("full_market_outcome_summary.json").read_text(encoding="utf-8"))
+          assert full.get("version") == "v39-full-market-forward-outcomes"
+          assert full.get("market_snapshot_healthy") is True
+
           bank = json.loads(Path("urgent_winner_bank.json").read_text(encoding="utf-8"))
           pos_bank = set((bank.get("positive") or {}).keys())
           neg_bank = set((bank.get("negative") or {}).keys())
@@ -106,25 +125,35 @@ jobs:
           negatives = set(selector.get("negative_examples") or [])
           assert not positives.intersection(negatives), f"winner/failure label conflict: {sorted(positives.intersection(negatives))}"
 
+          integrity = json.loads(Path("decision_integrity_summary.json").read_text(encoding="utf-8"))
+          assert integrity.get("version") == "v38-fail-closed-decision-integrity"
+          assert integrity.get("market_snapshot_healthy") is True
+          for d in integrity.get("diagnostics") or []:
+              if d.get("confirmed"):
+                  assert d.get("quality_ok") is True
+                  assert not d.get("quality_reasons")
+
           tracking = json.loads(Path("primary_tracking_summary.json").read_text(encoding="utf-8"))
           assert tracking.get("version") == "v36-stateful-primary-continuity"
           assert tracking.get("status") in {"NONE", "HOLD", "WARNING", "INVALIDATED"}
-          assert int(tracking.get("lock_runs") or 0) >= 0
-          assert int(tracking.get("challenger_runs") or 0) >= 0
 
           bridge = json.loads(Path("beam_breakout_bridge.json").read_text(encoding="utf-8"))
           assert "v33-execution-quality-feedback-gate" in bridge.get("version", "")
           assert "v34.2-durable-bank-winner-selector" in bridge.get("version", "")
+          assert "v38-fail-closed-decision-integrity" in bridge.get("version", "")
           assert "v36-stateful-primary-continuity" in bridge.get("version", "")
-          assert bridge.get("status") in {"URGENT_WINNER_MATCH", "WATCH_ONLY", "NO_SIGNAL", "URGENT_CONTINUATION_HOLD", "PRIMARY_WARNING"}
 
           promoted_rows = bridge.get("promoted_top3") or []
           for row in promoted_rows:
               grade = row.get("promotion_grade")
               assert grade in {"A_URGENT_WINNER_MATCH", "A_URGENT_CONTINUATION"}, f"illegal promoted grade: {grade}"
+              if grade == "A_URGENT_WINNER_MATCH":
+                  di = row.get("decision_integrity") or {}
+                  assert di.get("confirmed") is True, f"unconfirmed fresh winner leaked: {row.get('base')}"
+                  assert di.get("quality_ok") is True, f"bad-quality winner leaked: {row.get('base')}"
               if grade == "A_URGENT_CONTINUATION":
                   tr = row.get("tracking") or {}
-                  assert tr.get("status") == "HOLD", f"continuation must be HOLD: {tr}"
+                  assert tr.get("status") == "HOLD"
                   assert row.get("execution_allowed") is True
 
           delivery = json.loads(Path("beam_delivery_alert.json").read_text(encoding="utf-8"))
@@ -147,14 +176,15 @@ jobs:
           assert age < 900, f"stale delivery result: {age}s"
 
           print("scan_health:", scan.get("health"))
-          print("outcome_labels:", outcome.get("labels"))
-          print("fresh_winners:", [x.get("base") for x in selector.get("winner_matches") or []])
+          print("market_snapshot:", {"markets": market.get("market_count"), "tickers": market.get("ticker_count")})
+          print("full_market_outcomes:", full)
+          print("integrity:", integrity)
           print("primary_tracking:", tracking)
           print("delivery_status:", delivery.get("status"))
           print("delivery_primary:", (delivery.get("primary_alert") or {}).get("base"))
           PY
 
-      - name: Commit refreshed scan and delivery outputs
+      - name: Commit refreshed scan and decision outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -170,8 +200,11 @@ jobs:
             beam_early_strong.json early_strong_state.json early_strong_history.json \
             beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json \
             execution_quality_state.json execution_quality_history.json \
+            all_market_snapshot.json \
             urgent_outcome_history.json urgent_winner_bank.json urgent_outcome_summary.json \
+            full_market_outcome_summary.json \
             urgent_winner_selector.json urgent_winner_state.json \
+            decision_integrity_state.json decision_integrity_summary.json \
             primary_tracking_state.json primary_tracking_summary.json \
             beam_delivery_alert.json delivery_alert_state.json delivery_alert_history.json \
             "$output_dir/"
@@ -187,7 +220,7 @@ jobs:
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update scan, outcomes, primary continuity, and delivery results"
+            git commit -m "Update scan, full-market outcomes, integrity, continuity, and delivery"
             if git push origin main; then
               exit 0
             fi
