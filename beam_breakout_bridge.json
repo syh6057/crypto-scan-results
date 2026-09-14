@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-09-14T08:10:15.053401+00:00",
-  "version": "v31.1-episode-aware-early-winner-bridge+v33-execution-quality-feedback-gate+v34-urgent-winner-pattern-selector",
+  "generated_at_utc": "2026-09-14T08:12:09.530795+00:00",
+  "version": "v31.1-episode-aware-early-winner-bridge+v33-execution-quality-feedback-gate+v34.1-urgent-winner-pattern-selector",
   "status": "WATCH_ONLY",
   "health": {
     "analysis_ready": true,
@@ -19,9 +19,9 @@
       "trade_24h_krw": 249607177.49423516,
       "lane": "EARLY_ACCELERATOR",
       "score": 100.0,
-      "raw_score": 108.27,
-      "priority_score": 125.48,
-      "signal_count": 9,
+      "raw_score": 100.07,
+      "priority_score": 116.78,
+      "signal_count": 8,
       "flow_confirmation_count": 4,
       "signals": {
         "m15_volume_spike": true,
@@ -33,7 +33,7 @@
         "money_leads_price": true,
         "fast_turnover": false,
         "beam_signature": true,
-        "beam_score": true
+        "beam_score": false
       },
       "hard_failures": [],
       "immediate_quality": false,
@@ -54,10 +54,10 @@
       },
       "track": "PRE_IGNITION",
       "metrics": {
-        "beam_score": 109.81,
-        "beam_signature_count": 4,
+        "beam_score": 89.81,
+        "beam_signature_count": 3,
         "money_leads_price_score": 18.0,
-        "fast_turnover_intensity_x": 0.46,
+        "fast_turnover_intensity_x": 0.45,
         "price_change_per_5m_pct": 0.05,
         "m15_vol_spike_x": 4.26,
         "m15_vol_persistence_x": 4.12,
@@ -66,7 +66,7 @@
         "h1_low_rising": true,
         "h1_close_above_ma": true,
         "buy_sell_ratio": 1.27,
-        "bid_ask_depth_ratio": 1.02,
+        "bid_ask_depth_ratio": 0.85,
         "m15_upper_wick_pct": 0.0,
         "week_change_pct": 6.59
       },
@@ -92,19 +92,20 @@
           "h1_higher_low": true,
           "h1_above_ma": true,
           "buy_flow": true,
-          "orderbook_support": true,
+          "orderbook_support": false,
           "non_negative_short_pace": true,
           "no_repeat_failure_pattern": true
         },
         "failed_checks": [
-          "m15_above_ma"
+          "m15_above_ma",
+          "orderbook_support"
         ],
         "recent_failure_streak": 0,
         "rule": "URGENT_EARLY is detection only; execution requires two-run + 15m/1h structure + persistent flow/orderbook confirmation"
       },
       "execution_allowed": false,
       "winner_pattern": {
-        "version": "v34-urgent-winner-pattern-selector",
+        "version": "v34.1-urgent-winner-pattern-selector",
         "positive_examples": [
           "ARK",
           "REZ",
@@ -119,13 +120,14 @@
           "ANIME",
           "AEON",
           "MIRA",
-          "LIT",
-          "SKR",
-          "GPS"
+          "SKR"
         ],
-        "positive_similarity": 0.582,
-        "negative_similarity": 0.6311,
-        "winner_edge": -0.049,
+        "label_conflicts_removed": [
+          "LIT"
+        ],
+        "positive_similarity": 0.5955,
+        "negative_similarity": 0.6381,
+        "winner_edge": -0.0426,
         "live_checks": {
           "still_early_not_already_pumped": true,
           "persistent_15m_volume": true,
@@ -138,7 +140,7 @@
           "price_above_15m_ma"
         ],
         "winner_match": false,
-        "logic": "select only among URGENT_EARLY detections by resemblance to historically early-captured movers; failed accelerations are contrast examples, not the target class"
+        "logic": "select among URGENT detections by resemblance to early-captured >=10% movers; positive winner labels override later giveback/failure labels"
       }
     },
     {
@@ -147,12 +149,12 @@
       "korean_name": "피르마체인",
       "price_krw": 11.92,
       "change_24h_pct": 1.97,
-      "trade_24h_krw": 417899527.28452575,
+      "trade_24h_krw": 417899527.2840649,
       "lane": "QUIET_FLOW",
       "score": 100.0,
-      "raw_score": 106.9,
-      "priority_score": 120.37,
-      "signal_count": 7,
+      "raw_score": 102.34,
+      "priority_score": 115.31,
+      "signal_count": 6,
       "flow_confirmation_count": 4,
       "signals": {
         "m15_volume_spike": true,
@@ -163,7 +165,7 @@
         "orderbook_support": false,
         "money_leads_price": true,
         "fast_turnover": false,
-        "beam_signature": true,
+        "beam_signature": false,
         "beam_score": true
       },
       "hard_failures": [],
@@ -174,7 +176,7 @@
       "lifetime_first_price_krw": 10.36,
       "lifetime_first_change_24h_pct": 5.31,
       "episode": {
-        "started_at_utc": "2026-09-14T08:09:59.537928+00:00",
+        "started_at_utc": "2026-09-14T08:11:52.389663+00:00",
         "start_price_krw": 11.92,
         "start_change_24h_pct": 1.97,
         "runs": 1,
@@ -185,8 +187,8 @@
       },
       "track": "PRE_IGNITION",
       "metrics": {
-        "beam_score": 130.0,
-        "beam_signature_count": 3,
+        "beam_score": 114.0,
+        "beam_signature_count": 2,
         "money_leads_price_score": 22.0,
         "fast_turnover_intensity_x": 0.0,
         "price_change_per_5m_pct": 0.1,
@@ -239,7 +241,7 @@
       },
       "execution_allowed": false,
       "winner_pattern": {
-        "version": "v34-urgent-winner-pattern-selector",
+        "version": "v34.1-urgent-winner-pattern-selector",
         "positive_examples": [
           "ARK",
           "REZ",
@@ -254,13 +256,14 @@
           "ANIME",
           "AEON",
           "MIRA",
-          "LIT",
-          "SKR",
-          "GPS"
+          "SKR"
         ],
-        "positive_similarity": 0.5428,
-        "negative_similarity": 0.613,
-        "winner_edge": -0.0702,
+        "label_conflicts_removed": [
+          "LIT"
+        ],
+        "positive_similarity": 0.5488,
+        "negative_similarity": 0.619,
+        "winner_edge": -0.0703,
         "live_checks": {
           "still_early_not_already_pumped": true,
           "persistent_15m_volume": true,
@@ -271,20 +274,153 @@
         },
         "failed_live_checks": [],
         "winner_match": false,
-        "logic": "select only among URGENT_EARLY detections by resemblance to historically early-captured movers; failed accelerations are contrast examples, not the target class"
+        "logic": "select among URGENT detections by resemblance to early-captured >=10% movers; positive winner labels override later giveback/failure labels"
+      }
+    },
+    {
+      "base": "VIRTUAL",
+      "market": "KRW-VIRTUAL",
+      "korean_name": "버추얼프로토콜",
+      "price_krw": 846.0,
+      "change_24h_pct": 0.36,
+      "trade_24h_krw": 1413002838.8421605,
+      "lane": "QUIET_FLOW",
+      "score": 100.0,
+      "raw_score": 103.18,
+      "priority_score": 115.04,
+      "signal_count": 7,
+      "flow_confirmation_count": 4,
+      "signals": {
+        "m15_volume_spike": true,
+        "m15_volume_persistence": true,
+        "m15_structure": true,
+        "h1_structure": true,
+        "buy_flow": true,
+        "orderbook_support": false,
+        "money_leads_price": true,
+        "fast_turnover": false,
+        "beam_signature": false,
+        "beam_score": true
+      },
+      "hard_failures": [],
+      "immediate_quality": false,
+      "confirmed_quality": false,
+      "watch_quality": true,
+      "lifetime_first_detected_at_utc": "2026-09-06T13:36:01.650238+00:00",
+      "lifetime_first_price_krw": 958.0,
+      "lifetime_first_change_24h_pct": 2.02,
+      "episode": {
+        "started_at_utc": "2026-09-14T08:11:52.389663+00:00",
+        "start_price_krw": 846.0,
+        "start_change_24h_pct": 0.36,
+        "runs": 1,
+        "peak_price_krw": 846.0,
+        "return_pct": 0.0,
+        "giveback_from_peak_pct": 0.0,
+        "reset_reason": "episode_missing"
+      },
+      "track": "PRE_IGNITION",
+      "metrics": {
+        "beam_score": 94.26,
+        "beam_signature_count": 2,
+        "money_leads_price_score": 22.0,
+        "fast_turnover_intensity_x": 0.71,
+        "price_change_per_5m_pct": -0.02,
+        "m15_vol_spike_x": 1.71,
+        "m15_vol_persistence_x": 2.43,
+        "m15_low_rising": false,
+        "m15_close_above_ma": true,
+        "h1_low_rising": false,
+        "h1_close_above_ma": true,
+        "buy_sell_ratio": 1.24,
+        "bid_ask_depth_ratio": 0.67,
+        "m15_upper_wick_pct": 0.0,
+        "week_change_pct": -13.94
+      },
+      "entry_plan": {
+        "reference_price_krw": 846.0,
+        "do_not_chase_above_krw": 867.15,
+        "hard_stop_krw": 803.7,
+        "target_10_krw": 930.6,
+        "target_20_krw": 1015.2,
+        "external_news_unlock_listing_delisting_tokenomics_check_required": true,
+        "automatic_full_size_buy": false
+      },
+      "confirmations": 1,
+      "promotion_grade": "WATCH_URGENT_NONWINNER_PATTERN",
+      "execution_gate": {
+        "version": "v33-execution-quality-feedback-gate",
+        "actionable": false,
+        "checks": {
+          "two_run_confirmation": false,
+          "m15_volume_persistence": true,
+          "m15_higher_low": false,
+          "m15_above_ma": true,
+          "h1_higher_low": false,
+          "h1_above_ma": true,
+          "buy_flow": true,
+          "orderbook_support": false,
+          "non_negative_short_pace": true,
+          "no_repeat_failure_pattern": true
+        },
+        "failed_checks": [
+          "two_run_confirmation",
+          "m15_higher_low",
+          "h1_higher_low",
+          "orderbook_support"
+        ],
+        "recent_failure_streak": 0,
+        "rule": "URGENT_EARLY is detection only; execution requires two-run + 15m/1h structure + persistent flow/orderbook confirmation"
+      },
+      "execution_allowed": false,
+      "winner_pattern": {
+        "version": "v34.1-urgent-winner-pattern-selector",
+        "positive_examples": [
+          "ARK",
+          "REZ",
+          "LSK",
+          "LIT"
+        ],
+        "negative_examples": [
+          "USELESS",
+          "BFC",
+          "D",
+          "PUMP",
+          "ANIME",
+          "AEON",
+          "MIRA",
+          "SKR"
+        ],
+        "label_conflicts_removed": [
+          "LIT"
+        ],
+        "positive_similarity": 0.4989,
+        "negative_similarity": 0.7609,
+        "winner_edge": -0.262,
+        "live_checks": {
+          "still_early_not_already_pumped": true,
+          "persistent_15m_volume": true,
+          "price_above_15m_ma": true,
+          "buy_flow_not_sell_dominant": true,
+          "short_pace_not_rolling_over": true,
+          "upper_wick_not_exhausted": true
+        },
+        "failed_live_checks": [],
+        "winner_match": false,
+        "logic": "select among URGENT detections by resemblance to early-captured >=10% movers; positive winner labels override later giveback/failure labels"
       }
     },
     {
       "base": "PROS",
       "market": "KRW-PROS",
       "korean_name": "파로스",
-      "price_krw": 670.0,
-      "change_24h_pct": 7.72,
-      "trade_24h_krw": 383190389.05652183,
-      "lane": "EARLY_ACCELERATOR",
-      "score": 100.0,
-      "raw_score": 104.2,
-      "priority_score": 119.2,
+      "price_krw": 673.0,
+      "change_24h_pct": 8.2,
+      "trade_24h_krw": 383305059.19128287,
+      "lane": "CONTROLLED_ACCELERATOR",
+      "score": 96.8,
+      "raw_score": 96.8,
+      "priority_score": 111.8,
       "signal_count": 8,
       "flow_confirmation_count": 3,
       "signals": {
@@ -301,7 +437,7 @@
       },
       "hard_failures": [],
       "immediate_quality": false,
-      "confirmed_quality": false,
+      "confirmed_quality": true,
       "watch_quality": true,
       "lifetime_first_detected_at_utc": "2026-09-07T07:34:26.099327+00:00",
       "lifetime_first_price_krw": 665.0,
@@ -311,18 +447,18 @@
         "start_price_krw": 659.0,
         "start_change_24h_pct": 5.95,
         "runs": 2,
-        "peak_price_krw": 670.0,
-        "return_pct": 1.67,
+        "peak_price_krw": 673.0,
+        "return_pct": 2.12,
         "giveback_from_peak_pct": 0.0,
         "reset_reason": "stage2_gap_over_60m"
       },
-      "track": "PRE_IGNITION",
+      "track": "ACCELERATOR",
       "metrics": {
-        "beam_score": 173.79,
+        "beam_score": 143.79,
         "beam_signature_count": 4,
-        "money_leads_price_score": 32.0,
-        "fast_turnover_intensity_x": 3.16,
-        "price_change_per_5m_pct": 0.16,
+        "money_leads_price_score": 28.0,
+        "fast_turnover_intensity_x": 3.06,
+        "price_change_per_5m_pct": 0.19,
         "m15_vol_spike_x": 0.77,
         "m15_vol_persistence_x": 2.37,
         "m15_low_rising": true,
@@ -330,149 +466,16 @@
         "h1_low_rising": false,
         "h1_close_above_ma": true,
         "buy_sell_ratio": 0.88,
-        "bid_ask_depth_ratio": 2.84,
+        "bid_ask_depth_ratio": 1.51,
         "m15_upper_wick_pct": 0.0,
         "week_change_pct": 15.44
       },
       "entry_plan": {
-        "reference_price_krw": 670.0,
-        "do_not_chase_above_krw": 686.75,
-        "hard_stop_krw": 636.5,
-        "target_10_krw": 737.0,
-        "target_20_krw": 804.0,
-        "external_news_unlock_listing_delisting_tokenomics_check_required": true,
-        "automatic_full_size_buy": false
-      },
-      "confirmations": 1,
-      "promotion_grade": "WATCH_URGENT_NONWINNER_PATTERN",
-      "execution_gate": {
-        "version": "v33-execution-quality-feedback-gate",
-        "actionable": false,
-        "checks": {
-          "two_run_confirmation": false,
-          "m15_volume_persistence": true,
-          "m15_higher_low": true,
-          "m15_above_ma": true,
-          "h1_higher_low": false,
-          "h1_above_ma": true,
-          "buy_flow": false,
-          "orderbook_support": true,
-          "non_negative_short_pace": true,
-          "no_repeat_failure_pattern": true
-        },
-        "failed_checks": [
-          "two_run_confirmation",
-          "h1_higher_low",
-          "buy_flow"
-        ],
-        "recent_failure_streak": 0,
-        "rule": "URGENT_EARLY is detection only; execution requires two-run + 15m/1h structure + persistent flow/orderbook confirmation"
-      },
-      "execution_allowed": false,
-      "winner_pattern": {
-        "version": "v34-urgent-winner-pattern-selector",
-        "positive_examples": [
-          "ARK",
-          "REZ",
-          "LSK",
-          "LIT"
-        ],
-        "negative_examples": [
-          "USELESS",
-          "BFC",
-          "D",
-          "PUMP",
-          "ANIME",
-          "AEON",
-          "MIRA",
-          "LIT",
-          "SKR",
-          "GPS"
-        ],
-        "positive_similarity": 0.5413,
-        "negative_similarity": 0.639,
-        "winner_edge": -0.0977,
-        "live_checks": {
-          "still_early_not_already_pumped": true,
-          "persistent_15m_volume": true,
-          "price_above_15m_ma": true,
-          "buy_flow_not_sell_dominant": false,
-          "short_pace_not_rolling_over": true,
-          "upper_wick_not_exhausted": true
-        },
-        "failed_live_checks": [
-          "buy_flow_not_sell_dominant"
-        ],
-        "winner_match": false,
-        "logic": "select only among URGENT_EARLY detections by resemblance to historically early-captured movers; failed accelerations are contrast examples, not the target class"
-      }
-    },
-    {
-      "base": "POWR",
-      "market": "KRW-POWR",
-      "korean_name": "파워렛저",
-      "price_krw": 88.7,
-      "change_24h_pct": 3.88,
-      "trade_24h_krw": 4504586884.119693,
-      "lane": "QUIET_FLOW",
-      "score": 78.8,
-      "raw_score": 78.8,
-      "priority_score": 89.18,
-      "signal_count": 5,
-      "flow_confirmation_count": 2,
-      "signals": {
-        "m15_volume_spike": true,
-        "m15_volume_persistence": false,
-        "m15_structure": true,
-        "h1_structure": true,
-        "buy_flow": false,
-        "orderbook_support": true,
-        "money_leads_price": true,
-        "fast_turnover": false,
-        "beam_signature": false,
-        "beam_score": false
-      },
-      "hard_failures": [],
-      "immediate_quality": false,
-      "confirmed_quality": true,
-      "watch_quality": true,
-      "lifetime_first_detected_at_utc": "2026-09-09T02:22:36.493426+00:00",
-      "lifetime_first_price_krw": 69.86,
-      "lifetime_first_change_24h_pct": 3.74,
-      "episode": {
-        "started_at_utc": "2026-09-14T07:16:04.444027+00:00",
-        "start_price_krw": 90.6,
-        "start_change_24h_pct": 5.27,
-        "runs": 2,
-        "peak_price_krw": 90.6,
-        "return_pct": -2.1,
-        "giveback_from_peak_pct": -2.1,
-        "reset_reason": "stage2_gap_over_60m"
-      },
-      "track": "PRE_IGNITION",
-      "metrics": {
-        "beam_score": 57.64,
-        "beam_signature_count": 0,
-        "money_leads_price_score": 8.0,
-        "fast_turnover_intensity_x": 0.0,
-        "price_change_per_5m_pct": -0.2,
-        "m15_vol_spike_x": 1.45,
-        "m15_vol_persistence_x": 0.57,
-        "m15_low_rising": false,
-        "m15_close_above_ma": true,
-        "h1_low_rising": true,
-        "h1_close_above_ma": true,
-        "buy_sell_ratio": 0.87,
-        "bid_ask_depth_ratio": 1.91,
-        "m15_upper_wick_pct": 0.33,
-        "week_change_pct": 31.7
-      },
-      "entry_plan": {
-        "reference_price_krw": 88.7,
-        "do_not_chase_above_krw": 90.9175,
-        "hard_stop_krw": 84.265,
-        "target_10_krw": 97.57,
-        "target_20_krw": 106.44,
+        "reference_price_krw": 673.0,
+        "do_not_chase_above_krw": 689.825,
+        "hard_stop_krw": 639.35,
+        "target_10_krw": 740.3,
+        "target_20_krw": 807.6,
         "external_news_unlock_listing_delisting_tokenomics_check_required": true,
         "automatic_full_size_buy": false
       },
@@ -480,71 +483,71 @@
       "promotion_grade": "WATCH"
     },
     {
-      "base": "PUNDIX",
-      "market": "KRW-PUNDIX",
-      "korean_name": "펀디엑스",
-      "price_krw": 167.0,
-      "change_24h_pct": 0.6,
-      "trade_24h_krw": 6292106957.574811,
-      "lane": "QUIET_FLOW",
-      "score": 78.8,
-      "raw_score": 78.8,
-      "priority_score": 87.9,
-      "signal_count": 5,
-      "flow_confirmation_count": 3,
+      "base": "T",
+      "market": "KRW-T",
+      "korean_name": "쓰레스홀드",
+      "price_krw": 6.352,
+      "change_24h_pct": 6.43,
+      "trade_24h_krw": 346108953.87693244,
+      "lane": "EARLY_ACCELERATOR",
+      "score": 77.31,
+      "raw_score": 77.31,
+      "priority_score": 89.31,
+      "signal_count": 6,
+      "flow_confirmation_count": 2,
       "signals": {
-        "m15_volume_spike": true,
-        "m15_volume_persistence": true,
-        "m15_structure": false,
+        "m15_volume_spike": false,
+        "m15_volume_persistence": false,
+        "m15_structure": true,
         "h1_structure": true,
         "buy_flow": false,
         "orderbook_support": true,
         "money_leads_price": true,
-        "fast_turnover": false,
+        "fast_turnover": true,
         "beam_signature": false,
-        "beam_score": false
+        "beam_score": true
       },
       "hard_failures": [],
       "immediate_quality": false,
       "confirmed_quality": true,
       "watch_quality": true,
-      "lifetime_first_detected_at_utc": "2026-09-12T06:30:33.566391+00:00",
-      "lifetime_first_price_krw": 134.0,
-      "lifetime_first_change_24h_pct": 6.3,
+      "lifetime_first_detected_at_utc": "2026-09-06T14:36:02.606684+00:00",
+      "lifetime_first_price_krw": 6.106,
+      "lifetime_first_change_24h_pct": 5.26,
       "episode": {
-        "started_at_utc": "2026-09-14T07:16:04.444027+00:00",
-        "start_price_krw": 168.0,
-        "start_change_24h_pct": 1.2,
-        "runs": 2,
-        "peak_price_krw": 168.0,
-        "return_pct": -0.6,
-        "giveback_from_peak_pct": -0.6,
-        "reset_reason": "stage2_gap_over_60m"
+        "started_at_utc": "2026-09-14T08:11:52.389663+00:00",
+        "start_price_krw": 6.352,
+        "start_change_24h_pct": 6.43,
+        "runs": 1,
+        "peak_price_krw": 6.352,
+        "return_pct": 0.0,
+        "giveback_from_peak_pct": 0.0,
+        "reset_reason": "episode_missing"
       },
       "track": "PRE_IGNITION",
       "metrics": {
-        "beam_score": 60.64,
-        "beam_signature_count": 1,
-        "money_leads_price_score": 8.0,
-        "fast_turnover_intensity_x": 0.0,
-        "price_change_per_5m_pct": -0.06,
-        "m15_vol_spike_x": 3.62,
-        "m15_vol_persistence_x": 1.22,
-        "m15_low_rising": false,
-        "m15_close_above_ma": false,
+        "beam_score": 115.55,
+        "beam_signature_count": 2,
+        "money_leads_price_score": 26.0,
+        "fast_turnover_intensity_x": 1.83,
+        "price_change_per_5m_pct": 0.14,
+        "m15_vol_spike_x": 0.44,
+        "m15_vol_persistence_x": 0.75,
+        "m15_low_rising": true,
+        "m15_close_above_ma": true,
         "h1_low_rising": true,
         "h1_close_above_ma": true,
-        "buy_sell_ratio": 0.46,
-        "bid_ask_depth_ratio": 1.04,
-        "m15_upper_wick_pct": 0.59,
-        "week_change_pct": 27.48
+        "buy_sell_ratio": 0.93,
+        "bid_ask_depth_ratio": 1.9,
+        "m15_upper_wick_pct": 0.68,
+        "week_change_pct": 7.26
       },
       "entry_plan": {
-        "reference_price_krw": 167.0,
-        "do_not_chase_above_krw": 171.175,
-        "hard_stop_krw": 158.65,
-        "target_10_krw": 183.7,
-        "target_20_krw": 200.4,
+        "reference_price_krw": 6.352,
+        "do_not_chase_above_krw": 6.5108,
+        "hard_stop_krw": 6.0344,
+        "target_10_krw": 6.9872,
+        "target_20_krw": 7.6224,
         "external_news_unlock_listing_delisting_tokenomics_check_required": true,
         "automatic_full_size_buy": false
       },
@@ -562,9 +565,9 @@
       "trade_24h_krw": 249607177.49423516,
       "lane": "EARLY_ACCELERATOR",
       "score": 100.0,
-      "raw_score": 108.27,
-      "priority_score": 125.48,
-      "signal_count": 9,
+      "raw_score": 100.07,
+      "priority_score": 116.78,
+      "signal_count": 8,
       "flow_confirmation_count": 4,
       "signals": {
         "m15_volume_spike": true,
@@ -576,7 +579,7 @@
         "money_leads_price": true,
         "fast_turnover": false,
         "beam_signature": true,
-        "beam_score": true
+        "beam_score": false
       },
       "hard_failures": [],
       "immediate_quality": false,
@@ -597,10 +600,10 @@
       },
       "track": "PRE_IGNITION",
       "metrics": {
-        "beam_score": 109.81,
-        "beam_signature_count": 4,
+        "beam_score": 89.81,
+        "beam_signature_count": 3,
         "money_leads_price_score": 18.0,
-        "fast_turnover_intensity_x": 0.46,
+        "fast_turnover_intensity_x": 0.45,
         "price_change_per_5m_pct": 0.05,
         "m15_vol_spike_x": 4.26,
         "m15_vol_persistence_x": 4.12,
@@ -609,7 +612,7 @@
         "h1_low_rising": true,
         "h1_close_above_ma": true,
         "buy_sell_ratio": 1.27,
-        "bid_ask_depth_ratio": 1.02,
+        "bid_ask_depth_ratio": 0.85,
         "m15_upper_wick_pct": 0.0,
         "week_change_pct": 6.59
       },
@@ -635,19 +638,20 @@
           "h1_higher_low": true,
           "h1_above_ma": true,
           "buy_flow": true,
-          "orderbook_support": true,
+          "orderbook_support": false,
           "non_negative_short_pace": true,
           "no_repeat_failure_pattern": true
         },
         "failed_checks": [
-          "m15_above_ma"
+          "m15_above_ma",
+          "orderbook_support"
         ],
         "recent_failure_streak": 0,
         "rule": "URGENT_EARLY is detection only; execution requires two-run + 15m/1h structure + persistent flow/orderbook confirmation"
       },
       "execution_allowed": false,
       "winner_pattern": {
-        "version": "v34-urgent-winner-pattern-selector",
+        "version": "v34.1-urgent-winner-pattern-selector",
         "positive_examples": [
           "ARK",
           "REZ",
@@ -662,13 +666,14 @@
           "ANIME",
           "AEON",
           "MIRA",
-          "LIT",
-          "SKR",
-          "GPS"
+          "SKR"
         ],
-        "positive_similarity": 0.582,
-        "negative_similarity": 0.6311,
-        "winner_edge": -0.049,
+        "label_conflicts_removed": [
+          "LIT"
+        ],
+        "positive_similarity": 0.5955,
+        "negative_similarity": 0.6381,
+        "winner_edge": -0.0426,
         "live_checks": {
           "still_early_not_already_pumped": true,
           "persistent_15m_volume": true,
@@ -681,7 +686,7 @@
           "price_above_15m_ma"
         ],
         "winner_match": false,
-        "logic": "select only among URGENT_EARLY detections by resemblance to historically early-captured movers; failed accelerations are contrast examples, not the target class"
+        "logic": "select among URGENT detections by resemblance to early-captured >=10% movers; positive winner labels override later giveback/failure labels"
       }
     },
     {
@@ -690,12 +695,12 @@
       "korean_name": "피르마체인",
       "price_krw": 11.92,
       "change_24h_pct": 1.97,
-      "trade_24h_krw": 417899527.28452575,
+      "trade_24h_krw": 417899527.2840649,
       "lane": "QUIET_FLOW",
       "score": 100.0,
-      "raw_score": 106.9,
-      "priority_score": 120.37,
-      "signal_count": 7,
+      "raw_score": 102.34,
+      "priority_score": 115.31,
+      "signal_count": 6,
       "flow_confirmation_count": 4,
       "signals": {
         "m15_volume_spike": true,
@@ -706,7 +711,7 @@
         "orderbook_support": false,
         "money_leads_price": true,
         "fast_turnover": false,
-        "beam_signature": true,
+        "beam_signature": false,
         "beam_score": true
       },
       "hard_failures": [],
@@ -717,7 +722,7 @@
       "lifetime_first_price_krw": 10.36,
       "lifetime_first_change_24h_pct": 5.31,
       "episode": {
-        "started_at_utc": "2026-09-14T08:09:59.537928+00:00",
+        "started_at_utc": "2026-09-14T08:11:52.389663+00:00",
         "start_price_krw": 11.92,
         "start_change_24h_pct": 1.97,
         "runs": 1,
@@ -728,8 +733,8 @@
       },
       "track": "PRE_IGNITION",
       "metrics": {
-        "beam_score": 130.0,
-        "beam_signature_count": 3,
+        "beam_score": 114.0,
+        "beam_signature_count": 2,
         "money_leads_price_score": 22.0,
         "fast_turnover_intensity_x": 0.0,
         "price_change_per_5m_pct": 0.1,
@@ -782,7 +787,7 @@
       },
       "execution_allowed": false,
       "winner_pattern": {
-        "version": "v34-urgent-winner-pattern-selector",
+        "version": "v34.1-urgent-winner-pattern-selector",
         "positive_examples": [
           "ARK",
           "REZ",
@@ -797,13 +802,14 @@
           "ANIME",
           "AEON",
           "MIRA",
-          "LIT",
-          "SKR",
-          "GPS"
+          "SKR"
         ],
-        "positive_similarity": 0.5428,
-        "negative_similarity": 0.613,
-        "winner_edge": -0.0702,
+        "label_conflicts_removed": [
+          "LIT"
+        ],
+        "positive_similarity": 0.5488,
+        "negative_similarity": 0.619,
+        "winner_edge": -0.0703,
         "live_checks": {
           "still_early_not_already_pumped": true,
           "persistent_15m_volume": true,
@@ -814,20 +820,153 @@
         },
         "failed_live_checks": [],
         "winner_match": false,
-        "logic": "select only among URGENT_EARLY detections by resemblance to historically early-captured movers; failed accelerations are contrast examples, not the target class"
+        "logic": "select among URGENT detections by resemblance to early-captured >=10% movers; positive winner labels override later giveback/failure labels"
+      }
+    },
+    {
+      "base": "VIRTUAL",
+      "market": "KRW-VIRTUAL",
+      "korean_name": "버추얼프로토콜",
+      "price_krw": 846.0,
+      "change_24h_pct": 0.36,
+      "trade_24h_krw": 1413002838.8421605,
+      "lane": "QUIET_FLOW",
+      "score": 100.0,
+      "raw_score": 103.18,
+      "priority_score": 115.04,
+      "signal_count": 7,
+      "flow_confirmation_count": 4,
+      "signals": {
+        "m15_volume_spike": true,
+        "m15_volume_persistence": true,
+        "m15_structure": true,
+        "h1_structure": true,
+        "buy_flow": true,
+        "orderbook_support": false,
+        "money_leads_price": true,
+        "fast_turnover": false,
+        "beam_signature": false,
+        "beam_score": true
+      },
+      "hard_failures": [],
+      "immediate_quality": false,
+      "confirmed_quality": false,
+      "watch_quality": true,
+      "lifetime_first_detected_at_utc": "2026-09-06T13:36:01.650238+00:00",
+      "lifetime_first_price_krw": 958.0,
+      "lifetime_first_change_24h_pct": 2.02,
+      "episode": {
+        "started_at_utc": "2026-09-14T08:11:52.389663+00:00",
+        "start_price_krw": 846.0,
+        "start_change_24h_pct": 0.36,
+        "runs": 1,
+        "peak_price_krw": 846.0,
+        "return_pct": 0.0,
+        "giveback_from_peak_pct": 0.0,
+        "reset_reason": "episode_missing"
+      },
+      "track": "PRE_IGNITION",
+      "metrics": {
+        "beam_score": 94.26,
+        "beam_signature_count": 2,
+        "money_leads_price_score": 22.0,
+        "fast_turnover_intensity_x": 0.71,
+        "price_change_per_5m_pct": -0.02,
+        "m15_vol_spike_x": 1.71,
+        "m15_vol_persistence_x": 2.43,
+        "m15_low_rising": false,
+        "m15_close_above_ma": true,
+        "h1_low_rising": false,
+        "h1_close_above_ma": true,
+        "buy_sell_ratio": 1.24,
+        "bid_ask_depth_ratio": 0.67,
+        "m15_upper_wick_pct": 0.0,
+        "week_change_pct": -13.94
+      },
+      "entry_plan": {
+        "reference_price_krw": 846.0,
+        "do_not_chase_above_krw": 867.15,
+        "hard_stop_krw": 803.7,
+        "target_10_krw": 930.6,
+        "target_20_krw": 1015.2,
+        "external_news_unlock_listing_delisting_tokenomics_check_required": true,
+        "automatic_full_size_buy": false
+      },
+      "confirmations": 1,
+      "promotion_grade": "WATCH_URGENT_NONWINNER_PATTERN",
+      "execution_gate": {
+        "version": "v33-execution-quality-feedback-gate",
+        "actionable": false,
+        "checks": {
+          "two_run_confirmation": false,
+          "m15_volume_persistence": true,
+          "m15_higher_low": false,
+          "m15_above_ma": true,
+          "h1_higher_low": false,
+          "h1_above_ma": true,
+          "buy_flow": true,
+          "orderbook_support": false,
+          "non_negative_short_pace": true,
+          "no_repeat_failure_pattern": true
+        },
+        "failed_checks": [
+          "two_run_confirmation",
+          "m15_higher_low",
+          "h1_higher_low",
+          "orderbook_support"
+        ],
+        "recent_failure_streak": 0,
+        "rule": "URGENT_EARLY is detection only; execution requires two-run + 15m/1h structure + persistent flow/orderbook confirmation"
+      },
+      "execution_allowed": false,
+      "winner_pattern": {
+        "version": "v34.1-urgent-winner-pattern-selector",
+        "positive_examples": [
+          "ARK",
+          "REZ",
+          "LSK",
+          "LIT"
+        ],
+        "negative_examples": [
+          "USELESS",
+          "BFC",
+          "D",
+          "PUMP",
+          "ANIME",
+          "AEON",
+          "MIRA",
+          "SKR"
+        ],
+        "label_conflicts_removed": [
+          "LIT"
+        ],
+        "positive_similarity": 0.4989,
+        "negative_similarity": 0.7609,
+        "winner_edge": -0.262,
+        "live_checks": {
+          "still_early_not_already_pumped": true,
+          "persistent_15m_volume": true,
+          "price_above_15m_ma": true,
+          "buy_flow_not_sell_dominant": true,
+          "short_pace_not_rolling_over": true,
+          "upper_wick_not_exhausted": true
+        },
+        "failed_live_checks": [],
+        "winner_match": false,
+        "logic": "select among URGENT detections by resemblance to early-captured >=10% movers; positive winner labels override later giveback/failure labels"
       }
     },
     {
       "base": "PROS",
       "market": "KRW-PROS",
       "korean_name": "파로스",
-      "price_krw": 670.0,
-      "change_24h_pct": 7.72,
-      "trade_24h_krw": 383190389.05652183,
-      "lane": "EARLY_ACCELERATOR",
-      "score": 100.0,
-      "raw_score": 104.2,
-      "priority_score": 119.2,
+      "price_krw": 673.0,
+      "change_24h_pct": 8.2,
+      "trade_24h_krw": 383305059.19128287,
+      "lane": "CONTROLLED_ACCELERATOR",
+      "score": 96.8,
+      "raw_score": 96.8,
+      "priority_score": 111.8,
       "signal_count": 8,
       "flow_confirmation_count": 3,
       "signals": {
@@ -844,7 +983,7 @@
       },
       "hard_failures": [],
       "immediate_quality": false,
-      "confirmed_quality": false,
+      "confirmed_quality": true,
       "watch_quality": true,
       "lifetime_first_detected_at_utc": "2026-09-07T07:34:26.099327+00:00",
       "lifetime_first_price_krw": 665.0,
@@ -854,18 +993,18 @@
         "start_price_krw": 659.0,
         "start_change_24h_pct": 5.95,
         "runs": 2,
-        "peak_price_krw": 670.0,
-        "return_pct": 1.67,
+        "peak_price_krw": 673.0,
+        "return_pct": 2.12,
         "giveback_from_peak_pct": 0.0,
         "reset_reason": "stage2_gap_over_60m"
       },
-      "track": "PRE_IGNITION",
+      "track": "ACCELERATOR",
       "metrics": {
-        "beam_score": 173.79,
+        "beam_score": 143.79,
         "beam_signature_count": 4,
-        "money_leads_price_score": 32.0,
-        "fast_turnover_intensity_x": 3.16,
-        "price_change_per_5m_pct": 0.16,
+        "money_leads_price_score": 28.0,
+        "fast_turnover_intensity_x": 3.06,
+        "price_change_per_5m_pct": 0.19,
         "m15_vol_spike_x": 0.77,
         "m15_vol_persistence_x": 2.37,
         "m15_low_rising": true,
@@ -873,149 +1012,16 @@
         "h1_low_rising": false,
         "h1_close_above_ma": true,
         "buy_sell_ratio": 0.88,
-        "bid_ask_depth_ratio": 2.84,
+        "bid_ask_depth_ratio": 1.51,
         "m15_upper_wick_pct": 0.0,
         "week_change_pct": 15.44
       },
       "entry_plan": {
-        "reference_price_krw": 670.0,
-        "do_not_chase_above_krw": 686.75,
-        "hard_stop_krw": 636.5,
-        "target_10_krw": 737.0,
-        "target_20_krw": 804.0,
-        "external_news_unlock_listing_delisting_tokenomics_check_required": true,
-        "automatic_full_size_buy": false
-      },
-      "confirmations": 1,
-      "promotion_grade": "WATCH_URGENT_NONWINNER_PATTERN",
-      "execution_gate": {
-        "version": "v33-execution-quality-feedback-gate",
-        "actionable": false,
-        "checks": {
-          "two_run_confirmation": false,
-          "m15_volume_persistence": true,
-          "m15_higher_low": true,
-          "m15_above_ma": true,
-          "h1_higher_low": false,
-          "h1_above_ma": true,
-          "buy_flow": false,
-          "orderbook_support": true,
-          "non_negative_short_pace": true,
-          "no_repeat_failure_pattern": true
-        },
-        "failed_checks": [
-          "two_run_confirmation",
-          "h1_higher_low",
-          "buy_flow"
-        ],
-        "recent_failure_streak": 0,
-        "rule": "URGENT_EARLY is detection only; execution requires two-run + 15m/1h structure + persistent flow/orderbook confirmation"
-      },
-      "execution_allowed": false,
-      "winner_pattern": {
-        "version": "v34-urgent-winner-pattern-selector",
-        "positive_examples": [
-          "ARK",
-          "REZ",
-          "LSK",
-          "LIT"
-        ],
-        "negative_examples": [
-          "USELESS",
-          "BFC",
-          "D",
-          "PUMP",
-          "ANIME",
-          "AEON",
-          "MIRA",
-          "LIT",
-          "SKR",
-          "GPS"
-        ],
-        "positive_similarity": 0.5413,
-        "negative_similarity": 0.639,
-        "winner_edge": -0.0977,
-        "live_checks": {
-          "still_early_not_already_pumped": true,
-          "persistent_15m_volume": true,
-          "price_above_15m_ma": true,
-          "buy_flow_not_sell_dominant": false,
-          "short_pace_not_rolling_over": true,
-          "upper_wick_not_exhausted": true
-        },
-        "failed_live_checks": [
-          "buy_flow_not_sell_dominant"
-        ],
-        "winner_match": false,
-        "logic": "select only among URGENT_EARLY detections by resemblance to historically early-captured movers; failed accelerations are contrast examples, not the target class"
-      }
-    },
-    {
-      "base": "POWR",
-      "market": "KRW-POWR",
-      "korean_name": "파워렛저",
-      "price_krw": 88.7,
-      "change_24h_pct": 3.88,
-      "trade_24h_krw": 4504586884.119693,
-      "lane": "QUIET_FLOW",
-      "score": 78.8,
-      "raw_score": 78.8,
-      "priority_score": 89.18,
-      "signal_count": 5,
-      "flow_confirmation_count": 2,
-      "signals": {
-        "m15_volume_spike": true,
-        "m15_volume_persistence": false,
-        "m15_structure": true,
-        "h1_structure": true,
-        "buy_flow": false,
-        "orderbook_support": true,
-        "money_leads_price": true,
-        "fast_turnover": false,
-        "beam_signature": false,
-        "beam_score": false
-      },
-      "hard_failures": [],
-      "immediate_quality": false,
-      "confirmed_quality": true,
-      "watch_quality": true,
-      "lifetime_first_detected_at_utc": "2026-09-09T02:22:36.493426+00:00",
-      "lifetime_first_price_krw": 69.86,
-      "lifetime_first_change_24h_pct": 3.74,
-      "episode": {
-        "started_at_utc": "2026-09-14T07:16:04.444027+00:00",
-        "start_price_krw": 90.6,
-        "start_change_24h_pct": 5.27,
-        "runs": 2,
-        "peak_price_krw": 90.6,
-        "return_pct": -2.1,
-        "giveback_from_peak_pct": -2.1,
-        "reset_reason": "stage2_gap_over_60m"
-      },
-      "track": "PRE_IGNITION",
-      "metrics": {
-        "beam_score": 57.64,
-        "beam_signature_count": 0,
-        "money_leads_price_score": 8.0,
-        "fast_turnover_intensity_x": 0.0,
-        "price_change_per_5m_pct": -0.2,
-        "m15_vol_spike_x": 1.45,
-        "m15_vol_persistence_x": 0.57,
-        "m15_low_rising": false,
-        "m15_close_above_ma": true,
-        "h1_low_rising": true,
-        "h1_close_above_ma": true,
-        "buy_sell_ratio": 0.87,
-        "bid_ask_depth_ratio": 1.91,
-        "m15_upper_wick_pct": 0.33,
-        "week_change_pct": 31.7
-      },
-      "entry_plan": {
-        "reference_price_krw": 88.7,
-        "do_not_chase_above_krw": 90.9175,
-        "hard_stop_krw": 84.265,
-        "target_10_krw": 97.57,
-        "target_20_krw": 106.44,
+        "reference_price_krw": 673.0,
+        "do_not_chase_above_krw": 689.825,
+        "hard_stop_krw": 639.35,
+        "target_10_krw": 740.3,
+        "target_20_krw": 807.6,
         "external_news_unlock_listing_delisting_tokenomics_check_required": true,
         "automatic_full_size_buy": false
       },
@@ -1023,71 +1029,71 @@
       "promotion_grade": "WATCH"
     },
     {
-      "base": "PUNDIX",
-      "market": "KRW-PUNDIX",
-      "korean_name": "펀디엑스",
-      "price_krw": 167.0,
-      "change_24h_pct": 0.6,
-      "trade_24h_krw": 6292106957.574811,
-      "lane": "QUIET_FLOW",
-      "score": 78.8,
-      "raw_score": 78.8,
-      "priority_score": 87.9,
-      "signal_count": 5,
-      "flow_confirmation_count": 3,
+      "base": "T",
+      "market": "KRW-T",
+      "korean_name": "쓰레스홀드",
+      "price_krw": 6.352,
+      "change_24h_pct": 6.43,
+      "trade_24h_krw": 346108953.87693244,
+      "lane": "EARLY_ACCELERATOR",
+      "score": 77.31,
+      "raw_score": 77.31,
+      "priority_score": 89.31,
+      "signal_count": 6,
+      "flow_confirmation_count": 2,
       "signals": {
-        "m15_volume_spike": true,
-        "m15_volume_persistence": true,
-        "m15_structure": false,
+        "m15_volume_spike": false,
+        "m15_volume_persistence": false,
+        "m15_structure": true,
         "h1_structure": true,
         "buy_flow": false,
         "orderbook_support": true,
         "money_leads_price": true,
-        "fast_turnover": false,
+        "fast_turnover": true,
         "beam_signature": false,
-        "beam_score": false
+        "beam_score": true
       },
       "hard_failures": [],
       "immediate_quality": false,
       "confirmed_quality": true,
       "watch_quality": true,
-      "lifetime_first_detected_at_utc": "2026-09-12T06:30:33.566391+00:00",
-      "lifetime_first_price_krw": 134.0,
-      "lifetime_first_change_24h_pct": 6.3,
+      "lifetime_first_detected_at_utc": "2026-09-06T14:36:02.606684+00:00",
+      "lifetime_first_price_krw": 6.106,
+      "lifetime_first_change_24h_pct": 5.26,
       "episode": {
-        "started_at_utc": "2026-09-14T07:16:04.444027+00:00",
-        "start_price_krw": 168.0,
-        "start_change_24h_pct": 1.2,
-        "runs": 2,
-        "peak_price_krw": 168.0,
-        "return_pct": -0.6,
-        "giveback_from_peak_pct": -0.6,
-        "reset_reason": "stage2_gap_over_60m"
+        "started_at_utc": "2026-09-14T08:11:52.389663+00:00",
+        "start_price_krw": 6.352,
+        "start_change_24h_pct": 6.43,
+        "runs": 1,
+        "peak_price_krw": 6.352,
+        "return_pct": 0.0,
+        "giveback_from_peak_pct": 0.0,
+        "reset_reason": "episode_missing"
       },
       "track": "PRE_IGNITION",
       "metrics": {
-        "beam_score": 60.64,
-        "beam_signature_count": 1,
-        "money_leads_price_score": 8.0,
-        "fast_turnover_intensity_x": 0.0,
-        "price_change_per_5m_pct": -0.06,
-        "m15_vol_spike_x": 3.62,
-        "m15_vol_persistence_x": 1.22,
-        "m15_low_rising": false,
-        "m15_close_above_ma": false,
+        "beam_score": 115.55,
+        "beam_signature_count": 2,
+        "money_leads_price_score": 26.0,
+        "fast_turnover_intensity_x": 1.83,
+        "price_change_per_5m_pct": 0.14,
+        "m15_vol_spike_x": 0.44,
+        "m15_vol_persistence_x": 0.75,
+        "m15_low_rising": true,
+        "m15_close_above_ma": true,
         "h1_low_rising": true,
         "h1_close_above_ma": true,
-        "buy_sell_ratio": 0.46,
-        "bid_ask_depth_ratio": 1.04,
-        "m15_upper_wick_pct": 0.59,
-        "week_change_pct": 27.48
+        "buy_sell_ratio": 0.93,
+        "bid_ask_depth_ratio": 1.9,
+        "m15_upper_wick_pct": 0.68,
+        "week_change_pct": 7.26
       },
       "entry_plan": {
-        "reference_price_krw": 167.0,
-        "do_not_chase_above_krw": 171.175,
-        "hard_stop_krw": 158.65,
-        "target_10_krw": 183.7,
-        "target_20_krw": 200.4,
+        "reference_price_krw": 6.352,
+        "do_not_chase_above_krw": 6.5108,
+        "hard_stop_krw": 6.0344,
+        "target_10_krw": 6.9872,
+        "target_20_krw": 7.6224,
         "external_news_unlock_listing_delisting_tokenomics_check_required": true,
         "automatic_full_size_buy": false
       },
@@ -1100,7 +1106,7 @@
       "base": "GHX",
       "price_krw": 12.77,
       "change_24h_pct": 7.76,
-      "trade_24h_krw": 6882883265.6730585,
+      "trade_24h_krw": 6882729049.712958,
       "lifetime_first_change_24h_pct": 1.96,
       "return_since_lifetime_first_pct": 11.72,
       "status": "REACTIVATE_FOR_FULL_CANDLE_REFRESH",
@@ -1136,19 +1142,24 @@
   "miss_feedback": {
     "realized_early_captures": [
       {
+        "base": "ARK",
+        "first_detected_change_24h_pct": 5.06,
+        "current_change_24h_pct": 26.21
+      },
+      {
         "base": "B3",
         "first_detected_change_24h_pct": 0.89,
-        "current_change_24h_pct": 26.03
+        "current_change_24h_pct": 26.19
       },
       {
         "base": "MTL",
         "first_detected_change_24h_pct": 3.93,
-        "current_change_24h_pct": 24.87
+        "current_change_24h_pct": 25.63
       },
       {
-        "base": "ARK",
-        "first_detected_change_24h_pct": 5.06,
-        "current_change_24h_pct": 24.76
+        "base": "REZ",
+        "first_detected_change_24h_pct": 3.44,
+        "current_change_24h_pct": 19.38
       },
       {
         "base": "CPOOL",
@@ -1156,14 +1167,9 @@
         "current_change_24h_pct": 18.58
       },
       {
-        "base": "REZ",
-        "first_detected_change_24h_pct": 3.44,
-        "current_change_24h_pct": 18.52
-      },
-      {
         "base": "LSK",
         "first_detected_change_24h_pct": 7.3,
-        "current_change_24h_pct": 16.88
+        "current_change_24h_pct": 17.47
       },
       {
         "base": "LIT",
@@ -1174,13 +1180,13 @@
     "design_change": "weighted flow/volume promotion + controlled accelerator lane + resettable episode anchors + reactivation refresh + top3 surfacing + 7-day prospective feature history"
   },
   "execution_quality_gate": {
-    "generated_at_utc": "2026-09-14T08:10:15.093604+00:00",
+    "generated_at_utc": "2026-09-14T08:12:09.592077+00:00",
     "version": "v33-execution-quality-feedback-gate",
     "actionable_bases": [],
     "demoted_bases": [
       "UB",
       "FCT2",
-      "PROS"
+      "VIRTUAL"
     ],
     "closed_feedback": [],
     "rules": {
@@ -1196,14 +1202,14 @@
     }
   },
   "winner_pattern_selector": {
-    "generated_at_utc": "2026-09-14T08:10:15.135597+00:00",
-    "version": "v34-urgent-winner-pattern-selector",
+    "generated_at_utc": "2026-09-14T08:12:09.624466+00:00",
+    "version": "v34.1-urgent-winner-pattern-selector",
     "positive_bases_requested": [
+      "ARK",
       "B3",
       "MTL",
-      "ARK",
-      "CPOOL",
       "REZ",
+      "CPOOL",
       "LSK",
       "LIT"
     ],
@@ -1221,17 +1227,18 @@
       "ANIME",
       "AEON",
       "MIRA",
-      "LIT",
-      "SKR",
-      "GPS"
+      "SKR"
+    ],
+    "label_conflicts_removed": [
+      "LIT"
     ],
     "winner_matches": [],
     "rejected_urgent": [
       "UB",
       "FCT2",
-      "PROS"
+      "VIRTUAL"
     ],
     "minimum_positive_examples": 3,
-    "principle": "URGENT is candidate pool; actionable means it looks like the URGENT alerts that actually became >=10% movers, not merely that it avoids past failures."
+    "principle": "URGENT is candidate pool; actionable means it resembles URGENT alerts that actually became >=10% movers, with winner labels never simultaneously used as failure labels."
   }
 }
