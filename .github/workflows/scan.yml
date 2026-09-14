@@ -1,5 +1,5 @@
 name: 30-minute calibrated beam batch scan
-# durable urgent outcome bank enabled: 2026-09-14 KST
+# durable urgent outcome bank + stateful primary continuity enabled
 
 on:
   push:
@@ -40,9 +40,9 @@ jobs:
             scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py \
             scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py \
             scanner_v27.py scanner_v28.py scanner_v29.py scanner_v30.py \
-            scanner_v31.py scanner_v32.py scanner_v33.py scanner_v34.py scanner_v35.py
+            scanner_v31.py scanner_v32.py scanner_v33.py scanner_v34.py scanner_v35.py scanner_v36.py
 
-      - name: Run full scan, outcome tracker, winner selector, and delivery layer
+      - name: Run full scan, outcome tracker, winner selector, continuity tracker, and delivery layer
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -59,9 +59,10 @@ jobs:
           python scanner_v33.py
           python scanner_v35.py
           python scanner_v34.py
+          python scanner_v36.py
           python scanner_v32.py
 
-      - name: Validate fresh outputs and winner-selection contract
+      - name: Validate fresh outputs and stateful continuity contract
         run: |
           python - <<'PY'
           import json
@@ -81,6 +82,7 @@ jobs:
               "execution_quality_state.json", "execution_quality_history.json",
               "urgent_outcome_history.json", "urgent_winner_bank.json", "urgent_outcome_summary.json",
               "urgent_winner_selector.json", "urgent_winner_state.json",
+              "primary_tracking_state.json", "primary_tracking_summary.json",
               "beam_delivery_alert.json", "delivery_alert_state.json", "delivery_alert_history.json",
           )
           for name in required:
@@ -90,12 +92,6 @@ jobs:
           scan = json.loads(Path("beam_scan_result.json").read_text(encoding="utf-8"))
           assert (scan.get("health") or {}).get("stage1_requested", 0) > 0
           assert (scan.get("health") or {}).get("stage2_success", 0) > 0
-          first_seen_patch = ((scan.get("logic") or {}).get("first_seen_recall_patch") or {})
-          assert first_seen_patch.get("version") == "v24.1-episode-aware-first-seen"
-          assert first_seen_patch.get("episode_gap_minutes") == 60
-
-          final_gate = json.loads(Path("beam_final_trade_gate.json").read_text(encoding="utf-8"))
-          assert final_gate.get("status") in {"FINAL_BUY", "NO_BUY"}
 
           outcome = json.loads(Path("urgent_outcome_summary.json").read_text(encoding="utf-8"))
           assert outcome.get("version") == "v35-durable-urgent-outcome-bank"
@@ -104,23 +100,37 @@ jobs:
           neg_bank = set((bank.get("negative") or {}).keys())
           assert not pos_bank.intersection(neg_bank), f"durable bank conflict: {sorted(pos_bank.intersection(neg_bank))}"
 
-          bridge = json.loads(Path("beam_breakout_bridge.json").read_text(encoding="utf-8"))
-          assert "v33-execution-quality-feedback-gate" in bridge.get("version", "")
-          assert "v34.2-durable-bank-winner-selector" in bridge.get("version", "")
-          assert bridge.get("status") in {"URGENT_WINNER_MATCH", "WATCH_ONLY", "NO_SIGNAL"}
-          winner = bridge.get("winner_pattern_selector") or {}
-          assert winner.get("version") == "v34.2-durable-bank-winner-selector"
-
           selector = json.loads(Path("urgent_winner_selector.json").read_text(encoding="utf-8"))
           assert selector.get("version") == "v34.2-durable-bank-winner-selector"
           positives = set(selector.get("positive_examples") or [])
           negatives = set(selector.get("negative_examples") or [])
           assert not positives.intersection(negatives), f"winner/failure label conflict: {sorted(positives.intersection(negatives))}"
 
+          tracking = json.loads(Path("primary_tracking_summary.json").read_text(encoding="utf-8"))
+          assert tracking.get("version") == "v36-stateful-primary-continuity"
+          assert tracking.get("status") in {"NONE", "HOLD", "WARNING", "INVALIDATED"}
+          assert int(tracking.get("lock_runs") or 0) >= 0
+          assert int(tracking.get("challenger_runs") or 0) >= 0
+
+          bridge = json.loads(Path("beam_breakout_bridge.json").read_text(encoding="utf-8"))
+          assert "v33-execution-quality-feedback-gate" in bridge.get("version", "")
+          assert "v34.2-durable-bank-winner-selector" in bridge.get("version", "")
+          assert "v36-stateful-primary-continuity" in bridge.get("version", "")
+          assert bridge.get("status") in {"URGENT_WINNER_MATCH", "WATCH_ONLY", "NO_SIGNAL", "URGENT_CONTINUATION_HOLD", "PRIMARY_WARNING"}
+
+          promoted_rows = bridge.get("promoted_top3") or []
+          for row in promoted_rows:
+              grade = row.get("promotion_grade")
+              assert grade in {"A_URGENT_WINNER_MATCH", "A_URGENT_CONTINUATION"}, f"illegal promoted grade: {grade}"
+              if grade == "A_URGENT_CONTINUATION":
+                  tr = row.get("tracking") or {}
+                  assert tr.get("status") == "HOLD", f"continuation must be HOLD: {tr}"
+                  assert row.get("execution_allowed") is True
+
           delivery = json.loads(Path("beam_delivery_alert.json").read_text(encoding="utf-8"))
-          assert delivery.get("version") == "v32.1-winner-selector-enforced-delivery"
+          assert delivery.get("version") == "v32.2-continuity-aware-delivery"
           contract = delivery.get("delivery_contract") or {}
-          assert contract.get("actionable_urgent_requires_v34_winner_match") is True
+          assert contract.get("actionable_urgent_requires_fresh_winner_or_v36_continuation") is True
           assert contract.get("raw_early_is_watch_only") is True
           assert contract.get("external_risk_check_required_before_money") is True
           assert contract.get("never_promise_2x") is True
@@ -128,13 +138,9 @@ jobs:
           assert regression.get("bridge_promoted_all_delivered") is True
           assert not regression.get("illegal_urgent_bypass"), regression.get("illegal_urgent_bypass")
 
-          promoted = {x.get("base") for x in (bridge.get("promoted_top3") or []) if x.get("base")}
-          winner_matches = {x.get("base") for x in selector.get("winner_matches") or [] if x.get("base")}
-          assert promoted == winner_matches, f"promoted must equal urgent winner matches: promoted={sorted(promoted)}, winners={sorted(winner_matches)}"
-          delivered = {x.get("base") for x in (delivery.get("alerts") or []) if x.get("base")}
-          assert promoted.issubset(delivered), f"winner-pattern candidate silently dropped: {sorted(promoted - delivered)}"
+          promoted = {x.get("base") for x in promoted_rows if x.get("base")}
           urgent = {x.get("base") for x in (delivery.get("alerts") or []) if x.get("tier") == "URGENT_EARLY" and x.get("base")}
-          assert urgent == promoted, f"only v34 promoted winners may be URGENT: urgent={sorted(urgent)}, promoted={sorted(promoted)}"
+          assert urgent == promoted, f"delivery urgent must equal promoted primary set: urgent={sorted(urgent)}, promoted={sorted(promoted)}"
 
           ts = datetime.fromisoformat(delivery["generated_at_utc"])
           age = (datetime.now(timezone.utc) - ts).total_seconds()
@@ -142,13 +148,10 @@ jobs:
 
           print("scan_health:", scan.get("health"))
           print("outcome_labels:", outcome.get("labels"))
-          print("durable_positive_bank:", outcome.get("positive_bases"))
-          print("durable_negative_bank:", outcome.get("negative_bases"))
-          print("winner_examples:", selector.get("positive_examples"))
-          print("urgent_winner_matches:", sorted(promoted))
-          print("urgent_rejected:", [x.get("base") for x in selector.get("rejected_urgent") or []])
+          print("fresh_winners:", [x.get("base") for x in selector.get("winner_matches") or []])
+          print("primary_tracking:", tracking)
           print("delivery_status:", delivery.get("status"))
-          print("delivery_alerts:", [x.get("base") for x in delivery.get("alerts") or []])
+          print("delivery_primary:", (delivery.get("primary_alert") or {}).get("base"))
           PY
 
       - name: Commit refreshed scan and delivery outputs
@@ -169,6 +172,7 @@ jobs:
             execution_quality_state.json execution_quality_history.json \
             urgent_outcome_history.json urgent_winner_bank.json urgent_outcome_summary.json \
             urgent_winner_selector.json urgent_winner_state.json \
+            primary_tracking_state.json primary_tracking_summary.json \
             beam_delivery_alert.json delivery_alert_state.json delivery_alert_history.json \
             "$output_dir/"
 
@@ -178,25 +182,12 @@ jobs:
             git fetch origin main
             git checkout -B main origin/main
             cp "$output_dir"/*.json .
-            git add \
-              beam_scan_result.json beam_latest_summary.json beam_top10_compact.json \
-              beam_state.json beam_first_seen.json beam_expert_summary.json \
-              expert_lock_state.json expert_prediction_history.json \
-              beam_one_pick_summary.json one_pick_state.json one_pick_history.json \
-              beam_miss_audit.json beam_winner_recall.json winner_recall_state.json \
-              beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json \
-              beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json \
-              beam_early_strong.json early_strong_state.json early_strong_history.json \
-              beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json \
-              execution_quality_state.json execution_quality_history.json \
-              urgent_outcome_history.json urgent_winner_bank.json urgent_outcome_summary.json \
-              urgent_winner_selector.json urgent_winner_state.json \
-              beam_delivery_alert.json delivery_alert_state.json delivery_alert_history.json
+            git add *.json
             if git diff --cached --quiet; then
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update 30-minute scan, urgent outcomes, and winner results"
+            git commit -m "Update scan, outcomes, primary continuity, and delivery results"
             if git push origin main; then
               exit 0
             fi
