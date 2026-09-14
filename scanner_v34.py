@@ -3,7 +3,7 @@ import math
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "v34-urgent-winner-pattern-selector"
+VERSION = "v34.1-urgent-winner-pattern-selector"
 BRIDGE_FILE = "beam_breakout_bridge.json"
 HISTORY_FILE = "breakout_bridge_history.json"
 AUDIT_FILE = "beam_miss_audit.json"
@@ -117,7 +117,6 @@ def raw_urgent_candidates(bridge):
         base = row.get("base")
         if not base or base in seen:
             continue
-        # v33 attaches execution_gate only to rows that were URGENT/promoted before its gate.
         was_urgent = bool(row.get("execution_gate")) or str(row.get("promotion_grade") or "").startswith("A_")
         if not was_urgent:
             continue
@@ -150,7 +149,14 @@ def main():
         x.get("base") for x in (audit.get("current_top_movers") or [])
         if x.get("capture") == "EARLY_CAPTURE" and f(x.get("change_24h_pct")) >= 10.0 and x.get("base")
     ]
-    negative_bases = [x.get("base") for x in (audit.get("failed_acceleration_examples") or []) if x.get("base")]
+    positive_set = set(positive_bases)
+    # A coin cannot train the selector as both a winner and a failure in the same run.
+    # Positive outcome wins the label conflict; this prevents successful URGENT patterns
+    # from poisoning the negative bank merely because they later gave back gains.
+    negative_bases = [
+        x.get("base") for x in (audit.get("failed_acceleration_examples") or [])
+        if x.get("base") and x.get("base") not in positive_set
+    ]
 
     positive_rows = [earliest[b] for b in positive_bases if b in earliest]
     negative_rows = [earliest[b] for b in negative_bases if b in earliest]
@@ -175,13 +181,14 @@ def main():
             "version": VERSION,
             "positive_examples": [x.get("base") for x in positive_rows],
             "negative_examples": [x.get("base") for x in negative_rows],
+            "label_conflicts_removed": sorted(positive_set.intersection({x.get('base') for x in (audit.get('failed_acceleration_examples') or []) if x.get('base')})),
             "positive_similarity": round(pos_sim, 4),
             "negative_similarity": round(neg_sim, 4),
             "winner_edge": round(edge, 4),
             "live_checks": checks,
             "failed_live_checks": failed,
             "winner_match": winner_match,
-            "logic": "select only among URGENT_EARLY detections by resemblance to historically early-captured movers; failed accelerations are contrast examples, not the target class",
+            "logic": "select among URGENT detections by resemblance to early-captured >=10% movers; positive winner labels override later giveback/failure labels",
         }
         out["execution_allowed"] = bool(winner_match)
         out["promotion_grade"] = "A_URGENT_WINNER_MATCH" if winner_match else "WATCH_URGENT_NONWINNER_PATTERN"
@@ -197,7 +204,6 @@ def main():
     winners = [x for x in scored if (x.get("winner_pattern") or {}).get("winner_match")]
     nonwinners = [x for x in scored if not (x.get("winner_pattern") or {}).get("winner_match")]
 
-    # Preserve ordinary watches, but only winner-pattern URGENTs may remain promoted/actionable.
     ordinary_watch = []
     urgent_bases = {x.get("base") for x in scored}
     for row in bridge.get("watch_top5") or []:
@@ -213,10 +219,11 @@ def main():
         "positive_bases_requested": positive_bases,
         "positive_bases_with_history": [x.get("base") for x in positive_rows],
         "negative_bases_with_history": [x.get("base") for x in negative_rows],
+        "label_conflicts_removed": sorted(positive_set.intersection({x.get('base') for x in (audit.get('failed_acceleration_examples') or []) if x.get('base')})),
         "winner_matches": [x.get("base") for x in winners],
         "rejected_urgent": [x.get("base") for x in nonwinners],
         "minimum_positive_examples": MIN_POSITIVE_EXAMPLES,
-        "principle": "URGENT is candidate pool; actionable means it looks like the URGENT alerts that actually became >=10% movers, not merely that it avoids past failures.",
+        "principle": "URGENT is candidate pool; actionable means it resembles URGENT alerts that actually became >=10% movers, with winner labels never simultaneously used as failure labels.",
     }
     bridge["version"] = f"{bridge.get('version','')}+{VERSION}"
     bridge["status"] = "URGENT_WINNER_MATCH" if winners else ("WATCH_ONLY" if bridge.get("watch_top5") else "NO_SIGNAL")
@@ -227,26 +234,22 @@ def main():
         "version": VERSION,
         "status": bridge["status"],
         "winner_matches": [
-            {
-                "base": x.get("base"),
-                "price_krw": x.get("price_krw"),
-                "change_24h_pct": x.get("change_24h_pct"),
-                "positive_similarity": (x.get("winner_pattern") or {}).get("positive_similarity"),
-                "negative_similarity": (x.get("winner_pattern") or {}).get("negative_similarity"),
-                "winner_edge": (x.get("winner_pattern") or {}).get("winner_edge"),
-            } for x in winners[:3]
+            {"base": x.get("base"), "price_krw": x.get("price_krw"), "change_24h_pct": x.get("change_24h_pct"),
+             "positive_similarity": (x.get("winner_pattern") or {}).get("positive_similarity"),
+             "negative_similarity": (x.get("winner_pattern") or {}).get("negative_similarity"),
+             "winner_edge": (x.get("winner_pattern") or {}).get("winner_edge")}
+            for x in winners[:3]
         ],
         "rejected_urgent": [
-            {
-                "base": x.get("base"),
-                "failed_live_checks": (x.get("winner_pattern") or {}).get("failed_live_checks"),
-                "positive_similarity": (x.get("winner_pattern") or {}).get("positive_similarity"),
-                "negative_similarity": (x.get("winner_pattern") or {}).get("negative_similarity"),
-                "winner_edge": (x.get("winner_pattern") or {}).get("winner_edge"),
-            } for x in nonwinners
+            {"base": x.get("base"), "failed_live_checks": (x.get("winner_pattern") or {}).get("failed_live_checks"),
+             "positive_similarity": (x.get("winner_pattern") or {}).get("positive_similarity"),
+             "negative_similarity": (x.get("winner_pattern") or {}).get("negative_similarity"),
+             "winner_edge": (x.get("winner_pattern") or {}).get("winner_edge")}
+            for x in nonwinners
         ],
         "positive_examples": [x.get("base") for x in positive_rows],
         "negative_examples": [x.get("base") for x in negative_rows],
+        "label_conflicts_removed": sorted(positive_set.intersection({x.get('base') for x in (audit.get('failed_acceleration_examples') or []) if x.get('base')})),
     }
     save_json(OUT_FILE, result)
     save_json(STATE_FILE, result)
