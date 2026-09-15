@@ -1,0 +1,56 @@
+name: persistent early urgent candidate lifecycle
+
+on:
+  workflow_run:
+    workflows: ["30-minute calibrated beam batch scan"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: persistent-candidate-lifecycle
+  cancel-in-progress: false
+
+jobs:
+  lifecycle:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate lifecycle scanner
+        run: python -m py_compile scanner_v40.py
+      - name: Persist every early or urgent candidate beyond top5
+        run: python scanner_v40.py
+      - name: Validate no ranking deletion
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          state=json.loads(Path('persistent_candidate_pool.json').read_text())
+          bridge=json.loads(Path('beam_breakout_bridge.json').read_text())
+          pool=state.get('pool') or {}
+          exposed=bridge.get('persistent_candidate_pool') or []
+          assert state.get('version') == 'v40-persistent-candidate-lifecycle'
+          assert isinstance(pool, dict)
+          for row in exposed:
+              tr=row.get('persistent_tracking') or {}
+              assert tr.get('status') in {'TRACKING','SUCCESS_TRACKED'}
+          print('persistent_pool_size', len(pool))
+          print('active_exposed', len(exposed))
+          PY
+      - name: Commit lifecycle state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add beam_breakout_bridge.json persistent_candidate_pool.json persistent_candidate_summary.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Persist early urgent candidate lifecycle"
+          git pull --rebase origin main
+          git push origin main
