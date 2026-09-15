@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-15T18:23:58.151381+00:00",
+  "generated_at_utc": "2026-09-15T21:38:19.246171+00:00",
   "version": "v26-a-plus-validation-coverage",
   "purpose": "honest validation coverage for the A+ +30 gate; do not fabricate historical hit rate when price paths were not stored",
   "v25_status": "NO_BUY",
@@ -7,14 +7,14 @@
   "historical_proxy": {
     "signal_rule": "first historical v19 PREDICT_BUY per asset with confidence>=85, similarity>=75, 0<=24h_change<=6",
     "outcome_rule": "+30pct observed before -5pct observed in persisted chronological prices",
-    "signals": 132,
-    "signals_with_any_future_path": 114,
-    "coverage_ratio": 0.8636,
-    "resolved": 14,
+    "signals": 131,
+    "signals_with_any_future_path": 115,
+    "coverage_ratio": 0.8779,
+    "resolved": 15,
     "wins_30_before_stop": 2,
-    "losses_stop_before_30": 12,
-    "hit_rate": 0.1429,
-    "insufficient_path": 18,
+    "losses_stop_before_30": 13,
+    "hit_rate": 0.1333,
+    "insufficient_path": 16,
     "unresolved_with_path": 100,
     "source_observation_counts": {
       "expert_history": 995,
@@ -1417,13 +1417,14 @@
         "change_24h_pct": 4.28,
         "expert_confidence": 89.22,
         "pattern_similarity": 87.0,
-        "outcome": "INSUFFICIENT_PATH",
-        "future_observation_count": 0,
-        "first_future_at_utc": null,
-        "last_future_at_utc": null,
-        "max_seen_return_pct": null,
-        "min_seen_return_pct": null,
-        "resolution_source": null
+        "outcome": "LOSS_STOP",
+        "future_observation_count": 1,
+        "first_future_at_utc": "2026-09-15T21:38:18.807861+00:00",
+        "last_future_at_utc": "2026-09-15T21:38:18.807861+00:00",
+        "max_seen_return_pct": -16.05,
+        "min_seen_return_pct": -16.05,
+        "resolved_at_utc": "2026-09-15T21:38:18.807861+00:00",
+        "resolution_source": "expert_history"
       },
       {
         "base": "DATA",
@@ -1615,7 +1616,7 @@
     ]
   },
   "eventual_30_sanity_check": {
-    "count": 21,
+    "count": 22,
     "assets": [
       {
         "base": "SOPH",
@@ -1629,8 +1630,16 @@
         "base": "FANC",
         "first_price_krw": 0.9909,
         "first_change_24h_pct": 0.8,
-        "peak_price_krw": 2.649,
-        "peak_return_since_first_pct": 167.33,
+        "peak_price_krw": 3.027,
+        "peak_return_since_first_pct": 205.48,
+        "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
+      },
+      {
+        "base": "MEV",
+        "first_price_krw": 2.778,
+        "first_change_24h_pct": 0.83,
+        "peak_price_krw": 7.502,
+        "peak_return_since_first_pct": 170.05,
         "note": "shows eventual +30 reach only; cannot establish +30-before--5 ordering"
       },
       {
