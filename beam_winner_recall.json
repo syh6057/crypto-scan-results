@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-16T06:06:20.488400+00:00",
+  "generated_at_utc": "2026-09-16T09:42:17.747047+00:00",
   "version": "v23-realized-winner-recall",
   "health": {
     "analysis_ready": true,
@@ -11,45 +11,39 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 72.4
+    "runtime_sec": 66.5
   },
   "purpose": "surface early movers the scanner detected but downstream expert gates failed to recommend",
   "learned_from_realized_winners": [
     {
-      "base": "DRV",
-      "current_change_24h_pct": 27.89,
-      "first_detected_change_24h_pct": 0.46,
-      "first_detected_price_krw": 218.0
-    },
-    {
-      "base": "MEV",
-      "current_change_24h_pct": 25.03,
-      "first_detected_change_24h_pct": 0.83,
-      "first_detected_price_krw": 2.778
-    },
-    {
       "base": "LSK",
-      "current_change_24h_pct": 19.68,
+      "current_change_24h_pct": 31.99,
       "first_detected_change_24h_pct": 7.3,
       "first_detected_price_krw": 147.0
     },
     {
-      "base": "FOLD",
-      "current_change_24h_pct": 16.91,
-      "first_detected_change_24h_pct": 0.31,
-      "first_detected_price_krw": 76.69
+      "base": "MEV",
+      "current_change_24h_pct": 22.7,
+      "first_detected_change_24h_pct": 0.83,
+      "first_detected_price_krw": 2.778
+    },
+    {
+      "base": "DRV",
+      "current_change_24h_pct": 17.89,
+      "first_detected_change_24h_pct": 0.46,
+      "first_detected_price_krw": 218.0
     },
     {
       "base": "ARB",
-      "current_change_24h_pct": 12.23,
+      "current_change_24h_pct": 14.89,
       "first_detected_change_24h_pct": 0.0,
       "first_detected_price_krw": 253.0
     },
     {
-      "base": "PUFFER",
-      "current_change_24h_pct": 11.22,
-      "first_detected_change_24h_pct": 0.1,
-      "first_detected_price_krw": 21.02
+      "base": "ZIL",
+      "current_change_24h_pct": 14.29,
+      "first_detected_change_24h_pct": 2.1,
+      "first_detected_price_krw": 3.554
     }
   ],
   "policy": {
@@ -68,54 +62,7 @@
     "reason": "no_designated_one_pick"
   },
   "confirmed_recall_pick": null,
-  "winner_recall_watchlist": [
-    {
-      "base": "WAVES",
-      "market": "KRW-WAVES",
-      "korean_name": "웨이브",
-      "price_krw": 340.0,
-      "change_24h_pct": 1.49,
-      "trade_24h_krw": 448896129.31718487,
-      "track": "PRE_IGNITION",
-      "recall_score": 117.66,
-      "signal_count": 10,
-      "signals": {
-        "fast_turnover": true,
-        "controlled_5m": true,
-        "m15_spike": true,
-        "m15_persistence": true,
-        "m15_structure": true,
-        "h1_structure": true,
-        "buy_flow": true,
-        "orderbook_not_bad": true,
-        "signature": true,
-        "money_leads": true
-      },
-      "hard_failures": [],
-      "confirmations": 1,
-      "first_detected_at_utc": "2026-09-07T23:21:07.448514+00:00",
-      "first_price_krw": 314.0,
-      "first_change_24h_pct": 0.32,
-      "return_since_first_pct": 8.28,
-      "beam_score": 142.18,
-      "money_leads_price_score": 30.0,
-      "turnover_intensity": 2.18,
-      "buy_sell_ratio": 1.68,
-      "orderbook_ratio": 0.69,
-      "scenario_target_10_krw": 374.0,
-      "scenario_target_15_krw": 391.0,
-      "scenario_target_30_krw": 442.0,
-      "entry_plan": {
-        "status": "ENTER_CANDIDATE",
-        "reference_price_krw": 340.0,
-        "do_not_chase_above_krw": 348.5,
-        "invalidation_krw": 329.12,
-        "target_1_krw": 367.2,
-        "target_2_krw": 391.0,
-        "target_3_krw": 425.0
-      }
-    }
-  ],
+  "winner_recall_watchlist": [],
   "feedback": {
     "detection_bottleneck": "some eventual winners were first detected below 5pct but never surfaced as the recommendation",
     "fix": "parallel raw-stage2 recall scoring bypasses v19/v20 all-of expert thresholds, while requiring two observations",
