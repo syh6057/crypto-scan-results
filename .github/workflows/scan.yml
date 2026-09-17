@@ -1,5 +1,5 @@
 name: 30-minute calibrated beam batch scan
-# durable outcomes + fail-closed integrity + stateful primary continuity
+# durable outcomes + persistent candidate lifecycle + fail-closed integrity + stateful continuity
 
 on:
   push:
@@ -37,16 +37,10 @@ jobs:
 
       - name: Validate scanner syntax and integrity tests
         run: |
-          python -m py_compile \
-            scanner_v19.py scanner_v20.py scanner_v21.py scanner_v22.py \
-            scanner_v23.py scanner_v24.py scanner_v25.py scanner_v26.py \
-            scanner_v27.py scanner_v28.py scanner_v29.py scanner_v30.py \
-            scanner_v31.py scanner_v32.py scanner_v33.py scanner_v34.py \
-            scanner_v35.py scanner_v36.py scanner_v37.py scanner_v38.py scanner_v39.py \
-            test_decision_integrity.py
+          python -m py_compile scanner_v*.py test_decision_integrity.py
           python -m unittest -v test_decision_integrity.py
 
-      - name: Run scan, full-market outcomes, integrity gate, continuity, and delivery
+      - name: Run scan, outcomes, persistent lifecycle, integrity, continuity, and delivery
         run: |
           python scanner_v21.py
           python scanner_v24.py
@@ -64,6 +58,8 @@ jobs:
           python scanner_v37.py
           python scanner_v35.py
           python scanner_v39.py
+          # v40 must run before v34 so persistent candidates are in the selector universe.
+          python scanner_v40.py
           python scanner_v34.py
           python scanner_v38.py
           python scanner_v36.py
@@ -87,9 +83,9 @@ jobs:
               "beam_early_strong.json", "early_strong_state.json", "early_strong_history.json",
               "beam_breakout_bridge.json", "breakout_bridge_state.json", "breakout_bridge_history.json",
               "execution_quality_state.json", "execution_quality_history.json",
-              "all_market_snapshot.json",
-              "urgent_outcome_history.json", "urgent_winner_bank.json", "urgent_outcome_summary.json",
-              "full_market_outcome_summary.json",
+              "all_market_snapshot.json", "urgent_outcome_history.json", "urgent_winner_bank.json",
+              "urgent_outcome_summary.json", "full_market_outcome_summary.json",
+              "persistent_candidate_pool.json", "persistent_candidate_summary.json",
               "urgent_winner_selector.json", "urgent_winner_state.json",
               "decision_integrity_state.json", "decision_integrity_summary.json",
               "primary_tracking_state.json", "primary_tracking_summary.json",
@@ -99,33 +95,36 @@ jobs:
               p = Path(name)
               assert p.exists() and p.stat().st_size > 0, f"{name} missing"
 
-          scan = json.loads(Path("beam_scan_result.json").read_text(encoding="utf-8"))
+          scan = json.loads(Path("beam_scan_result.json").read_text())
           assert (scan.get("health") or {}).get("stage1_requested", 0) > 0
           assert (scan.get("health") or {}).get("stage2_success", 0) > 0
 
-          market = json.loads(Path("all_market_snapshot.json").read_text(encoding="utf-8"))
+          market = json.loads(Path("all_market_snapshot.json").read_text())
           assert market.get("version") == "v37-all-market-observer"
-          assert market.get("healthy") is True, market
+          assert market.get("healthy") is True
           assert int(market.get("ticker_count") or 0) >= 100
 
-          outcome = json.loads(Path("urgent_outcome_summary.json").read_text(encoding="utf-8"))
+          outcome = json.loads(Path("urgent_outcome_summary.json").read_text())
           assert outcome.get("version") == "v35-durable-urgent-outcome-bank"
-          full = json.loads(Path("full_market_outcome_summary.json").read_text(encoding="utf-8"))
+          full = json.loads(Path("full_market_outcome_summary.json").read_text())
           assert full.get("version") == "v39-full-market-forward-outcomes"
           assert full.get("market_snapshot_healthy") is True
 
-          bank = json.loads(Path("urgent_winner_bank.json").read_text(encoding="utf-8"))
+          bank = json.loads(Path("urgent_winner_bank.json").read_text())
           pos_bank = set((bank.get("positive") or {}).keys())
           neg_bank = set((bank.get("negative") or {}).keys())
-          assert not pos_bank.intersection(neg_bank), f"durable bank conflict: {sorted(pos_bank.intersection(neg_bank))}"
+          assert not pos_bank.intersection(neg_bank)
 
-          selector = json.loads(Path("urgent_winner_selector.json").read_text(encoding="utf-8"))
-          assert selector.get("version") == "v34.2-durable-bank-winner-selector"
+          persistent = json.loads(Path("persistent_candidate_summary.json").read_text())
+          assert persistent.get("version") == "v40-persistent-candidate-lifecycle"
+
+          selector = json.loads(Path("urgent_winner_selector.json").read_text())
+          assert selector.get("version") == "v34.3-persistent-bank-winner-selector"
           positives = set(selector.get("positive_examples") or [])
           negatives = set(selector.get("negative_examples") or [])
-          assert not positives.intersection(negatives), f"winner/failure label conflict: {sorted(positives.intersection(negatives))}"
+          assert not positives.intersection(negatives)
 
-          integrity = json.loads(Path("decision_integrity_summary.json").read_text(encoding="utf-8"))
+          integrity = json.loads(Path("decision_integrity_summary.json").read_text())
           assert integrity.get("version") == "v38-fail-closed-decision-integrity"
           assert integrity.get("market_snapshot_healthy") is True
           for d in integrity.get("diagnostics") or []:
@@ -133,30 +132,33 @@ jobs:
                   assert d.get("quality_ok") is True
                   assert not d.get("quality_reasons")
 
-          tracking = json.loads(Path("primary_tracking_summary.json").read_text(encoding="utf-8"))
+          tracking = json.loads(Path("primary_tracking_summary.json").read_text())
           assert tracking.get("version") == "v36-stateful-primary-continuity"
           assert tracking.get("status") in {"NONE", "HOLD", "WARNING", "INVALIDATED"}
 
-          bridge = json.loads(Path("beam_breakout_bridge.json").read_text(encoding="utf-8"))
-          assert "v33-execution-quality-feedback-gate" in bridge.get("version", "")
-          assert "v34.2-durable-bank-winner-selector" in bridge.get("version", "")
-          assert "v38-fail-closed-decision-integrity" in bridge.get("version", "")
-          assert "v36-stateful-primary-continuity" in bridge.get("version", "")
+          bridge = json.loads(Path("beam_breakout_bridge.json").read_text())
+          version = bridge.get("version", "")
+          assert "v33-execution-quality-feedback-gate" in version
+          assert "v34.3-persistent-bank-winner-selector" in version
+          assert "v38-fail-closed-decision-integrity" in version
+          assert "v36-stateful-primary-continuity" in version
+          lifecycle = bridge.get("persistent_candidate_lifecycle") or {}
+          assert lifecycle.get("version") == "v40-persistent-candidate-lifecycle"
 
           promoted_rows = bridge.get("promoted_top3") or []
           for row in promoted_rows:
               grade = row.get("promotion_grade")
-              assert grade in {"A_URGENT_WINNER_MATCH", "A_URGENT_CONTINUATION"}, f"illegal promoted grade: {grade}"
+              assert grade in {"A_URGENT_WINNER_MATCH", "A_URGENT_CONTINUATION"}
               if grade == "A_URGENT_WINNER_MATCH":
                   di = row.get("decision_integrity") or {}
-                  assert di.get("confirmed") is True, f"unconfirmed fresh winner leaked: {row.get('base')}"
-                  assert di.get("quality_ok") is True, f"bad-quality winner leaked: {row.get('base')}"
-              if grade == "A_URGENT_CONTINUATION":
+                  assert di.get("confirmed") is True
+                  assert di.get("quality_ok") is True
+              else:
                   tr = row.get("tracking") or {}
                   assert tr.get("status") == "HOLD"
                   assert row.get("execution_allowed") is True
 
-          delivery = json.loads(Path("beam_delivery_alert.json").read_text(encoding="utf-8"))
+          delivery = json.loads(Path("beam_delivery_alert.json").read_text())
           assert delivery.get("version") == "v32.2-continuity-aware-delivery"
           contract = delivery.get("delivery_contract") or {}
           assert contract.get("actionable_urgent_requires_fresh_winner_or_v36_continuation") is True
@@ -165,23 +167,15 @@ jobs:
           assert contract.get("never_promise_2x") is True
           regression = delivery.get("regression_checks") or {}
           assert regression.get("bridge_promoted_all_delivered") is True
-          assert not regression.get("illegal_urgent_bypass"), regression.get("illegal_urgent_bypass")
+          assert not regression.get("illegal_urgent_bypass")
 
           promoted = {x.get("base") for x in promoted_rows if x.get("base")}
           urgent = {x.get("base") for x in (delivery.get("alerts") or []) if x.get("tier") == "URGENT_EARLY" and x.get("base")}
-          assert urgent == promoted, f"delivery urgent must equal promoted primary set: urgent={sorted(urgent)}, promoted={sorted(promoted)}"
+          assert urgent == promoted
 
           ts = datetime.fromisoformat(delivery["generated_at_utc"])
-          age = (datetime.now(timezone.utc) - ts).total_seconds()
-          assert age < 900, f"stale delivery result: {age}s"
-
-          print("scan_health:", scan.get("health"))
-          print("market_snapshot:", {"markets": market.get("market_count"), "tickers": market.get("ticker_count")})
-          print("full_market_outcomes:", full)
-          print("integrity:", integrity)
-          print("primary_tracking:", tracking)
-          print("delivery_status:", delivery.get("status"))
-          print("delivery_primary:", (delivery.get("primary_alert") or {}).get("base"))
+          assert (datetime.now(timezone.utc) - ts).total_seconds() < 900
+          print("contract_ok", {"selector": selector.get("version"), "persistent": persistent.get("version"), "delivery": delivery.get("status")})
           PY
 
       - name: Commit refreshed scan and decision outputs
@@ -189,26 +183,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           output_dir="$(mktemp -d)"
-          cp \
-            beam_scan_result.json beam_latest_summary.json beam_top10_compact.json \
-            beam_state.json beam_first_seen.json beam_expert_summary.json \
-            expert_lock_state.json expert_prediction_history.json \
-            beam_one_pick_summary.json one_pick_state.json one_pick_history.json \
-            beam_miss_audit.json beam_winner_recall.json winner_recall_state.json \
-            beam_a_plus_precision.json a_plus_precision_state.json beam_a_plus_validation.json \
-            beam_final_trade_gate.json beam_30m_expert.json beam_30m_expert_history.json \
-            beam_early_strong.json early_strong_state.json early_strong_history.json \
-            beam_breakout_bridge.json breakout_bridge_state.json breakout_bridge_history.json \
-            execution_quality_state.json execution_quality_history.json \
-            all_market_snapshot.json \
-            urgent_outcome_history.json urgent_winner_bank.json urgent_outcome_summary.json \
-            full_market_outcome_summary.json \
-            urgent_winner_selector.json urgent_winner_state.json \
-            decision_integrity_state.json decision_integrity_summary.json \
-            primary_tracking_state.json primary_tracking_summary.json \
-            beam_delivery_alert.json delivery_alert_state.json delivery_alert_history.json \
-            "$output_dir/"
-
+          cp *.json "$output_dir/"
           for attempt in 1 2 3; do
             git reset --hard HEAD
             git clean -fd
@@ -220,11 +195,8 @@ jobs:
               echo "No output changes to commit."
               exit 0
             fi
-            git commit -m "Update scan, full-market outcomes, integrity, continuity, and delivery"
-            if git push origin main; then
-              exit 0
-            fi
+            git commit -m "Update scan, persistent lifecycle, integrity, continuity, and delivery"
+            if git push origin main; then exit 0; fi
             echo "Push raced with another update; retrying ($attempt/3)."
           done
-          echo "Unable to publish scan outputs after 3 attempts."
           exit 1
