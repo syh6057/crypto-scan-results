@@ -58,7 +58,6 @@ jobs:
           python scanner_v37.py
           python scanner_v35.py
           python scanner_v39.py
-          # v40 must run before v34 so persistent candidates are in the selector universe.
           python scanner_v40.py
           python scanner_v34.py
           python scanner_v38.py
@@ -133,7 +132,7 @@ jobs:
                   assert not d.get("quality_reasons")
 
           tracking = json.loads(Path("primary_tracking_summary.json").read_text())
-          assert tracking.get("version") == "v36-stateful-primary-continuity"
+          assert tracking.get("version") == "v36.1-persistent-primary-continuity"
           assert tracking.get("status") in {"NONE", "HOLD", "WARNING", "INVALIDATED"}
 
           bridge = json.loads(Path("beam_breakout_bridge.json").read_text())
@@ -141,7 +140,7 @@ jobs:
           assert "v33-execution-quality-feedback-gate" in version
           assert "v34.3-persistent-bank-winner-selector" in version
           assert "v38-fail-closed-decision-integrity" in version
-          assert "v36-stateful-primary-continuity" in version
+          assert "v36.1-persistent-primary-continuity" in version
           lifecycle = bridge.get("persistent_candidate_lifecycle") or {}
           assert lifecycle.get("version") == "v40-persistent-candidate-lifecycle"
 
@@ -175,7 +174,7 @@ jobs:
 
           ts = datetime.fromisoformat(delivery["generated_at_utc"])
           assert (datetime.now(timezone.utc) - ts).total_seconds() < 900
-          print("contract_ok", {"selector": selector.get("version"), "persistent": persistent.get("version"), "delivery": delivery.get("status")})
+          print("contract_ok", {"selector": selector.get("version"), "persistent": persistent.get("version"), "continuity": tracking.get("version"), "delivery": delivery.get("status")})
           PY
 
       - name: Commit refreshed scan and decision outputs
