@@ -1,9 +1,8 @@
 {
-  "generated_at_utc": "2026-09-18T14:22:51.801407+00:00",
+  "generated_at_utc": "2026-09-18T14:23:06.123754+00:00",
   "version": "v40-persistent-candidate-lifecycle",
   "pool_size": 59,
   "active": [
-    "MMT",
     "RENDER",
     "DRV",
     "CFG",
@@ -33,6 +32,11 @@
   ],
   "principle": "top5 is display only; once early/urgent is detected it remains in lifecycle state until explicit invalidation, success, or expiry",
   "removed_this_run": [
+    {
+      "base": "MMT",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
     {
       "base": "MBX",
       "status": "EXPIRED",
