@@ -1,36 +1,39 @@
 {
-  "generated_at_utc": "2026-09-18T14:01:26.836518+00:00",
+  "generated_at_utc": "2026-09-18T14:14:53.556823+00:00",
   "version": "v34.3-persistent-bank-winner-selector",
   "status": "URGENT_WINNER_MATCH",
   "training_source": "durable_v35_bank",
   "persistent_pool_integrated": true,
   "winner_matches": [
     {
-      "base": "HBAR",
-      "price_krw": 107.0,
-      "change_24h_pct": 1.9,
-      "positive_similarity": 0.8652,
-      "negative_similarity": 0.7324,
-      "winner_edge": 0.1328
-    },
-    {
-      "base": "POL",
-      "price_krw": 139.0,
-      "change_24h_pct": 2.96,
-      "positive_similarity": 0.8919,
-      "negative_similarity": 0.7813,
-      "winner_edge": 0.1105
-    },
-    {
       "base": "PEPE",
       "price_krw": 0.0052,
       "change_24h_pct": 4.0,
-      "positive_similarity": 0.9093,
-      "negative_similarity": 0.8181,
-      "winner_edge": 0.0912
+      "positive_similarity": 0.9086,
+      "negative_similarity": 0.825,
+      "winner_edge": 0.0836
     }
   ],
-  "rejected_urgent": [],
+  "rejected_urgent": [
+    {
+      "base": "TRUMP",
+      "failed_live_checks": [
+        "short_pace_not_rolling_over"
+      ],
+      "positive_similarity": 0.8693,
+      "negative_similarity": 0.7446,
+      "winner_edge": 0.1248
+    },
+    {
+      "base": "HBAR",
+      "failed_live_checks": [
+        "buy_flow_not_sell_dominant"
+      ],
+      "positive_similarity": 0.868,
+      "negative_similarity": 0.7646,
+      "winner_edge": 0.1034
+    }
+  ],
   "positive_examples": [
     "REZ",
     "T",
@@ -89,7 +92,8 @@
     "SUI",
     "TAO",
     "PIEVERSE",
-    "JUP"
+    "JUP",
+    "ENS"
   ],
   "negative_examples": [
     "USELESS",
