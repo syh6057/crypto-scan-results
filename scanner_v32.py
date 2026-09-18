@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "v32.3-early-bench-visible-delivery"
+VERSION = "v32.2-continuity-aware-delivery"
 BRIDGE_FILE = "beam_breakout_bridge.json"
 EARLY_FILE = "beam_early_strong.json"
 MISS_FILE = "beam_miss_audit.json"
