@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "v32.2-continuity-aware-delivery"
+VERSION = "v32.3-early-bench-visible-delivery"
 BRIDGE_FILE = "beam_breakout_bridge.json"
 EARLY_FILE = "beam_early_strong.json"
 MISS_FILE = "beam_miss_audit.json"
@@ -63,7 +63,7 @@ def candidate_from_early(row, rank, source, promoted_bases):
     key = f"{base}|WATCH_EARLY|{row.get('first_detected_at_utc') or 'na'}"
     return {
         "alert_key": key, "base": base, "market": row.get("market"), "tier": "WATCH_EARLY", "source": source,
-        "rank": rank, "must_surface_in_chat": False, "price_krw": row.get("price_krw"), "change_24h_pct": row.get("change_24h_pct"),
+        "rank": rank, "must_surface_in_chat": (source in {"early_newly_promoted","early_best_test","early_best_watch","early_ranked"} and rank <= 3), "price_krw": row.get("price_krw"), "change_24h_pct": row.get("change_24h_pct"),
         "trade_24h_krw": row.get("trade_24h_krw"), "promotion_grade": grade, "score": row.get("score"),
         "first_detected_price_krw": row.get("first_detected_price_krw"), "first_detected_change_24h_pct": row.get("first_detected_change_24h_pct"),
         "relative_strength_vs_stronger_major_pct": row.get("relative_strength_vs_stronger_major_pct"),
@@ -102,13 +102,20 @@ def main():
     alerts += [candidate_from_bridge(r, i, "bridge_watch") for i, r in enumerate(bridge.get("watch_top5") or [], 1)]
     early_rows = [(early.get("newly_promoted"),1,"early_newly_promoted"),(early.get("best_test_candidate"),2,"early_best_test"),(early.get("best_watch_candidate"),3,"early_best_watch")]
     alerts += [candidate_from_early(r, rank, src, promoted_bases) for r, rank, src in early_rows]
+    # Surface the ranked early-strong bench directly so genuine pre-move candidates are not buried
+    # behind stricter execution gates or transient bridge rankings. These remain WATCH_ONLY.
+    ranked_early = [r for r in (early.get("ranked_candidates") or []) if isinstance(r, dict) and r.get("grade") != "REJECT"][:5]
+    alerts += [candidate_from_early(r, i, "early_ranked", promoted_bases) for i, r in enumerate(ranked_early, 1)]
     alerts = dedupe(alerts)
 
     urgent = [x for x in alerts if x.get("tier") == "URGENT_EARLY"]
     watch = [x for x in alerts if x.get("tier") == "WATCH_EARLY"]
     urgent.sort(key=lambda x:(fnum(x.get("priority_score"),fnum(x.get("score"))),fnum(x.get("trade_24h_krw"))), reverse=True)
     watch.sort(key=lambda x:(fnum(x.get("priority_score"),fnum(x.get("score"))),fnum(x.get("trade_24h_krw"))), reverse=True)
-    alerts = (urgent + watch)[:8]
+    must_surface_watch = [x for x in watch if x.get("must_surface_in_chat")]
+    other_watch = [x for x in watch if not x.get("must_surface_in_chat")]
+    # Keep urgent first, but reserve visibility for the early-strong bench. Visibility never grants execution.
+    alerts = dedupe(urgent + must_surface_watch + other_watch)[:12]
 
     allowed_grades = {"A_URGENT_WINNER_MATCH", "A_URGENT_CONTINUATION"}
     illegal = [x.get("base") for x in urgent if x.get("base") not in promoted_bases or x.get("promotion_grade") not in allowed_grades or x.get("execution_allowed") is not True]
@@ -126,6 +133,7 @@ def main():
       "delivery_required":bool(urgent),"primary_alert":urgent[0] if urgent else None,"alerts":alerts,"new_alerts":new_alerts,
       "strict_final_trade_gate_status":final.get("status"),
       "delivery_contract":{"actionable_urgent_requires_fresh_winner_or_v36_continuation":True,"raw_early_is_watch_only":True,"external_risk_check_required_before_money":True,"never_promise_2x":True},
+      "early_strong_ranked_top5":[x for x in alerts if x.get("source") == "early_ranked"][:5],
       "regression_checks":{"bridge_promoted_count":len(promoted_bases),"bridge_promoted_all_delivered":not missing_promoted,"illegal_urgent_bypass":illegal,"historical_early_capture_examples":audit_movers(miss)},
       "root_cause_guard":{"old_failure_mode":"primary changed every scan because selection was stateless","fix":"v36 locks a primary across scans; v32 only delivers fresh winners or explicit v36 HOLD continuations"}}
     state={"updated_at_utc":now,"active_alert_keys":active_keys,"active_bases":delivered_bases,"last_status":result["status"],"primary_base":(result.get("primary_alert") or {}).get("base")}
