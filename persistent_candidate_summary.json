@@ -1,10 +1,8 @@
 {
-  "generated_at_utc": "2026-09-18T14:01:26.788085+00:00",
+  "generated_at_utc": "2026-09-18T14:01:41.340806+00:00",
   "version": "v40-persistent-candidate-lifecycle",
   "pool_size": 58,
   "active": [
-    "LA",
-    "PUMP",
     "MBX",
     "MOODENG",
     "MMT",
@@ -35,6 +33,16 @@
   ],
   "principle": "top5 is display only; once early/urgent is detected it remains in lifecycle state until explicit invalidation, success, or expiry",
   "removed_this_run": [
+    {
+      "base": "LA",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
+    {
+      "base": "PUMP",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
     {
       "base": "GAS",
       "status": "EXPIRED",
