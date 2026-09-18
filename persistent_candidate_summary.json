@@ -1,10 +1,8 @@
 {
-  "generated_at_utc": "2026-09-18T14:49:13.525474+00:00",
+  "generated_at_utc": "2026-09-18T14:49:25.707062+00:00",
   "version": "v40-persistent-candidate-lifecycle",
   "pool_size": 60,
   "active": [
-    "RENDER",
-    "DRV",
     "CFG",
     "ACS",
     "ETC",
@@ -36,6 +34,16 @@
   ],
   "principle": "top5 is display only; once early/urgent is detected it remains in lifecycle state until explicit invalidation, success, or expiry",
   "removed_this_run": [
+    {
+      "base": "RENDER",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
+    {
+      "base": "DRV",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
     {
       "base": "MMT",
       "status": "EXPIRED",
@@ -193,11 +201,6 @@
     },
     {
       "base": "XCN",
-      "status": "INVALIDATED",
-      "reason": "forward_loss_le_minus_4pct"
-    },
-    {
-      "base": "A",
       "status": "INVALIDATED",
       "reason": "forward_loss_le_minus_4pct"
     }
