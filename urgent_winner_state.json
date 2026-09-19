@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-19T15:26:48.809852+00:00",
+  "generated_at_utc": "2026-09-19T15:50:30.383423+00:00",
   "version": "v34.3-persistent-bank-winner-selector",
   "status": "WATCH_ONLY",
   "training_source": "durable_v35_bank",
@@ -7,29 +7,30 @@
   "winner_matches": [],
   "rejected_urgent": [
     {
-      "base": "XTZ",
+      "base": "SWAP",
+      "failed_live_checks": [
+        "persistent_15m_volume",
+        "price_above_15m_ma"
+      ],
+      "positive_similarity": 0.6619,
+      "negative_similarity": 0.5699,
+      "winner_edge": 0.092
+    },
+    {
+      "base": "PRL",
       "failed_live_checks": [
         "buy_flow_not_sell_dominant"
       ],
-      "positive_similarity": 0.7423,
-      "negative_similarity": 0.6591,
-      "winner_edge": 0.0832
+      "positive_similarity": 0.7191,
+      "negative_similarity": 0.6855,
+      "winner_edge": 0.0337
     },
     {
-      "base": "PEPE",
-      "failed_live_checks": [
-        "price_above_15m_ma"
-      ],
-      "positive_similarity": 0.814,
-      "negative_similarity": 0.7586,
-      "winner_edge": 0.0554
-    },
-    {
-      "base": "TRUMP",
+      "base": "COS",
       "failed_live_checks": [],
-      "positive_similarity": 0.7552,
-      "negative_similarity": 0.8803,
-      "winner_edge": -0.1252
+      "positive_similarity": 0.712,
+      "negative_similarity": 0.8024,
+      "winner_edge": -0.0904
     }
   ],
   "positive_examples": [
@@ -151,7 +152,8 @@
     "HP",
     "GRVT",
     "S",
-    "BIRB"
+    "BIRB",
+    "XTZ"
   ],
   "label_conflicts_removed": []
 }
