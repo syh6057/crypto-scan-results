@@ -1,12 +1,15 @@
 {
-  "generated_at_utc": "2026-09-19T06:52:58.489805+00:00",
-  "version": "v41-pre-ignition-precursor",
+  "generated_at_utc": "2026-09-19T06:57:08.157233+00:00",
+  "version": "v42-pre-ignition-multiday-late-gate",
   "status": "PRECURSOR_FOUND",
   "policy": {
     "goal": "detect money/volume before vertical price move",
     "preferred_change24_pct": "0 to <4",
     "change24_ge_5": "late watch only",
     "change24_ge_7": "no chase",
+    "week_change_ge_12": "late/no precursor",
+    "episode_runup_ge_12": "late/no precursor",
+    "lifetime_runup_ge_18": "late/no precursor",
     "h1_structure": "confirmation, not hard precursor gate",
     "execution": "never automatic"
   },
@@ -24,6 +27,9 @@
         "bid_ask_depth_ratio": 0.88,
         "money_leads_price_score": 36.0,
         "fast_turnover_intensity_x": 4.04,
+        "week_change_pct": -8.11,
+        "episode_runup_pct": 0.0,
+        "lifetime_runup_pct": -15.45,
         "m15_low_rising": true,
         "m15_close_above_ma": true,
         "h1_low_rising": false,
@@ -59,6 +65,9 @@
         "bid_ask_depth_ratio": 0.75,
         "money_leads_price_score": 32.0,
         "fast_turnover_intensity_x": 2.01,
+        "week_change_pct": 8.38,
+        "episode_runup_pct": 0.0,
+        "lifetime_runup_pct": 13.2,
         "m15_low_rising": true,
         "m15_close_above_ma": true,
         "h1_low_rising": false,
@@ -94,6 +103,9 @@
         "bid_ask_depth_ratio": 0.34,
         "money_leads_price_score": 22.0,
         "fast_turnover_intensity_x": 0.93,
+        "week_change_pct": 8.04,
+        "episode_runup_pct": 0.0,
+        "lifetime_runup_pct": -1.63,
         "m15_low_rising": true,
         "m15_close_above_ma": true,
         "h1_low_rising": false,
@@ -129,6 +141,9 @@
         "bid_ask_depth_ratio": 0.84,
         "money_leads_price_score": 0.0,
         "fast_turnover_intensity_x": 0.0,
+        "week_change_pct": 9.09,
+        "episode_runup_pct": 0.0,
+        "lifetime_runup_pct": 0.55,
         "m15_low_rising": true,
         "m15_close_above_ma": true,
         "h1_low_rising": true,
@@ -164,6 +179,9 @@
         "bid_ask_depth_ratio": 1.18,
         "money_leads_price_score": 0.0,
         "fast_turnover_intensity_x": 0.0,
+        "week_change_pct": 15.22,
+        "episode_runup_pct": 0.0,
+        "lifetime_runup_pct": 8.16,
         "m15_low_rising": true,
         "m15_close_above_ma": true,
         "h1_low_rising": true,
@@ -189,22 +207,16 @@
   ],
   "late_no_chase": [
     {
-      "base": "PRL",
-      "price_krw": 164.0,
-      "change_24h_pct": 7.19,
-      "reason": "change24_ge_7_no_chase"
+      "base": "AVNT",
+      "price_krw": 149.0,
+      "change_24h_pct": 5.67,
+      "reason": "change24_ge_5_late_watch"
     },
     {
-      "base": "BIRB",
-      "price_krw": 89.55,
-      "change_24h_pct": 7.26,
-      "reason": "change24_ge_7_no_chase"
-    },
-    {
-      "base": "ZAMA",
-      "price_krw": 84.96,
-      "change_24h_pct": 9.34,
-      "reason": "change24_ge_7_no_chase"
+      "base": "UP",
+      "price_krw": 82.46,
+      "change_24h_pct": 6.28,
+      "reason": "change24_ge_5_late_watch"
     },
     {
       "base": "JTO",
@@ -219,10 +231,16 @@
       "reason": "change24_ge_5_late_watch"
     },
     {
-      "base": "LA",
-      "price_krw": 94.48,
-      "change_24h_pct": 5.15,
-      "reason": "change24_ge_5_late_watch"
+      "base": "PRL",
+      "price_krw": 164.0,
+      "change_24h_pct": 7.19,
+      "reason": "change24_ge_7_no_chase"
+    },
+    {
+      "base": "BIRB",
+      "price_krw": 89.55,
+      "change_24h_pct": 7.26,
+      "reason": "change24_ge_7_no_chase"
     }
   ]
 }
