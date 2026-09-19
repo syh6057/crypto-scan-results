@@ -1,31 +1,35 @@
 {
-  "generated_at_utc": "2026-09-19T11:56:50.572943+00:00",
+  "generated_at_utc": "2026-09-19T12:19:24.467667+00:00",
   "version": "v34.3-persistent-bank-winner-selector",
-  "status": "WATCH_ONLY",
+  "status": "URGENT_WINNER_MATCH",
   "training_source": "durable_v35_bank",
   "persistent_pool_integrated": true,
-  "winner_matches": [],
+  "winner_matches": [
+    {
+      "base": "BERA",
+      "price_krw": 281.0,
+      "change_24h_pct": 4.85,
+      "positive_similarity": 0.8812,
+      "negative_similarity": 0.8207,
+      "winner_edge": 0.0605
+    }
+  ],
   "rejected_urgent": [
     {
       "base": "VIRTUAL",
-      "failed_live_checks": [],
-      "positive_similarity": 0.7848,
-      "negative_similarity": 0.7375,
-      "winner_edge": 0.0474
+      "failed_live_checks": [
+        "buy_flow_not_sell_dominant"
+      ],
+      "positive_similarity": 0.8651,
+      "negative_similarity": 0.7239,
+      "winner_edge": 0.1411
     },
     {
-      "base": "POWR",
+      "base": "ME",
       "failed_live_checks": [],
-      "positive_similarity": 0.8445,
-      "negative_similarity": 0.832,
-      "winner_edge": 0.0124
-    },
-    {
-      "base": "GRT",
-      "failed_live_checks": [],
-      "positive_similarity": 0.7973,
-      "negative_similarity": 0.9165,
-      "winner_edge": -0.1192
+      "positive_similarity": 0.7599,
+      "negative_similarity": 0.7222,
+      "winner_edge": 0.0377
     }
   ],
   "positive_examples": [
@@ -101,7 +105,9 @@
     "VET",
     "MINA",
     "AVAX",
-    "BREV"
+    "BREV",
+    "NIL",
+    "ARX"
   ],
   "negative_examples": [
     "USELESS",
@@ -115,7 +121,6 @@
     "NEXO",
     "SNT",
     "XAN",
-    "ARX",
     "MOC",
     "PRL",
     "A",
