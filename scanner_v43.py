@@ -1,3 +1,4 @@
+# manual rerun trigger: 2026-09-19T07:31Z
 import json
 from datetime import datetime, timezone
 from pathlib import Path
