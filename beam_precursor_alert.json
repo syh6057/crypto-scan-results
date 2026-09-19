@@ -1,8 +1,9 @@
 {
-  "generated_at_utc": "2026-09-19T08:27:55.630740+00:00",
-  "version": "v43-real-h4-expansion-gate",
+  "generated_at_utc": "2026-09-19T08:32:44.637331+00:00",
+  "version": "v44-live-bithumb-ticker-refresh",
   "status": "PRECURSOR_FOUND",
   "policy": {
+    "price_source": "Bithumb /v1/ticker refreshed in same run; fail closed",
     "real_h4_18bar_low_to_high_ge_15": "NO_CHASE",
     "week_ge_12": "NO_CHASE",
     "24h_ge_5": "LATE",
@@ -10,50 +11,44 @@
   },
   "precursors": [
     {
-      "base": "MON",
-      "market": "KRW-MON",
-      "price_krw": 30.07,
-      "change_24h_pct": 0.64,
-      "week_change_pct": -5.97,
+      "base": "ASTR",
+      "market": "KRW-ASTR",
+      "price_krw": 9.094,
+      "bridge_price_krw": 9.094,
+      "live_price_delta_pct": 0.0,
+      "change_24h_pct": 0.71,
+      "week_change_pct": 3.85,
       "h4_18bar_expansion": {
         "bars": 18,
-        "low": 30.15,
-        "high": 34.35,
-        "low_to_high_pct": 13.93
+        "low": 8.2,
+        "high": 9.165,
+        "low_to_high_pct": 11.77
       },
-      "precursor_score": 99.0,
+      "precursor_score": 115.0,
       "metrics": {
-        "m15_vol_spike_x": 9.96,
-        "m15_vol_persistence_x": 5.23,
-        "buy_sell_ratio": 1.81,
-        "bid_ask_depth_ratio": 3.6,
-        "money_leads_price_score": 0.0,
-        "fast_turnover_intensity_x": 0.0
+        "m15_vol_spike_x": 2.79,
+        "m15_vol_persistence_x": 5.14,
+        "buy_sell_ratio": 1.68,
+        "bid_ask_depth_ratio": 0.36,
+        "money_leads_price_score": 48.0,
+        "fast_turnover_intensity_x": 13.97
       },
       "confirmation": {
         "m15_above_ma": true,
         "h1_higher_low": false,
         "h1_above_ma": true,
-        "orderbook_support": true
+        "orderbook_support": false
       },
       "permission": "EARLY_WATCH_ONLY"
     }
   ],
   "late_no_chase": [
     {
-      "base": "PARTI",
-      "price_krw": 32.68,
-      "change_24h_pct": 2.16,
-      "week_change_pct": 3.88,
-      "h4_18bar_expansion_pct": 18.19,
-      "reason": "real_h4_already_expanded"
-    },
-    {
-      "base": "C98",
-      "price_krw": 21.45,
-      "change_24h_pct": 6.5,
-      "week_change_pct": 9.38,
-      "h4_18bar_expansion_pct": 25.24,
+      "base": "PLUME",
+      "price_krw": 19.56,
+      "change_24h_pct": 2.52,
+      "week_change_pct": 6.94,
+      "h4_18bar_expansion_pct": 22.46,
       "reason": "real_h4_already_expanded"
     },
     {
@@ -65,9 +60,17 @@
       "reason": "real_h4_already_expanded"
     },
     {
+      "base": "JUP",
+      "price_krw": 373.0,
+      "change_24h_pct": 3.61,
+      "week_change_pct": 17.3,
+      "h4_18bar_expansion_pct": 32.98,
+      "reason": "real_h4_already_expanded"
+    },
+    {
       "base": "G",
       "price_krw": 5.247,
-      "change_24h_pct": 3.1,
+      "change_24h_pct": -18.17,
       "week_change_pct": -1.8,
       "h4_18bar_expansion_pct": 135.12,
       "reason": "real_h4_already_expanded"
@@ -75,7 +78,7 @@
     {
       "base": "NEAR",
       "price_krw": 5200.0,
-      "change_24h_pct": 2.66,
+      "change_24h_pct": 0.39,
       "week_change_pct": 55.95,
       "h4_18bar_expansion_pct": 61.8,
       "reason": "real_h4_already_expanded"
@@ -83,7 +86,7 @@
     {
       "base": "SKR",
       "price_krw": 27.44,
-      "change_24h_pct": 3.31,
+      "change_24h_pct": 1.77,
       "week_change_pct": 7.78,
       "h4_18bar_expansion_pct": 18.67,
       "reason": "real_h4_already_expanded"
@@ -91,7 +94,7 @@
     {
       "base": "VVV",
       "price_krw": 30250.0,
-      "change_24h_pct": 3.38,
+      "change_24h_pct": 9.7,
       "week_change_pct": -4.24,
       "h4_18bar_expansion_pct": 34.76,
       "reason": "real_h4_already_expanded"
@@ -99,7 +102,7 @@
     {
       "base": "EDEN",
       "price_krw": 64.62,
-      "change_24h_pct": 4.24,
+      "change_24h_pct": -1.4,
       "week_change_pct": -2.99,
       "h4_18bar_expansion_pct": 22.81,
       "reason": "real_h4_already_expanded"
@@ -107,7 +110,7 @@
     {
       "base": "COTI",
       "price_krw": 27.45,
-      "change_24h_pct": 1.29,
+      "change_24h_pct": -3.56,
       "week_change_pct": 8.38,
       "h4_18bar_expansion_pct": 65.44,
       "reason": "real_h4_already_expanded"
@@ -115,23 +118,15 @@
     {
       "base": "ZK",
       "price_krw": 12.4,
-      "change_24h_pct": 2.99,
+      "change_24h_pct": 6.09,
       "week_change_pct": -9.41,
       "h4_18bar_expansion_pct": 34.06,
       "reason": "real_h4_already_expanded"
     },
     {
-      "base": "JUP",
-      "price_krw": 364.0,
-      "change_24h_pct": 1.11,
-      "week_change_pct": 9.09,
-      "h4_18bar_expansion_pct": 32.98,
-      "reason": "real_h4_already_expanded"
-    },
-    {
       "base": "SUI",
       "price_krw": 1008.0,
-      "change_24h_pct": 0.7,
+      "change_24h_pct": 1.09,
       "week_change_pct": -1.38,
       "h4_18bar_expansion_pct": 22.9,
       "reason": "real_h4_already_expanded"
@@ -139,7 +134,7 @@
     {
       "base": "JTO",
       "price_krw": 589.0,
-      "change_24h_pct": 7.09,
+      "change_24h_pct": 0.33,
       "week_change_pct": 0.86,
       "h4_18bar_expansion_pct": 19.74,
       "reason": "real_h4_already_expanded"
@@ -147,15 +142,15 @@
     {
       "base": "ENA",
       "price_krw": 208.0,
-      "change_24h_pct": 6.12,
+      "change_24h_pct": 13.27,
       "week_change_pct": 0.0,
-      "h4_18bar_expansion_pct": 33.16,
+      "h4_18bar_expansion_pct": 33.68,
       "reason": "real_h4_already_expanded"
     },
     {
       "base": "ONDO",
       "price_krw": 549.0,
-      "change_24h_pct": 0.18,
+      "change_24h_pct": 0.0,
       "week_change_pct": 16.07,
       "h4_18bar_expansion_pct": 28.67,
       "reason": "real_h4_already_expanded"
@@ -163,7 +158,7 @@
     {
       "base": "BILL",
       "price_krw": 17.67,
-      "change_24h_pct": 3.33,
+      "change_24h_pct": -3.95,
       "week_change_pct": -8.11,
       "h4_18bar_expansion_pct": 21.25,
       "reason": "real_h4_already_expanded"
@@ -171,7 +166,7 @@
     {
       "base": "PEPE",
       "price_krw": 0.0053,
-      "change_24h_pct": 0.0,
+      "change_24h_pct": -1.89,
       "week_change_pct": 15.22,
       "h4_18bar_expansion_pct": 17.78,
       "reason": "real_h4_already_expanded"
@@ -179,7 +174,7 @@
     {
       "base": "BONK",
       "price_krw": 0.0036,
-      "change_24h_pct": 0.0,
+      "change_24h_pct": 5.13,
       "week_change_pct": -2.7,
       "h4_18bar_expansion_pct": 27.27,
       "reason": "real_h4_already_expanded"
@@ -187,7 +182,7 @@
     {
       "base": "PIEVERSE",
       "price_krw": 1642.0,
-      "change_24h_pct": 4.99,
+      "change_24h_pct": 10.59,
       "week_change_pct": -8.48,
       "h4_18bar_expansion_pct": 71.59,
       "reason": "real_h4_already_expanded"
@@ -195,9 +190,17 @@
     {
       "base": "XPL",
       "price_krw": 121.0,
-      "change_24h_pct": 3.42,
+      "change_24h_pct": 0.81,
       "week_change_pct": 8.04,
       "h4_18bar_expansion_pct": 20.56,
+      "reason": "real_h4_already_expanded"
+    },
+    {
+      "base": "ADP",
+      "price_krw": 0.8364,
+      "change_24h_pct": 14.18,
+      "week_change_pct": 26.9,
+      "h4_18bar_expansion_pct": 69.91,
       "reason": "real_h4_already_expanded"
     }
   ]
