@@ -1,10 +1,9 @@
-# manual rerun trigger: 2026-09-19T08:25Z
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 import requests
 
-VERSION="v43-real-h4-expansion-gate"
+VERSION="v44-live-bithumb-ticker-refresh"
 BRIDGE_FILE="beam_breakout_bridge.json"
 OUT_FILE="beam_precursor_alert.json"
 API="https://api.bithumb.com"
@@ -26,6 +25,26 @@ def h4_expansion(market,count=18):
         return {"bars":len(a),"low":lo,"high":hi,"low_to_high_pct":round((hi/lo-1)*100,2)}
     except Exception as e:return {"error":str(e)[:120]}
 
+def live_ticker(markets):
+    """Fetch fresh Bithumb KRW ticker data. Fail closed if unavailable."""
+    out={}
+    try:
+        # Bithumb public v1 ticker accepts comma-separated markets.
+        for i in range(0,len(markets),100):
+            chunk=markets[i:i+100]
+            r=requests.get(API+"/v1/ticker",params={"markets":",".join(chunk)},timeout=8,
+                headers={"User-Agent":"crypto-beam-scanner/44","Accept":"application/json"})
+            r.raise_for_status()
+            for x in r.json():
+                m=x.get("market")
+                if not m: continue
+                px=f(x.get("trade_price"),0)
+                ch=f(x.get("signed_change_rate"),0)*100
+                if px>0: out[m]={"price_krw":px,"change_24h_pct":round(ch,4),"timestamp":x.get("timestamp")}
+        return out,None
+    except Exception as e:
+        return {},str(e)[:160]
+
 def main():
     b=load(BRIDGE_FILE,{})
     rows=[]; seen=set()
@@ -33,17 +52,32 @@ def main():
         for r in b.get(key) or []:
             if isinstance(r,dict) and r.get("base") and r["base"] not in seen:
                 seen.add(r["base"]); rows.append(r)
+    # Refresh every candidate against Bithumb live ticker before any gate.
+    markets=[r.get("market") or ("KRW-"+r["base"]) for r in rows]
+    live,live_err=live_ticker(markets)
     picks=[]; late=[]
+    if live_err:
+        out={"generated_at_utc":datetime.now(timezone.utc).isoformat(),"version":VERSION,
+             "status":"NO_PRECURSOR","reason":"live_bithumb_ticker_unavailable_fail_closed","error":live_err,
+             "precursors":[],"late_no_chase":[]}
+        Path(OUT_FILE).write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding="utf-8")
+        print(json.dumps(out,ensure_ascii=False,indent=2)); return
     for r in rows:
-        ch=f(r.get("change_24h_pct")); m=r.get("metrics") or {}
+        market=r.get("market") or ("KRW-"+r["base"])
+        lt=live.get(market)
+        if not lt:
+            late.append({"base":r["base"],"market":market,"reason":"live_ticker_missing_fail_closed"}); continue
+        bridge_price=f(r.get("price_krw"))
+        live_price=f(lt.get("price_krw"))
+        ch=f(lt.get("change_24h_pct"))
+        m=r.get("metrics") or {}
         vol=f(m.get("m15_vol_spike_x")); persist=f(m.get("m15_vol_persistence_x")); flow=f(m.get("buy_sell_ratio"))
         depth=f(m.get("bid_ask_depth_ratio")); money=f(m.get("money_leads_price_score")); pace=f(m.get("fast_turnover_intensity_x"))
         upper=f(m.get("m15_upper_wick_pct")); week=f(m.get("week_change_pct"))
         m15hl=bool(m.get("m15_low_rising")); m15ma=bool(m.get("m15_close_above_ma")); h1hl=bool(m.get("h1_low_rising")); h1ma=bool(m.get("h1_close_above_ma"))
-        market=r.get("market") or ("KRW-"+r["base"])
         x=h4_expansion(market); exp=f((x or {}).get("low_to_high_pct"),999 if x and x.get("error") else 0)
         if x and x.get("error"):
-            late.append({"base":r["base"],"price_krw":r.get("price_krw"),"reason":"h4_data_unavailable_fail_closed","h4_expansion":x}); continue
+            late.append({"base":r["base"],"price_krw":live_price,"reason":"h4_data_unavailable_fail_closed","h4_expansion":x}); continue
         if exp>=15:
             late.append({"base":r["base"],"price_krw":r.get("price_krw"),"change_24h_pct":ch,"week_change_pct":week,"h4_18bar_expansion_pct":exp,"reason":"real_h4_already_expanded"}); continue
         if week>=12:
@@ -56,8 +90,8 @@ def main():
         conf={"m15_above_ma":m15ma,"h1_higher_low":h1hl,"h1_above_ma":h1ma,"orderbook_support":depth>=0.8}
         if all(checks.values()):
             score=sum(checks.values())*12+sum(conf.values())*5+min(money,30)*.4+min(pace,3)*3
-            picks.append({"base":r["base"],"market":market,"price_krw":r.get("price_krw"),"change_24h_pct":ch,"week_change_pct":week,"h4_18bar_expansion":x,"precursor_score":round(score,2),"metrics":{"m15_vol_spike_x":vol,"m15_vol_persistence_x":persist,"buy_sell_ratio":flow,"bid_ask_depth_ratio":depth,"money_leads_price_score":money,"fast_turnover_intensity_x":pace},"confirmation":conf,"permission":"EARLY_WATCH_ONLY"})
+            picks.append({"base":r["base"],"market":market,"price_krw":live_price,"bridge_price_krw":bridge_price,"live_price_delta_pct":round((live_price/bridge_price-1)*100,2) if bridge_price>0 else None,"change_24h_pct":ch,"week_change_pct":week,"h4_18bar_expansion":x,"precursor_score":round(score,2),"metrics":{"m15_vol_spike_x":vol,"m15_vol_persistence_x":persist,"buy_sell_ratio":flow,"bid_ask_depth_ratio":depth,"money_leads_price_score":money,"fast_turnover_intensity_x":pace},"confirmation":conf,"permission":"EARLY_WATCH_ONLY"})
     picks.sort(key=lambda x:x["precursor_score"],reverse=True)
-    out={"generated_at_utc":datetime.now(timezone.utc).isoformat(),"version":VERSION,"status":"PRECURSOR_FOUND" if picks else "NO_PRECURSOR","policy":{"real_h4_18bar_low_to_high_ge_15":"NO_CHASE","week_ge_12":"NO_CHASE","24h_ge_5":"LATE","execution":"never automatic"},"precursors":picks[:5],"late_no_chase":late[:20]}
+    out={"generated_at_utc":datetime.now(timezone.utc).isoformat(),"version":VERSION,"status":"PRECURSOR_FOUND" if picks else "NO_PRECURSOR","policy":{"price_source":"Bithumb /v1/ticker refreshed in same run; fail closed","real_h4_18bar_low_to_high_ge_15":"NO_CHASE","week_ge_12":"NO_CHASE","24h_ge_5":"LATE","execution":"never automatic"},"precursors":picks[:5],"late_no_chase":late[:20]}
     Path(OUT_FILE).write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding="utf-8"); print(json.dumps(out,ensure_ascii=False,indent=2))
 if __name__=="__main__":main()
