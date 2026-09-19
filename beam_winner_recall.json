@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-19T18:10:44.231810+00:00",
+  "generated_at_utc": "2026-09-19T20:45:28.371699+00:00",
   "version": "v23-realized-winner-recall",
   "health": {
     "analysis_ready": true,
@@ -11,21 +11,27 @@
     "stage1_success": 200,
     "stage1_success_ratio": 100.0,
     "stage2_success": 45,
-    "runtime_sec": 66.2
+    "runtime_sec": 54.1
   },
   "purpose": "surface early movers the scanner detected but downstream expert gates failed to recommend",
   "learned_from_realized_winners": [
     {
+      "base": "CELR",
+      "current_change_24h_pct": 30.59,
+      "first_detected_change_24h_pct": 0.0,
+      "first_detected_price_krw": 2.915
+    },
+    {
       "base": "BANK",
-      "current_change_24h_pct": 15.69,
+      "current_change_24h_pct": 20.21,
       "first_detected_change_24h_pct": 1.13,
       "first_detected_price_krw": 47.47
     },
     {
-      "base": "FIL",
-      "current_change_24h_pct": 13.41,
-      "first_detected_change_24h_pct": 1.51,
-      "first_detected_price_krw": 1078.0
+      "base": "SKL",
+      "current_change_24h_pct": 18.94,
+      "first_detected_change_24h_pct": 0.78,
+      "first_detected_price_krw": 5.293
     },
     {
       "base": "PEPE",
@@ -50,7 +56,54 @@
     "reason": "no_designated_one_pick"
   },
   "confirmed_recall_pick": null,
-  "winner_recall_watchlist": [],
+  "winner_recall_watchlist": [
+    {
+      "base": "BARD",
+      "market": "KRW-BARD",
+      "korean_name": "롬바드",
+      "price_krw": 179.0,
+      "change_24h_pct": 0.0,
+      "trade_24h_krw": 204223816.32968614,
+      "track": "PRE_IGNITION",
+      "recall_score": 100.41,
+      "signal_count": 8,
+      "signals": {
+        "fast_turnover": false,
+        "controlled_5m": true,
+        "m15_spike": true,
+        "m15_persistence": true,
+        "m15_structure": true,
+        "h1_structure": true,
+        "buy_flow": true,
+        "orderbook_not_bad": true,
+        "signature": true,
+        "money_leads": false
+      },
+      "hard_failures": [],
+      "confirmations": 1,
+      "first_detected_at_utc": "2026-09-06T17:18:29.651532+00:00",
+      "first_price_krw": 173.0,
+      "first_change_24h_pct": 1.17,
+      "return_since_first_pct": 3.47,
+      "beam_score": 119.38,
+      "money_leads_price_score": 0.0,
+      "turnover_intensity": 0.0,
+      "buy_sell_ratio": 1.32,
+      "orderbook_ratio": 1.53,
+      "scenario_target_10_krw": 196.9,
+      "scenario_target_15_krw": 205.85,
+      "scenario_target_30_krw": 232.7,
+      "entry_plan": {
+        "status": "WAIT_CONFIRMATION",
+        "reference_price_krw": 179.0,
+        "do_not_chase_above_krw": 183.475,
+        "invalidation_krw": 173.272,
+        "target_1_krw": 193.32,
+        "target_2_krw": 205.85,
+        "target_3_krw": 223.75
+      }
+    }
+  ],
   "feedback": {
     "detection_bottleneck": "some eventual winners were first detected below 5pct but never surfaced as the recommendation",
     "fix": "parallel raw-stage2 recall scoring bypasses v19/v20 all-of expert thresholds, while requiring two observations",
