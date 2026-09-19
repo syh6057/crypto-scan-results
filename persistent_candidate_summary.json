@@ -1,9 +1,8 @@
 {
-  "generated_at_utc": "2026-09-19T04:49:54.948065+00:00",
+  "generated_at_utc": "2026-09-19T04:50:08.164712+00:00",
   "version": "v40-persistent-candidate-lifecycle",
   "pool_size": 60,
   "active": [
-    "CVC",
     "ALGO",
     "PHA",
     "AAVE",
@@ -43,6 +42,11 @@
   ],
   "principle": "top5 is display only; once early/urgent is detected it remains in lifecycle state until explicit invalidation, success, or expiry",
   "removed_this_run": [
+    {
+      "base": "CVC",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
     {
       "base": "S",
       "status": "EXPIRED",
@@ -165,21 +169,6 @@
     },
     {
       "base": "GRND",
-      "status": "EXPIRED",
-      "reason": "max_tracking_age"
-    },
-    {
-      "base": "CTK",
-      "status": "EXPIRED",
-      "reason": "max_tracking_age"
-    },
-    {
-      "base": "BFC",
-      "status": "INVALIDATED",
-      "reason": "forward_loss_le_minus_4pct"
-    },
-    {
-      "base": "CRTS",
       "status": "EXPIRED",
       "reason": "max_tracking_age"
     }
