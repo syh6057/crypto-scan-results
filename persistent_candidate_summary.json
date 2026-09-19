@@ -1,11 +1,8 @@
 {
-  "generated_at_utc": "2026-09-19T07:34:15.259547+00:00",
+  "generated_at_utc": "2026-09-19T08:18:07.190152+00:00",
   "version": "v40-persistent-candidate-lifecycle",
   "pool_size": 60,
   "active": [
-    "SPK",
-    "AVL",
-    "SKY",
     "PRL",
     "RED",
     "BIRB",
@@ -13,7 +10,9 @@
     "AVNT",
     "TRUST",
     "ALLO",
-    "ONG"
+    "ONG",
+    "KITE",
+    "CAP"
   ],
   "success_tracked": [
     "G",
@@ -46,6 +45,21 @@
   "principle": "top5 is display only; once early/urgent is detected it remains in lifecycle state until explicit invalidation, success, or expiry",
   "removed_this_run": [
     {
+      "base": "SPK",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
+    {
+      "base": "AVL",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
+    {
+      "base": "SKY",
+      "status": "EXPIRED",
+      "reason": "max_tracking_age"
+    },
+    {
       "base": "PUMPBTC",
       "status": "EXPIRED",
       "reason": "max_tracking_age"
@@ -57,8 +71,8 @@
     },
     {
       "base": "A",
-      "status": "EXPIRED",
-      "reason": "max_tracking_age"
+      "status": "INVALIDATED",
+      "reason": "forward_loss_le_minus_4pct"
     },
     {
       "base": "AAVE",
