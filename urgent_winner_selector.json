@@ -1,49 +1,45 @@
 {
-  "generated_at_utc": "2026-09-19T11:07:03.612020+00:00",
+  "generated_at_utc": "2026-09-19T11:49:20.708431+00:00",
   "version": "v34.3-persistent-bank-winner-selector",
-  "status": "WATCH_ONLY",
+  "status": "URGENT_WINNER_MATCH",
   "training_source": "durable_v35_bank",
   "persistent_pool_integrated": true,
-  "winner_matches": [],
-  "rejected_urgent": [
-    {
-      "base": "COTI",
-      "failed_live_checks": [
-        "persistent_15m_volume"
-      ],
-      "positive_similarity": 0.8556,
-      "negative_similarity": 0.795,
-      "winner_edge": 0.0606
-    },
-    {
-      "base": "STX",
-      "failed_live_checks": [],
-      "positive_similarity": 0.8994,
-      "negative_similarity": 0.875,
-      "winner_edge": 0.0244
-    },
-    {
-      "base": "HBAR",
-      "failed_live_checks": [],
-      "positive_similarity": 0.8512,
-      "negative_similarity": 0.8341,
-      "winner_edge": 0.0171
-    },
+  "winner_matches": [
     {
       "base": "ONDO",
+      "price_krw": 560.0,
+      "change_24h_pct": 2.19,
+      "positive_similarity": 0.867,
+      "negative_similarity": 0.6737,
+      "winner_edge": 0.1933
+    }
+  ],
+  "rejected_urgent": [
+    {
+      "base": "VVV",
       "failed_live_checks": [
-        "persistent_15m_volume"
+        "price_above_15m_ma"
       ],
-      "positive_similarity": 0.8162,
-      "negative_similarity": 0.8029,
-      "winner_edge": 0.0133
+      "positive_similarity": 0.7309,
+      "negative_similarity": 0.634,
+      "winner_edge": 0.0969
     },
     {
-      "base": "PLUME",
+      "base": "ARX",
+      "failed_live_checks": [
+        "still_early_not_already_pumped",
+        "buy_flow_not_sell_dominant"
+      ],
+      "positive_similarity": 0.8683,
+      "negative_similarity": 0.8125,
+      "winner_edge": 0.0557
+    },
+    {
+      "base": "PENGU",
       "failed_live_checks": [],
-      "positive_similarity": 0.8397,
-      "negative_similarity": 0.8356,
-      "winner_edge": 0.0041
+      "positive_similarity": 0.8721,
+      "negative_similarity": 0.8312,
+      "winner_edge": 0.0409
     }
   ],
   "positive_examples": [
@@ -163,7 +159,8 @@
     "PROM",
     "HP",
     "GRVT",
-    "S"
+    "S",
+    "BIRB"
   ],
   "label_conflicts_removed": []
 }
