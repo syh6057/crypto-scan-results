@@ -1,42 +1,35 @@
 {
-  "generated_at_utc": "2026-09-19T06:31:30.519313+00:00",
+  "generated_at_utc": "2026-09-19T06:52:58.521386+00:00",
   "version": "v34.3-persistent-bank-winner-selector",
-  "status": "URGENT_WINNER_MATCH",
+  "status": "WATCH_ONLY",
   "training_source": "durable_v35_bank",
   "persistent_pool_integrated": true,
-  "winner_matches": [
-    {
-      "base": "PRL",
-      "price_krw": 165.0,
-      "change_24h_pct": 7.84,
-      "positive_similarity": 0.8521,
-      "negative_similarity": 0.7433,
-      "winner_edge": 0.1087
-    }
-  ],
+  "winner_matches": [],
   "rejected_urgent": [
     {
-      "base": "CFG",
-      "failed_live_checks": [],
-      "positive_similarity": 0.849,
-      "negative_similarity": 0.7894,
-      "winner_edge": 0.0596
-    },
-    {
-      "base": "RED",
-      "failed_live_checks": [],
-      "positive_similarity": 0.888,
-      "negative_similarity": 0.8529,
-      "winner_edge": 0.0351
-    },
-    {
-      "base": "AVAX",
+      "base": "PRL",
       "failed_live_checks": [
-        "buy_flow_not_sell_dominant"
+        "short_pace_not_rolling_over"
       ],
-      "positive_similarity": 0.7698,
-      "negative_similarity": 0.87,
-      "winner_edge": -0.1002
+      "positive_similarity": 0.8443,
+      "negative_similarity": 0.7658,
+      "winner_edge": 0.0784
+    },
+    {
+      "base": "BIRB",
+      "failed_live_checks": [],
+      "positive_similarity": 0.5663,
+      "negative_similarity": 0.7363,
+      "winner_edge": -0.17
+    },
+    {
+      "base": "IN",
+      "failed_live_checks": [
+        "short_pace_not_rolling_over"
+      ],
+      "positive_similarity": 0.7226,
+      "negative_similarity": 0.9165,
+      "winner_edge": -0.1939
     }
   ],
   "positive_examples": [
@@ -107,7 +100,8 @@
     "CPOOL",
     "BLAST",
     "ESP",
-    "TREE"
+    "TREE",
+    "HOME"
   ],
   "negative_examples": [
     "USELESS",
